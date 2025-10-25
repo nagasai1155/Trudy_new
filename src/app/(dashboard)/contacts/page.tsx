@@ -57,8 +57,8 @@ export default function ContactsPage() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Contacts</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Contacts</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
               Manage your contact list
             </p>
           </div>
@@ -83,7 +83,7 @@ export default function ContactsPage() {
 
         {/* Search */}
         <div className="relative max-w-full sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <Input
             placeholder="Search contacts..."
             value={searchQuery}
@@ -97,30 +97,30 @@ export default function ContactsPage() {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b bg-gray-50">
+                <thead className="border-b border-gray-200 dark:border-gray-900 bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900">Name</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900">Email</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900">Phone</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900">Company</th>
-                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900">Actions</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900 dark:text-white">Name</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900 dark:text-white">Email</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900 dark:text-white">Phone</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900 dark:text-white">Company</th>
+                    <th className="px-4 lg:px-6 py-3 text-left text-xs lg:text-sm font-medium text-gray-900 dark:text-white">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-900">
                   {filteredContacts.map((contact) => (
-                    <tr key={contact.id} className="hover:bg-gray-50">
+                    <tr key={contact.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
                       <td className="px-4 lg:px-6 py-4">
-                        <div className="text-xs lg:text-sm font-medium text-gray-900">
+                        <div className="text-xs lg:text-sm font-medium text-gray-900 dark:text-white">
                           {contact.firstName} {contact.lastName}
                         </div>
                       </td>
-                      <td className="px-4 lg:px-6 py-4 text-xs lg:text-sm text-gray-600">
+                      <td className="px-4 lg:px-6 py-4 text-xs lg:text-sm text-gray-600 dark:text-gray-400">
                         {contact.email}
                       </td>
-                      <td className="px-4 lg:px-6 py-4 text-xs lg:text-sm text-gray-900">
+                      <td className="px-4 lg:px-6 py-4 text-xs lg:text-sm text-gray-900 dark:text-white">
                         {formatPhoneNumber(contact.phoneNumber)}
                       </td>
-                      <td className="px-4 lg:px-6 py-4 text-xs lg:text-sm text-gray-900">
+                      <td className="px-4 lg:px-6 py-4 text-xs lg:text-sm text-gray-900 dark:text-white">
                         {contact.company}
                       </td>
                       <td className="px-4 lg:px-6 py-4">
@@ -157,12 +157,12 @@ export default function ContactsPage() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {contact.firstName} {contact.lastName}
                     </p>
-                    <p className="text-xs text-gray-600 truncate mt-1">{contact.email}</p>
-                    <p className="text-xs text-gray-900 mt-1">{formatPhoneNumber(contact.phoneNumber)}</p>
-                    <p className="text-xs text-gray-600 mt-1">{contact.company}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 truncate mt-1">{contact.email}</p>
+                    <p className="text-xs text-gray-900 dark:text-white mt-1">{formatPhoneNumber(contact.phoneNumber)}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{contact.company}</p>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -190,8 +190,8 @@ export default function ContactsPage() {
         {filteredContacts.length === 0 && (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
-              <h3 className="mt-3 sm:mt-4 text-base sm:text-lg font-semibold text-gray-900">No contacts found</h3>
-              <p className="mt-2 text-xs sm:text-sm text-gray-600 text-center px-4">
+              <h3 className="mt-3 sm:mt-4 text-base sm:text-lg font-semibold text-gray-900 dark:text-white">No contacts found</h3>
+              <p className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center px-4">
                 {searchQuery
                   ? 'Try adjusting your search query'
                   : 'Get started by adding your first contact'}

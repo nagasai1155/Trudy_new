@@ -183,7 +183,7 @@ export function Sidebar() {
                 {[
                   { title: 'Agents', href: '/agents', icon: 'Wand2' },
                   { title: 'Knowledge Base', href: '/rag', icon: 'FolderOpen' },
-                  { title: 'Tools', href: '/tools', icon: 'Wrench' },
+                  { title: 'Integrations', href: '/tools', icon: 'Wrench' },
                   { title: 'Voices', href: '/voice-cloning', icon: 'Mic' },
                 ].map((item) => {
                   const Icon = iconMap[item.icon]
@@ -293,7 +293,45 @@ export function Sidebar() {
               </div>
             </div>
 
-            {/* Individual Items */}
+            {/* Integrations Section */}
+            <div className="mb-6">
+              {(!sidebarCollapsed || mobileMenuOpen) && (
+                <div className="sidebar-section-title mb-3">Integrations</div>
+              )}
+              <div className="space-y-1">
+                {[
+                  { title: 'Contacts', href: '/contacts', icon: 'Users' },
+                ].map((item) => {
+                  const Icon = iconMap[item.icon]
+                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                  const isClickedActive = clickedPath === item.href
+                  const isNavigating = isPending && isClickedActive
+
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={() => handleNavigation(item.href)}
+                      disabled={isNavigating}
+                      className={cn(
+                        'sidebar-nav-item w-full',
+                        (isActive || isClickedActive) && 'active',
+                        isNavigating && 'opacity-70 cursor-wait',
+                        sidebarCollapsed && !mobileMenuOpen && 'justify-center px-2'
+                      )}
+                    >
+                      {isNavigating ? (
+                        <Loader2 className={cn('animate-spin sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
+                      ) : (
+                        <Icon className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
+                      )}
+                      {(!sidebarCollapsed || mobileMenuOpen) && <span className="transition-all">{item.title}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Settings */}
             <div className="space-y-1">
               {[
                 { title: 'Settings', href: '/settings', icon: 'Settings' },

@@ -179,7 +179,7 @@ export const NAV_ITEMS = [
     icon: 'FolderOpen',
   },
   {
-    title: 'Tools',
+    title: 'Integrations',
     href: '/tools',
     icon: 'Wrench',
   },

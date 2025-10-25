@@ -27,6 +27,7 @@ import {
 import { Phone, Plus, Server, Info, X, AlertCircle } from 'lucide-react'
 
 export default function PhoneNumbersPage() {
+  const [addNumberDialogOpen, setAddNumberDialogOpen] = useState(false)
   const [twilioDialogOpen, setTwilioDialogOpen] = useState(false)
   const [sipTrunkDialogOpen, setSipTrunkDialogOpen] = useState(false)
   const [label, setLabel] = useState('')
@@ -42,6 +43,11 @@ export default function PhoneNumbersPage() {
   const [sipUsername, setSipUsername] = useState('')
   const [sipPassword, setSipPassword] = useState('')
   const [outboundAddress, setOutboundAddress] = useState('')
+  
+  // Add number states
+  const [newNumberLabel, setNewNumberLabel] = useState('')
+  const [newNumberCountryCode, setNewNumberCountryCode] = useState('+1')
+  const [areaCode, setAreaCode] = useState('')
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -50,25 +56,35 @@ export default function PhoneNumbersPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Phone numbers</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Import and manage your phone numbers
+              Add or import your phone numbers
             </p>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black gap-2">
-                <Plus className="h-4 w-4" />
-                Import number
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-              <DropdownMenuItem onClick={() => setTwilioDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                From Twilio
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSipTrunkDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                From SIP Trunk
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline"
+              className="gap-2"
+              onClick={() => setAddNumberDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Add number
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black gap-2">
+                  <Plus className="h-4 w-4" />
+                  Import number
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
+                <DropdownMenuItem onClick={() => setTwilioDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
+                  From Twilio
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSipTrunkDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
+                  From SIP Trunk
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Empty State */}
@@ -80,27 +96,120 @@ export default function PhoneNumbersPage() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               No phone numbers
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              You don&apos;t have any phone numbers yet.
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              You don&apos;t have any phone numbers yet. Use the buttons above to add or import a number.
             </p>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Import number
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-                <DropdownMenuItem onClick={() => setTwilioDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                  From Twilio
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSipTrunkDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                  From SIP Trunk
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
+
+        {/* Add Number Dialog */}
+        <Dialog open={addNumberDialogOpen} onOpenChange={setAddNumberDialogOpen}>
+          <DialogContent className="max-w-lg bg-white dark:bg-black border-gray-200 dark:border-gray-900">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg text-gray-900 dark:text-white">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-900">
+                  <Phone className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                </div>
+                Add new phone number
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              {/* Label */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-900 dark:text-white">Label</Label>
+                <Input
+                  placeholder="Easy to identify name for this number"
+                  value={newNumberLabel}
+                  onChange={(e) => setNewNumberLabel(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Country */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-900 dark:text-white">Country</Label>
+                <Select value={newNumberCountryCode} onValueChange={setNewNumberCountryCode}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      <div className="flex items-center gap-2">
+                        <span>{newNumberCountryCode === '+1' ? '🇺🇸' : newNumberCountryCode === '+44' ? '🇬🇧' : '🇮🇳'}</span>
+                        <span>{newNumberCountryCode === '+1' ? 'United States' : newNumberCountryCode === '+44' ? 'United Kingdom' : 'India'}</span>
+                      </div>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="+1">
+                      <div className="flex items-center gap-2">
+                        <span>🇺🇸</span>
+                        <span>United States</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="+44">
+                      <div className="flex items-center gap-2">
+                        <span>🇬🇧</span>
+                        <span>United Kingdom</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="+91">
+                      <div className="flex items-center gap-2">
+                        <span>🇮🇳</span>
+                        <span>India</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Area Code (Optional) */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-900 dark:text-white">Area Code (Optional)</Label>
+                <Input
+                  placeholder="e.g., 212, 415, 202"
+                  value={areaCode}
+                  onChange={(e) => setAreaCode(e.target.value)}
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Specify a preferred area code for your new number
+                </p>
+              </div>
+
+              {/* Info Banner */}
+              <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900 rounded-lg">
+                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    A new phone number will be provisioned for you. Monthly charges may apply.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-900">
+              <Button
+                variant="outline"
+                onClick={() => setAddNumberDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                onClick={() => {
+                  console.log('Adding new number:', {
+                    label: newNumberLabel,
+                    countryCode: newNumberCountryCode,
+                    areaCode,
+                  })
+                  setAddNumberDialogOpen(false)
+                }}
+              >
+                Add Number
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Import from Twilio Dialog */}
         <Dialog open={twilioDialogOpen} onOpenChange={setTwilioDialogOpen}>

@@ -27,6 +27,7 @@ import { AppLayout } from '@/components/layout/app-layout'
 import { Wrench, Plus, Search, Webhook, X, Code, Target } from 'lucide-react'
 
 export default function ToolsPage() {
+  const [mode, setMode] = useState<'basic' | 'advanced'>('basic')
   const [searchQuery, setSearchQuery] = useState('')
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false)
   const [clientToolDialogOpen, setClientToolDialogOpen] = useState(false)
@@ -49,10 +50,39 @@ export default function ToolsPage() {
     <AppLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Tools</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Integrations</h1>
+          
+          {/* Mode Toggle */}
+          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
+            <button
+              onClick={() => setMode('basic')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                mode === 'basic'
+                  ? 'bg-white dark:bg-black text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Basic Settings
+            </button>
+            <button
+              onClick={() => setMode('advanced')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                mode === 'advanced'
+                  ? 'bg-white dark:bg-black text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Advanced Mode
+            </button>
+          </div>
+        </div>
 
-        {/* Action Cards */}
-        <div className="flex gap-3">
+        {/* Content based on mode */}
+        {mode === 'basic' && (
+          <>
+            {/* Basic Settings View */}
+            <div className="flex gap-3">
           <button
             onClick={() => setWebhookDialogOpen(true)}
             className="flex items-center gap-3 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all"
@@ -74,7 +104,7 @@ export default function ToolsPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
             <Input
-              placeholder="Search tools..."
+              placeholder="Search integrations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -104,18 +134,46 @@ export default function ToolsPage() {
           </DropdownMenu>
         </div>
 
-        {/* Empty State */}
+        {/* Empty State - Basic */}
         <Card className="border-gray-200 dark:border-gray-900">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900 mb-4">
               <Wrench className="h-8 w-8 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No tools found</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No integrations found</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 text-center max-w-md">
-              You don&apos;t have any tools yet.
+              You don&apos;t have any integrations yet. Add your first integration to get started.
             </p>
           </CardContent>
         </Card>
+          </>
+        )}
+
+        {/* Advanced Mode */}
+        {mode === 'advanced' && (
+          <>
+            {/* Advanced Settings View */}
+            <Card className="border-gray-200 dark:border-gray-900">
+              <CardContent className="py-12">
+                <div className="flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/20 mb-2">
+                    <Code className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Advanced Mode</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
+                    Access advanced configuration options, custom webhooks, API integrations, and detailed logging.
+                  </p>
+                  <div className="pt-4">
+                    <Button className="gap-2">
+                      <Code className="h-4 w-4" />
+                      Configure Advanced Settings
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* Add Webhook Tool Dialog */}

@@ -10,9 +10,22 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useState } from 'react'
+import { Camera, User } from 'lucide-react'
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile')
+  const [profileImage, setProfileImage] = useState<string | null>(null)
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfileImage(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   return (
     <AppLayout>
@@ -53,6 +66,54 @@ export default function SettingsPage() {
           {/* Profile Tab Content */}
           {activeTab === 'profile' && (
             <div className="space-y-6">
+              {/* Profile Picture */}
+              <div className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-6">
+                  <div className="relative group">
+                    <div className="h-24 w-24 rounded-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden border-2 border-gray-200 dark:border-gray-800">
+                      {profileImage ? (
+                        <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
+                      ) : (
+                        <User className="h-12 w-12 text-gray-400 dark:text-gray-500" />
+                      )}
+                    </div>
+                    <label 
+                      htmlFor="profile-upload" 
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <Camera className="h-6 w-6 text-white" />
+                    </label>
+                    <input
+                      id="profile-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">Profile Picture</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Upload a profile picture (JPG, PNG, or GIF)</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <label htmlFor="profile-upload">
+                    <Button variant="outline" className="bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800" asChild>
+                      <span>Upload Photo</span>
+                    </Button>
+                  </label>
+                  {profileImage && (
+                    <Button 
+                      variant="outline" 
+                      className="bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 border-red-300 dark:border-red-800"
+                      onClick={() => setProfileImage(null)}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               {/* Email Address */}
               <div className="flex items-center justify-between py-4">
                 <div className="flex-1">

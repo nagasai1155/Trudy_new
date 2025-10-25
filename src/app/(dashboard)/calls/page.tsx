@@ -162,7 +162,7 @@ export default function CallsPage() {
                   {filteredCalls.map((call) => (
                     <tr 
                       key={call.id} 
-                      className="hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
                       onClick={() => handleCallClick(call)}
                     >
                       <td className="px-4 lg:px-6 py-4">
@@ -226,7 +226,7 @@ export default function CallsPage() {
           {filteredCalls.map((call) => (
             <Card 
               key={call.id} 
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className="cursor-pointer"
               onClick={() => handleCallClick(call)}
             >
               <CardContent className="p-4">
