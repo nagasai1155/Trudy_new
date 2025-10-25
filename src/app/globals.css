@@ -548,6 +548,18 @@ button, a, input, textarea, select, [role="button"] {
   animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Collapsed sidebar - prevent transform overflow */
+@media (min-width: 1280px) {
+  .sidebar-nav-item.justify-center:hover,
+  .sidebar-nav-item.justify-center.active {
+    transform: scale(1.1);
+  }
+  
+  .sidebar-nav-item.justify-center.active::before {
+    display: none;
+  }
+}
+
 .sidebar-section-title {
   @apply text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wider;
   letter-spacing: 0.05em;
@@ -612,7 +624,7 @@ button, a, input, textarea, select, [role="button"] {
 }
 
 .sidebar-icon {
-  @apply h-5 w-5;
+  @apply h-4 w-4;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -621,7 +633,7 @@ button, a, input, textarea, select, [role="button"] {
 }
 
 .sidebar-icon-small {
-  @apply h-4 w-4;
+  @apply h-3.5 w-3.5;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

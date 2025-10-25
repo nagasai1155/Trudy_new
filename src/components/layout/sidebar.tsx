@@ -96,64 +96,67 @@ export function Sidebar() {
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full',
           // Desktop (xl: 1280px+): fixed on left, always visible
           'xl:left-0 xl:right-auto xl:translate-x-0',
-          sidebarCollapsed ? 'xl:w-16' : 'xl:w-72'
+          sidebarCollapsed ? 'xl:w-20' : 'xl:w-72'
         )}
       >
       <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex h-16 shrink-0 items-center px-6 justify-between bg-white dark:bg-black">
-            <div className="flex items-center space-x-3 flex-1">
+          <div className={cn(
+            "flex h-16 shrink-0 items-center bg-white dark:bg-black",
+            sidebarCollapsed && !mobileMenuOpen ? "justify-center px-2" : "justify-between px-6"
+          )}>
             {(!sidebarCollapsed || mobileMenuOpen) && (
-               <button 
-                onClick={() => handleNavigation('/dashboard')} 
+              <>
+                <button 
+                  onClick={() => handleNavigation('/dashboard')} 
                   className="flex items-center space-x-3 group cursor-pointer"
-              >
+                >
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black dark:bg-white shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-95">
                     <Bot className="h-4 w-4 text-white dark:text-black" />
-                </div>
+                  </div>
                   <span className="text-lg font-bold text-black dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">Truedy AI</span>
-              </button>
+                </button>
+                
+                {/* Close button for mobile */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="xl:hidden text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+
+                {/* Collapse button for desktop */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSidebar}
+                  className="hidden xl:flex text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+              </>
             )}
+            
             {sidebarCollapsed && !mobileMenuOpen && (
               <button 
                 onClick={() => handleNavigation('/dashboard')} 
-                className="flex items-center justify-center w-full group cursor-pointer"
+                className="flex items-center justify-center group cursor-pointer"
               >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black dark:bg-white shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-95">
-                    <Bot className="h-4 w-4 text-white dark:text-black" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black dark:bg-white shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-95">
+                  <Bot className="h-4 w-4 text-white dark:text-black" />
                 </div>
               </button>
             )}
-          </div>
-          
-          {/* Close button for mobile */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileMenuOpen(false)}
-              className="xl:hidden text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-
-            {/* Collapse button for desktop */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className="hidden xl:flex text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            >
-              {sidebarCollapsed ? (
-                <ChevronRight className="h-5 w-5" />
-              ) : (
-                <ChevronLeft className="h-5 w-5" />
-              )}
-            </Button>
         </div>
 
 
         {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto scrollbar-hide px-6">
+          <nav className={cn(
+            "flex-1 overflow-y-auto scrollbar-hide",
+            sidebarCollapsed && !mobileMenuOpen ? "px-2" : "px-6"
+          )}>
             {/* Home - Always first */}
             <div className="mb-6">
               <button
@@ -390,9 +393,20 @@ export function Sidebar() {
             </div>
           )}
 
-          {/* Theme Toggle for Collapsed Sidebar */}
+          {/* Theme Toggle & Expand Button for Collapsed Sidebar */}
           {(sidebarCollapsed && !mobileMenuOpen) && (
-            <div className="px-3 py-4 border-t border-gray-100 dark:border-gray-900 flex items-center justify-center">
+            <div className="px-3 py-4 border-t border-gray-100 dark:border-gray-900 flex flex-col items-center gap-4">
+              {/* Expand Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+              
+              {/* Theme Toggle */}
               <ThemeToggle />
             </div>
           )}
