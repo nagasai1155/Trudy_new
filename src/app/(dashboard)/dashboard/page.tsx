@@ -240,7 +240,7 @@ export default function DashboardPage() {
               variant="default"
               size="sm" 
               className="gap-2 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
-              onClick={() => router.push('/agents/new')}
+              onClick={() => router.push('/agents')}
             >
               <Bot className="h-4 w-4" />
               Create Agent

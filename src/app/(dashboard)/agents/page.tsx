@@ -13,7 +13,7 @@ import {
 import { NewAgentModal } from '@/components/forms/new-agent-modal'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Headphones, Wind, TrendingUp, Wand2, Check, Mic2, Search, Plus, MoreHorizontal, ChevronDown, ExternalLink, Copy, Archive, Trash2 } from 'lucide-react'
+import { Headphones, Wind, TrendingUp, Wand2, Check, Mic2, Search, Plus, MoreHorizontal, ChevronDown, ExternalLink, Copy, Archive, Trash2, Play } from 'lucide-react'
 
 // Mock agents data with color schemes
 const agents = [
@@ -132,13 +132,23 @@ export default function AgentsPage() {
                 <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-1">Agents</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Create and manage your AI agents</p>
               </div>
-              <Button
-                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black gap-2 w-full sm:w-auto"
-                onClick={() => setShowNewAgentModal(true)}
-              >
-                <Plus className="h-4 w-4" />
-                New agent
-              </Button>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  className="border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-900 dark:text-white gap-2 flex-1 sm:flex-initial"
+                  onClick={() => router.push('/agents/playground')}
+                >
+                  <Play className="h-4 w-4" />
+                  Playground
+                </Button>
+                <Button
+                  className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black gap-2 flex-1 sm:flex-initial"
+                  onClick={() => setShowNewAgentModal(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  New agent
+                </Button>
+              </div>
             </div>
 
             {/* Search Bar */}
