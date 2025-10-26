@@ -25,7 +25,66 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { NewSourcePanel } from '@/components/rag/new-source-panel'
-import { Globe, FileText, Type, Search, Plus, Database, Folder, FolderPlus, ChevronRight, ChevronDown, MoreVertical, Edit, Trash } from 'lucide-react'
+import { Globe, FileText, Type, Search, Plus, Database, Folder, FolderPlus, ChevronRight, ChevronDown, MoreVertical, Edit, Trash, Headphones, Wind, TrendingUp, Wand2, BookOpen, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+
+// Mock agents data (this would come from useAgents hook in production)
+const mockAgents = [
+  {
+    id: '1',
+    name: 'Support agent',
+    description: 'Dedicated support agent ready to resolve customer issues',
+    agentName: 'Alexis',
+    avatar: '👩',
+    icon: Headphones,
+    knowledgeBase: {
+      filesCount: 12,
+      sources: ['Product Docs', 'FAQ', 'Support Scripts'],
+      files: [
+        { id: 'f1', name: 'Product Documentation.pdf', type: 'pdf', size: 3.2, uploadedAt: '2024-02-10' },
+        { id: 'f2', name: 'FAQ Database.docx', type: 'docx', size: 1.5, uploadedAt: '2024-02-12' },
+        { id: 'f3', name: 'Support Scripts.txt', type: 'txt', size: 0.8, uploadedAt: '2024-02-15' },
+        { id: 'f4', name: 'Troubleshooting Guide.pdf', type: 'pdf', size: 2.1, uploadedAt: '2024-02-18' },
+        { id: 'f5', name: 'Customer Service Best Practices.docx', type: 'docx', size: 1.2, uploadedAt: '2024-02-20' },
+      ]
+    }
+  },
+  {
+    id: '2',
+    name: 'Mindfulness coach',
+    description: 'Helps users find calm and clarity through mindfulness',
+    agentName: 'Joe',
+    avatar: '🧘',
+    icon: Wind,
+    knowledgeBase: null, // No knowledge base yet
+  },
+  {
+    id: '3',
+    name: 'Sales agent',
+    description: 'Showcases products and helps close deals',
+    agentName: 'Harper',
+    avatar: '💼',
+    icon: TrendingUp,
+    knowledgeBase: {
+      filesCount: 8,
+      sources: ['Product Catalog', 'Pricing Guide'],
+      files: [
+        { id: 'f6', name: 'Product Catalog 2024.pdf', type: 'pdf', size: 4.5, uploadedAt: '2024-02-08' },
+        { id: 'f7', name: 'Pricing Guide.xlsx', type: 'xlsx', size: 0.9, uploadedAt: '2024-02-10' },
+        { id: 'f8', name: 'Sales Playbook.pdf', type: 'pdf', size: 2.8, uploadedAt: '2024-02-14' },
+      ]
+    }
+  },
+  {
+    id: '4',
+    name: 'Video game character',
+    description: 'Mysterious wizard offering ancient wisdom',
+    agentName: 'Callum',
+    avatar: '🧙',
+    icon: Wand2,
+    knowledgeBase: null,
+  },
+]
 
 // Mock data for knowledge hubs
 const mockKnowledgeHubs = [
@@ -53,6 +112,7 @@ const mockKnowledgeHubs = [
 ]
 
 export default function RAGCollectionsPage() {
+  const router = useRouter()
   const [newSourceOpen, setNewSourceOpen] = useState(false)
   const [addUrlOpen, setAddUrlOpen] = useState(false)
   const [addFilesOpen, setAddFilesOpen] = useState(false)
@@ -66,7 +126,16 @@ export default function RAGCollectionsPage() {
   const [hubDescription, setHubDescription] = useState('')
   const [expandedHubs, setExpandedHubs] = useState<string[]>(['1'])
   const [selectedHub, setSelectedHub] = useState<string | null>(null)
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
+  const [viewingAgent, setViewingAgent] = useState<string | null>(null)
   const [knowledgeHubs, setKnowledgeHubs] = useState(mockKnowledgeHubs)
+  const [agents, setAgents] = useState(mockAgents)
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  const filteredAgents = agents.filter(agent =>
+    agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    agent.description.toLowerCase().includes(searchQuery.toLowerCase())
+  )
   
   const toggleHub = (hubId: string) => {
     setExpandedHubs(prev =>
@@ -91,209 +160,253 @@ export default function RAGCollectionsPage() {
     e.preventDefault()
   }
 
+  const handleAddFiles = () => {
+    if (!selectedAgent || selectedFiles.length === 0) return
+
+    // Create new file entries
+    const newFiles = selectedFiles.map((file, index) => ({
+      id: `f${Date.now()}-${index}`,
+      name: file.name,
+      type: file.name.split('.').pop() || 'file',
+      size: parseFloat((file.size / 1024 / 1024).toFixed(2)), // Convert bytes to MB
+      uploadedAt: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    }))
+
+    // Get unique file types from new files
+    const fileTypes = Array.from(new Set(newFiles.map(f => f.type.toUpperCase())))
+
+    // Update agents state
+    setAgents(prevAgents => 
+      prevAgents.map(agent => {
+        if (agent.id === selectedAgent) {
+          if (agent.knowledgeBase) {
+            // Agent already has knowledge base, add to it
+            const existingSources = agent.knowledgeBase.sources || []
+            const newSources = fileTypes.filter(type => !existingSources.includes(type))
+            
+            return {
+              ...agent,
+              knowledgeBase: {
+                ...agent.knowledgeBase,
+                filesCount: agent.knowledgeBase.filesCount + newFiles.length,
+                sources: [...existingSources, ...newSources],
+                files: [...(agent.knowledgeBase.files || []), ...newFiles]
+              }
+            }
+          } else {
+            // Create new knowledge base for agent
+            return {
+              ...agent,
+              knowledgeBase: {
+                filesCount: newFiles.length,
+                sources: fileTypes,
+                files: newFiles
+              }
+            }
+          }
+        }
+        return agent
+      })
+    )
+
+    // Reset form
+    setSelectedFiles([])
+    setSelectedAgent(null)
+    setAddFilesOpen(false)
+  }
+
+  const handleDeleteFile = (agentId: string, fileId: string) => {
+    setAgents(prevAgents =>
+      prevAgents.map(agent => {
+        if (agent.id === agentId && agent.knowledgeBase) {
+          const updatedFiles = agent.knowledgeBase.files?.filter(f => f.id !== fileId) || []
+          
+          if (updatedFiles.length === 0) {
+            // No files left, remove knowledge base
+            return {
+              ...agent,
+              knowledgeBase: null
+            }
+          }
+          
+          // Recalculate sources from remaining files
+          const sources = Array.from(new Set(updatedFiles.map(f => f.type.toUpperCase())))
+          
+          return {
+            ...agent,
+            knowledgeBase: {
+              ...agent.knowledgeBase,
+              filesCount: updatedFiles.length,
+              sources: sources,
+              files: updatedFiles
+            }
+          }
+        }
+        return agent
+      })
+    )
+  }
+
   return (
     <AppLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Knowledge Base</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Knowledge Base</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Manage knowledge bases for your agents
+            </p>
+          </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm">
               <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
               <span className="text-gray-700 dark:text-gray-300">
-                RAG Storage: <strong className="text-gray-900 dark:text-white">0 B</strong> / <strong className="text-gray-900 dark:text-white">1.0 MB</strong>
+                <strong className="text-gray-900 dark:text-white">0 B</strong> / <strong className="text-gray-900 dark:text-white">1.0 MB</strong>
               </span>
             </div>
-            <Button 
-              variant="outline" 
-              className="gap-2"
-              onClick={() => setCreateHubOpen(true)}
-            >
-              <FolderPlus className="h-4 w-4" />
-              Create Hub
-            </Button>
           </div>
         </div>
 
-        {/* Action Cards */}
-        <div className="flex gap-3">
-          <button
-            onClick={() => setAddUrlOpen(true)}
-            className="flex flex-col items-center justify-center px-6 py-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all min-w-[140px]"
-          >
-            <Globe className="h-6 w-6 text-gray-700 dark:text-gray-300 mb-2" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Add URL</span>
-          </button>
-          <button
-            onClick={() => {
-              setSelectedHub(null)
-              setAddFilesOpen(true)
-            }}
-            className="flex flex-col items-center justify-center px-6 py-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all min-w-[140px]"
-          >
-            <FileText className="h-6 w-6 text-gray-700 dark:text-gray-300 mb-2" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Add Files</span>
-          </button>
-          <button
-            onClick={() => setCreateTextOpen(true)}
-            className="flex flex-col items-center justify-center px-6 py-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all min-w-[140px]"
-          >
-            <Type className="h-6 w-6 text-gray-700 dark:text-gray-300 mb-2" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Create Text</span>
-          </button>
-        </div>
-
-        {/* Search and Filter */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
+        {/* Search Bar */}
+        {agents.length > 0 && (
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
             <Input
-              placeholder="Search Knowledge Base..."
-              className="pl-10"
+              type="text"
+              placeholder="Search agents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 w-full sm:max-w-md"
             />
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Plus className="h-4 w-4" />
-                Type
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[180px] bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-              <DropdownMenuItem className="flex items-center gap-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                <FileText className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-                <span>File</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                <Globe className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-                <span>URL</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-3 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                <Type className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-                <span>Text</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        )}
 
-        {/* Knowledge Hubs List */}
-        {knowledgeHubs.length > 0 ? (
-          <div className="space-y-3">
-            {knowledgeHubs.map((hub) => (
-              <Card key={hub.id} className="border-gray-200 dark:border-gray-900">
-                <CardContent className="p-0">
-                  {/* Hub Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-900 bg-gray-50 dark:bg-gray-900">
-                    <div className="flex items-center gap-3 flex-1">
-                      <button
-                        onClick={() => toggleHub(hub.id)}
-                        className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                      >
-                        {expandedHubs.includes(hub.id) ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </button>
-                      <Folder className="h-5 w-5 text-primary dark:text-primary" />
-                      <div className="flex-1">
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{hub.name}</h3>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{hub.filesCount} files</p>
+        {/* Agent Cards */}
+        {agents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredAgents.map((agent) => {
+              const Icon = agent.icon
+              const hasKnowledgeBase = agent.knowledgeBase !== null
+              
+              return (
+                <Card 
+                  key={agent.id} 
+                  className="border-gray-200 dark:border-gray-900 hover:border-gray-300 dark:hover:border-gray-700 transition-all"
+                >
+                  <CardContent className="p-6">
+                    {/* Agent Header */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20 flex-shrink-0">
+                        <Icon className="h-5 w-5 text-primary dark:text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                          {agent.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                          {agent.description}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => {
-                          setSelectedHub(hub.id)
-                          setAddFilesOpen(true)
-                        }}
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Files
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                            <Edit className="mr-2 h-4 w-4" />
-                            Rename Hub
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-900">
-                            <Trash className="mr-2 h-4 w-4" />
-                            Delete Hub
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+
+                    {/* Agent Avatar */}
+                    <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-900">
+                      <span className="text-xl">{agent.avatar}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                        {agent.agentName}
+                      </span>
                     </div>
-                  </div>
-                  
-                  {/* Hub Files */}
-                  {expandedHubs.includes(hub.id) && hub.files && hub.files.length > 0 && (
-                    <div className="divide-y divide-gray-200 dark:divide-gray-900">
-                      {hub.files.map((file) => (
-                        <div key={file.id} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900">
-                          <div className="flex items-center gap-3 flex-1">
-                            <FileText className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">{file.name}</p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">{file.size} MB</p>
-                            </div>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-                              <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-900">
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete File
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+
+                    {/* Knowledge Base Status */}
+                    {hasKnowledgeBase ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <BookOpen className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-gray-700 dark:text-gray-300">
+                            <strong className="text-gray-900 dark:text-white">{agent.knowledgeBase!.filesCount}</strong> files
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Empty state for hub with no files */}
-                  {expandedHubs.includes(hub.id) && (!hub.files || hub.files.length === 0) && (
-                    <div className="px-4 py-8 text-center">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">No files in this hub yet.</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                        <div className="flex flex-wrap gap-2">
+                          {agent.knowledgeBase!.sources.map((source, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded"
+                            >
+                              {source}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 gap-2"
+                            onClick={() => {
+                              setSelectedAgent(agent.id)
+                              setAddFilesOpen(true)
+                            }}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Add More
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 gap-2"
+                            onClick={() => {
+                              setViewingAgent(agent.id)
+                            }}
+                          >
+                            <ArrowRight className="h-3.5 w-3.5" />
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-center py-4 px-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                            No knowledge base yet
+                          </p>
+                        </div>
+                        <Button
+                          className="w-full gap-2 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAgent(agent.id)
+                            setAddFilesOpen(true)
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Add Knowledge Base
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         ) : (
-          /* Empty State */
+          /* Empty State - No Agents */
           <Card className="border-gray-200 dark:border-gray-900">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900 mb-4">
                 <Database className="h-8 w-8 text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No knowledge hubs found
+                No agents found
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Create your first knowledge hub to organize your documents.
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 text-center max-w-md">
+                You need to create agents first before you can add knowledge bases to them.
               </p>
               <Button
-                variant="outline"
-                className="gap-2"
-                onClick={() => setCreateHubOpen(true)}
+                className="gap-2 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                onClick={() => router.push('/agents')}
               >
-                <FolderPlus className="h-4 w-4" />
-                Create First Hub
+                <Plus className="h-4 w-4" />
+                Create Your First Agent
               </Button>
             </CardContent>
           </Card>
@@ -442,27 +555,30 @@ export default function RAGCollectionsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg text-gray-900 dark:text-white">
               <FileText className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-              Add Files {selectedHub && `to ${knowledgeHubs.find(h => h.id === selectedHub)?.name}`}
+              Add Files {selectedAgent && `to ${agents.find(a => a.id === selectedAgent)?.name}`}
             </DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-4">
-            {/* Hub Selector */}
-            {!selectedHub && knowledgeHubs.length > 0 && (
+            {/* Agent Selector */}
+            {!selectedAgent && agents.length > 0 && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-900 dark:text-white">Select Knowledge Hub</label>
-                <Select value={selectedHub || ''} onValueChange={setSelectedHub}>
+                <label className="text-sm font-medium text-gray-900 dark:text-white">Select Agent</label>
+                <Select value={selectedAgent || ''} onValueChange={setSelectedAgent}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Choose a hub to add files to" />
+                    <SelectValue placeholder="Choose an agent to add files to" />
                   </SelectTrigger>
                   <SelectContent>
-                    {knowledgeHubs.map((hub) => (
-                      <SelectItem key={hub.id} value={hub.id}>
-                        <div className="flex items-center gap-2">
-                          <Folder className="h-4 w-4 text-primary dark:text-primary" />
-                          {hub.name}
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {agents.map((agent) => {
+                      const Icon = agent.icon
+                      return (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4 text-primary dark:text-primary" />
+                            {agent.name}
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -518,7 +634,7 @@ export default function RAGCollectionsPage() {
               variant="outline"
               onClick={() => {
                 setAddFilesOpen(false)
-                setSelectedHub(null)
+                setSelectedAgent(null)
                 setSelectedFiles([])
               }}
             >
@@ -526,14 +642,86 @@ export default function RAGCollectionsPage() {
             </Button>
             <Button 
               className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
-              disabled={!selectedHub && knowledgeHubs.length > 0}
+              disabled={(!selectedAgent && agents.length > 0) || selectedFiles.length === 0}
+              onClick={handleAddFiles}
+            >
+              Add Files
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Knowledge Base Dialog */}
+      <Dialog open={viewingAgent !== null} onOpenChange={(open) => !open && setViewingAgent(null)}>
+        <DialogContent className="max-w-2xl bg-white dark:bg-black border-gray-200 dark:border-gray-900">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg text-gray-900 dark:text-white">
+              <BookOpen className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              Knowledge Base - {agents.find(a => a.id === viewingAgent)?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {viewingAgent && agents.find(a => a.id === viewingAgent)?.knowledgeBase?.files ? (
+              <div className="space-y-2">
+                {/* File List */}
+                <div className="divide-y divide-gray-200 dark:divide-gray-900 border border-gray-200 dark:border-gray-900 rounded-lg overflow-hidden">
+                  {agents.find(a => a.id === viewingAgent)?.knowledgeBase?.files?.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FileText className="h-4 w-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {file.name}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                            <span>{file.size} MB</span>
+                            <span>•</span>
+                            <span>Uploaded {file.uploadedAt}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
+                          <DropdownMenuItem 
+                            className="text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-900"
+                            onClick={() => handleDeleteFile(viewingAgent!, file.id)}
+                          >
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete File
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-sm text-gray-600 dark:text-gray-400">No files in this knowledge base.</p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setViewingAgent(null)}
+            >
+              Close
+            </Button>
+            <Button 
+              className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black gap-2"
               onClick={() => {
-                console.log('Adding files to hub:', selectedHub, 'Files:', selectedFiles)
-                setSelectedFiles([])
-                setSelectedHub(null)
-                setAddFilesOpen(false)
+                setViewingAgent(null)
+                setSelectedAgent(viewingAgent)
+                setAddFilesOpen(true)
               }}
             >
+              <Plus className="h-4 w-4" />
               Add Files
             </Button>
           </div>
