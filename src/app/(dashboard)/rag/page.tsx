@@ -195,7 +195,7 @@ export default function RAGCollectionsPage() {
                           <ChevronRight className="h-4 w-4" />
                         )}
                       </button>
-                      <Folder className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <Folder className="h-5 w-5 text-primary dark:text-primary" />
                       <div className="flex-1">
                         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{hub.name}</h3>
                         <p className="text-xs text-gray-600 dark:text-gray-400">{hub.filesCount} files</p>
@@ -326,7 +326,7 @@ export default function RAGCollectionsPage() {
                 placeholder="Brief description of what this hub contains"
                 value={hubDescription}
                 onChange={(e) => setHubDescription(e.target.value)}
-                className="w-full min-h-[80px] px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                className="w-full min-h-[80px] px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary focus:border-primary dark:focus:border-primary resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
               />
             </div>
           </div>
@@ -415,7 +415,7 @@ export default function RAGCollectionsPage() {
                 placeholder="Enter your text content here"
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
-                className="w-full min-h-[200px] px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                className="w-full min-h-[200px] px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary focus:border-primary dark:focus:border-primary resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
               />
             </div>
           </div>
@@ -458,7 +458,7 @@ export default function RAGCollectionsPage() {
                     {knowledgeHubs.map((hub) => (
                       <SelectItem key={hub.id} value={hub.id}>
                         <div className="flex items-center gap-2">
-                          <Folder className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <Folder className="h-4 w-4 text-primary dark:text-primary" />
                           {hub.name}
                         </div>
                       </SelectItem>

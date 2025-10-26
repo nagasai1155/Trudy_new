@@ -599,7 +599,7 @@ export default function DashboardPage() {
               }`}
               onClick={() => setSelectedCard(index)}
             >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-2 sm:p-3">
                 <CardTitle className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-400 leading-tight">
                   {stat.title}
                 </CardTitle>
@@ -609,10 +609,10 @@ export default function DashboardPage() {
                   </div>
                 )}
               </CardHeader>
-              <CardContent className="p-3 sm:p-6 pt-0">
-                <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
+              <CardContent className="p-2 sm:p-3 pt-0">
+                <div className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">
                   {stat.value}
-                  {stat.unit && <span className="text-xs sm:text-sm font-normal text-gray-600 dark:text-gray-400 ml-1 block sm:inline">{stat.unit}</span>}
+                  {stat.unit && <span className="text-xs font-normal text-gray-600 dark:text-gray-400 ml-1 block sm:inline">{stat.unit}</span>}
                 </div>
               </CardContent>
             </Card>

@@ -18,7 +18,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Mobile/Tablet menu overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 dark:bg-black/80 xl:hidden"
+          className="fixed inset-0 z-[50] bg-black/50 dark:bg-black/80 xl:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -33,7 +33,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         )}
       >
         <main className="flex-1 overflow-hidden bg-white dark:bg-black">
-          <div className="h-full overflow-y-auto px-3 pb-4 pt-4 sm:px-6 sm:pb-6 lg:px-8 xl:pt-[72px] xl:pb-8">
+          <div className="h-full overflow-y-auto overflow-x-hidden px-3 pb-4 pt-2 pr-[52px] sm:px-6 sm:pb-6 sm:pr-6 lg:px-8 xl:pt-[72px] xl:pb-8 xl:pr-8">
             {children}
           </div>
         </main>

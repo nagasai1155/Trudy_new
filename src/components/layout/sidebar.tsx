@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -82,15 +83,15 @@ export function Sidebar() {
           variant="default"
           size="icon"
           onClick={() => setMobileMenuOpen(true)}
-          className="fixed top-4 right-4 z-50 xl:hidden shadow-lg bg-black dark:bg-white hover:bg-black/90 dark:hover:bg-gray-100"
+          className="fixed top-2 right-2 z-[100] xl:hidden shadow-lg bg-black dark:bg-white hover:bg-black/90 dark:hover:bg-gray-100 h-11 w-11 rounded-lg p-2.5"
         >
-          <Menu className="h-5 w-5 text-white dark:text-black" />
+          <Menu className="h-6 w-6 text-white dark:text-black" strokeWidth={2} />
         </Button>
       )}
 
       <aside
         className={cn(
-          'fixed top-0 z-40 h-screen sidebar-modern transition-all duration-300',
+          'fixed top-0 z-[60] h-screen sidebar-modern transition-all duration-300',
           // Mobile/Tablet (< 1280px): slide in from right
           'w-72 right-0',
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full',
@@ -109,12 +110,26 @@ export function Sidebar() {
               <>
                 <button 
                   onClick={() => handleNavigation('/dashboard')} 
-                  className="flex items-center space-x-3 group cursor-pointer"
+                  className="flex items-center space-x-3 group cursor-pointer relative"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black dark:bg-white shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-95">
-                    <Bot className="h-4 w-4 text-white dark:text-black" />
-                  </div>
-                  <span className="text-lg font-bold text-black dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">Truedy AI</span>
+                  {/* Light mode logo */}
+                  <Image
+                    src="/icons/image2.jpg"
+                    alt="Truedy AI Logo"
+                    width={120}
+                    height={32}
+                    className="h-8 w-auto object-contain transition-all duration-200 group-hover:opacity-80 group-active:scale-95 dark:hidden"
+                    priority
+                  />
+                  {/* Dark mode logo */}
+                  <Image
+                    src="/icons/image3.jpg"
+                    alt="Truedy AI Logo"
+                    width={120}
+                    height={32}
+                    className="h-8 w-auto object-contain transition-all duration-200 group-hover:opacity-80 group-active:scale-95 hidden dark:block"
+                    priority
+                  />
                 </button>
                 
                 {/* Close button for mobile */}
@@ -144,9 +159,14 @@ export function Sidebar() {
                 onClick={() => handleNavigation('/dashboard')} 
                 className="flex items-center justify-center group cursor-pointer"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black dark:bg-white shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-95">
-                  <Bot className="h-4 w-4 text-white dark:text-black" />
-                </div>
+                <Image
+                  src="/icons/image1.jpg"
+                  alt="Truedy AI"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 rounded-lg object-cover shadow-sm group-hover:shadow-md transition-all duration-200 group-active:scale-95"
+                  priority
+                />
               </button>
             )}
         </div>

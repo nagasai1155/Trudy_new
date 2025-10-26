@@ -76,8 +76,8 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
                   <Check className="h-3 w-3 text-white dark:text-black" strokeWidth={3} />
                 </div>
               )}
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950 mb-3">
-                <Headphones className="h-5 w-5 text-blue-700 dark:text-blue-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20 mb-3">
+                <Headphones className="h-5 w-5 text-primary dark:text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Personal Assistant</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 text-left mb-4">
@@ -86,8 +86,8 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
               <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg w-full">
                 <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Example conversation:</p>
                 <div className="space-y-2">
-                  <div className="bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-300 p-4 rounded-lg flex items-start space-x-3">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-semibold">
+                  <div className="bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary p-4 rounded-lg flex items-start space-x-3">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary text-xs font-semibold">
                       You
                     </div>
                     <p className="text-sm">Could you see whether I have any urgent outstanding emails?</p>

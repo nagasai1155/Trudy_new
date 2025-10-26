@@ -238,8 +238,8 @@ export default function VoiceCloningPage() {
         </div>
 
         {/* Search and Filters */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative flex-1 max-w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
           <Input
               placeholder={
@@ -252,45 +252,48 @@ export default function VoiceCloningPage() {
             className="pl-10"
           />
         </div>
-          {activeTab === 'explore' && (
-            <>
-              <Button variant="ghost" className="gap-2">
-                <Plus className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" className="gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            {activeTab === 'explore' && (
+              <>
+                <Button variant="ghost" className="gap-2 hidden sm:flex">
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" className="gap-2 hidden md:flex">
+                  <ArrowUpDown className="h-4 w-4" />
+                  <span className="hidden lg:inline">Trending</span>
+                </Button>
+              </>
+            )}
+            {activeTab === 'my-voices' && (
+              <Button variant="ghost" className="gap-2 hidden sm:flex">
                 <ArrowUpDown className="h-4 w-4" />
-                Trending
+                <span className="hidden lg:inline">Latest</span>
               </Button>
-            </>
-          )}
-          {activeTab === 'my-voices' && (
-            <Button variant="ghost" className="gap-2">
-              <ArrowUpDown className="h-4 w-4" />
-              Latest
-            </Button>
-          )}
-          {activeTab === 'explore' && (
+            )}
+            {activeTab === 'explore' && (
+              <Button 
+                variant="ghost" 
+                className="gap-2 flex-shrink-0"
+                onClick={() => setFiltersDialogOpen(true)}
+              >
+                <Filter className="h-4 w-4" />
+                <span className="hidden sm:inline">Filters</span>
+                {activeTab === 'explore' && (
+                  <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                    {filterCount}
+                  </Badge>
+                )}
+              </Button>
+            )}
             <Button 
-              variant="ghost" 
-              className="gap-2"
-              onClick={() => setFiltersDialogOpen(true)}
+              onClick={() => setCreateVoiceDialogOpen(true)}
+              size="sm"
+              className="bg-primary hover:bg-primary/90 text-white gap-2 flex-shrink-0"
             >
-              <Filter className="h-4 w-4" />
-              Filters
-              {activeTab === 'explore' && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                  {filterCount}
-                </Badge>
-              )}
+              <Plus className="h-4 w-4" />
+              Add Voice
             </Button>
-          )}
-          <Button 
-            onClick={() => setCreateVoiceDialogOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
-          >
-            <Users className="h-4 w-4" />
-            Create or Clone a Voice
-          </Button>
+          </div>
         </div>
 
         {/* Explore Tab Content */}
@@ -732,7 +735,7 @@ export default function VoiceCloningPage() {
                   placeholder="Type your feedback here..."
                   value={feedbackText}
                   onChange={(e) => setFeedbackText(e.target.value)}
-                  className="w-full min-h-[120px] px-4 py-3 pr-12 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                  className="w-full min-h-[120px] px-4 py-3 pr-12 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary focus:border-primary dark:focus:border-primary resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
                 />
                 <button 
                   className="absolute bottom-3 right-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-full transition-colors"

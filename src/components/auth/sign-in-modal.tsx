@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   Dialog,
   DialogContent,
@@ -37,9 +37,14 @@ export function SignInModal({ open, onOpenChange }: SignInModalProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
-              <Bot className="h-7 w-7 text-primary-foreground" />
-            </div>
+            <Image
+              src="/icons/image1.jpg"
+              alt="Truedy AI"
+              width={64}
+              height={64}
+              className="h-16 w-16 rounded-lg object-cover"
+              priority
+            />
           </div>
           <DialogTitle className="text-center text-2xl">Welcome to Truedy AI</DialogTitle>
           <DialogDescription className="text-center">

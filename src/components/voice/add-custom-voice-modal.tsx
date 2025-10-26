@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { X, Upload, Cloud } from 'lucide-react'
+import { Upload, Cloud } from 'lucide-react'
 
 interface AddCustomVoiceModalProps {
   isOpen: boolean
@@ -35,19 +35,9 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg bg-white dark:bg-black border-gray-200 dark:border-gray-900">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-              Add Custom Voice
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+            Add Custom Voice
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -115,7 +105,7 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
                   onClick={() => setSelectedProvider('elevenlabs')}
                   className={`p-4 border-2 rounded-lg text-left transition-colors ${
                     selectedProvider === 'elevenlabs'
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+                      ? 'border-primary bg-primary/10 dark:bg-primary/20'
                       : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                   }`}
                 >
@@ -134,12 +124,12 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
                   onClick={() => setSelectedProvider('google-cartesia')}
                   className={`p-4 border-2 rounded-lg text-left transition-colors ${
                     selectedProvider === 'google-cartesia'
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+                      ? 'border-primary bg-primary/10 dark:bg-primary/20'
                       : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                       <span className="text-white text-xs font-bold">G</span>
                     </div>
                     <div>
@@ -153,7 +143,7 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
                   onClick={() => setSelectedProvider('lmnt')}
                   className={`p-4 border-2 rounded-lg text-left transition-colors ${
                     selectedProvider === 'lmnt'
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+                      ? 'border-primary bg-primary/10 dark:bg-primary/20'
                       : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                   }`}
                 >
@@ -178,7 +168,7 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
               id="agreement"
               checked={hasAgreed}
               onChange={(e) => setHasAgreed(e.target.checked)}
-              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-700 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="mt-1 h-4 w-4 text-primary border-gray-300 dark:border-gray-700 rounded focus:ring-primary dark:focus:ring-primary"
             />
             <label htmlFor="agreement" className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
               I hereby confirm that I have all necessary rights or consents to upload and clone these voice samples and that I will not use the platform-generated content for any illegal, fraudulent, or harmful purpose.

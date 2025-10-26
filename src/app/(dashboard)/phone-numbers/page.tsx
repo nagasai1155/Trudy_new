@@ -176,8 +176,8 @@ export default function PhoneNumbersPage() {
               </div>
 
               {/* Info Banner */}
-              <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900 rounded-lg">
-                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 p-4 bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 rounded-lg">
+                <Info className="h-5 w-5 text-primary dark:text-primary flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm text-gray-700 dark:text-gray-300">
                     A new phone number will be provisioned for you. Monthly charges may apply.

@@ -211,7 +211,7 @@ export default function ToolsPage() {
               <textarea
                 value={toolDescription}
                 onChange={(e) => setToolDescription(e.target.value)}
-                className="w-full min-h-[80px] px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                className="w-full min-h-[80px] px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary focus:border-primary dark:focus:border-primary resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
               />
             </div>
 
@@ -273,7 +273,7 @@ export default function ToolsPage() {
                 id="disable-interruptions"
                 checked={disableInterruptions}
                 onChange={(e) => setDisableInterruptions(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary focus:ring-primary dark:focus:ring-primary"
               />
               <label htmlFor="disable-interruptions" className="text-sm text-gray-900 dark:text-white">
                 Disable Interruptions
@@ -347,7 +347,7 @@ export default function ToolsPage() {
               <textarea
                 value={clientToolDescription}
                 onChange={(e) => setClientToolDescription(e.target.value)}
-                className="w-full min-h-[80px] px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                className="w-full min-h-[80px] px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-black border border-gray-300 dark:border-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary focus:border-primary dark:focus:border-primary resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
               />
             </div>
 
@@ -359,7 +359,7 @@ export default function ToolsPage() {
                   id="wait-for-response"
                   checked={waitForResponse}
                   onChange={(e) => setWaitForResponse(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary focus:ring-primary dark:focus:ring-primary"
                 />
                 <div className="flex-1">
                   <label htmlFor="wait-for-response" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
@@ -380,7 +380,7 @@ export default function ToolsPage() {
                   id="client-disable-interruptions"
                   checked={clientDisableInterruptions}
                   onChange={(e) => setClientDisableInterruptions(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-primary focus:ring-primary dark:focus:ring-primary"
                 />
                 <div className="flex-1">
                   <label htmlFor="client-disable-interruptions" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">

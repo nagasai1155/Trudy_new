@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SignInModal } from '@/components/auth/sign-in-modal'
@@ -30,10 +31,24 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-black/95 backdrop-blur shadow-sm">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black dark:bg-white shadow-sm">
-              <Bot className="h-5 w-5 text-white dark:text-black" />
-            </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Truedy AI</span>
+            {/* Light mode logo */}
+            <Image
+              src="/icons/image2.jpg"
+              alt="Truedy AI"
+              width={140}
+              height={36}
+              className="h-9 w-auto object-contain dark:hidden"
+              priority
+            />
+            {/* Dark mode logo */}
+            <Image
+              src="/icons/image3.jpg"
+              alt="Truedy AI"
+              width={140}
+              height={36}
+              className="h-9 w-auto object-contain hidden dark:block"
+              priority
+            />
           </div>
           <div className="flex items-center space-x-4">
             <ThemeToggle />
@@ -123,8 +138,8 @@ export default function LandingPage() {
           {/* Feature 1 */}
           <Card className="relative overflow-hidden">
             <CardHeader>
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10 dark:bg-blue-500/20">
-                <Bot className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20">
+                <Bot className="h-6 w-6 text-primary dark:text-primary" />
               </div>
               <CardTitle className="text-gray-900 dark:text-gray-100">AI Agent Builder</CardTitle>
               <CardDescription className="text-gray-600 dark:text-gray-400">
@@ -214,7 +229,7 @@ export default function LandingPage() {
         <div className="mx-auto grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader>
-              <Phone className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <Phone className="h-8 w-8 text-primary dark:text-primary" />
               <CardTitle className="text-gray-900 dark:text-gray-100">Sales Outreach</CardTitle>
             </CardHeader>
             <CardContent>
@@ -283,10 +298,22 @@ export default function LandingPage() {
       <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black py-12">
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black dark:bg-white shadow-sm">
-              <Bot className="h-5 w-5 text-white dark:text-black" />
-            </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">Truedy AI</span>
+            {/* Light mode logo */}
+            <Image
+              src="/icons/image2.jpg"
+              alt="Truedy AI"
+              width={120}
+              height={32}
+              className="h-8 w-auto object-contain dark:hidden"
+            />
+            {/* Dark mode logo */}
+            <Image
+              src="/icons/image3.jpg"
+              alt="Truedy AI"
+              width={120}
+              height={32}
+              className="h-8 w-auto object-contain hidden dark:block"
+            />
           </div>
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             © 2024 Truedy AI Platform. All rights reserved.

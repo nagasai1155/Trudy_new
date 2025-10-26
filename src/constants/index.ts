@@ -113,7 +113,7 @@ export const DEFAULT_CAMPAIGN_SETTINGS = {
 
 // Chart Colors
 export const CHART_COLORS = {
-  primary: '#3b82f6',
+  primary: '#007FFF',
   secondary: '#8b5cf6',
   success: '#10b981',
   warning: '#f59e0b',

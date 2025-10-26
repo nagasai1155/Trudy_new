@@ -14,6 +14,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Truedy AI Platform - AI Voice Agent Management',
   description: 'Build, manage, and deploy AI voice agents at scale',
+  icons: {
+    icon: [
+      { url: '/icons/image1.jpg', sizes: '32x32', type: 'image/jpeg' },
+      { url: '/icons/image1.jpg', sizes: '16x16', type: 'image/jpeg' },
+    ],
+    apple: [
+      { url: '/icons/image1.jpg', sizes: '180x180', type: 'image/jpeg' },
+    ],
+  },
 }
 
 export default function RootLayout({

@@ -139,13 +139,13 @@
   
   /* Flipkart-style links */
   a {
-    @apply text-blue-600 dark:text-blue-400;
+    @apply text-primary dark:text-primary;
     text-decoration: none;
     transition: color 0.2s ease;
   }
   
   a:hover {
-    @apply text-blue-700 dark:text-blue-300;
+    @apply text-primary/80 dark:text-primary/80;
   }
   
   /* Button text sizing */
@@ -473,8 +473,8 @@ button, a, input, textarea, select, [role="button"] {
 
 .smooth-focus:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary));
 }
 
 /* Enhanced dropdown animations */
@@ -711,11 +711,11 @@ button, a, input, textarea, select, [role="button"] {
   }
   
   .text-link-flipkart {
-    @apply text-blue-600 dark:text-blue-400;
+    @apply text-primary dark:text-primary;
   }
   
   .text-link-flipkart:hover {
-    @apply text-blue-700 dark:text-blue-300;
+    @apply text-primary/80 dark:text-primary/80;
   }
   
   .text-success-flipkart {

@@ -226,7 +226,7 @@ const mockSearchData: SearchResult[] = [
 
 // --- SEARCH CATEGORIES ---
 const searchCategories = {
-  agent: { label: 'Agents', color: 'text-blue-600 dark:text-blue-400' },
+  agent: { label: 'Agents', color: 'text-primary dark:text-primary' },
   campaign: { label: 'Campaigns', color: 'text-purple-600 dark:text-purple-400' },
   contact: { label: 'Contacts', color: 'text-green-600 dark:text-green-400' },
   call: { label: 'Calls', color: 'text-orange-600 dark:text-orange-400' },

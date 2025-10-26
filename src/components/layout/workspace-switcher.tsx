@@ -42,7 +42,7 @@ export function WorkspaceSwitcher() {
             >
               <Check
                 className={cn(
-                  'mr-2 h-4 w-4 text-blue-600 dark:text-blue-400',
+                  'mr-2 h-4 w-4 text-primary dark:text-primary',
                   currentWorkspace?.id === workspace.id
                     ? 'opacity-100'
                     : 'opacity-0'

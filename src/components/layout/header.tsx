@@ -119,7 +119,7 @@ export function Header() {
               <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
                 <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                   <AvatarImage src={user?.avatar} alt={user?.name || 'User'} />
-                  <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-semibold text-xs sm:text-sm">
+                  <AvatarFallback className="bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary font-semibold text-xs sm:text-sm">
                     {user ? getInitials(user.name) : <User className="h-3 w-3 sm:h-4 sm:w-4" />}
                   </AvatarFallback>
                 </Avatar>

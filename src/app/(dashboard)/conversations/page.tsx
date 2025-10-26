@@ -69,9 +69,9 @@ export default function ConversationsPage() {
           onClick={() => setSelectedDate(date)}
           className={`h-10 w-10 text-center text-sm rounded ${
             isSelected
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'bg-primary text-white hover:bg-primary/90'
               : isToday
-              ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+              ? 'bg-primary/10 text-primary hover:bg-primary/20'
               : 'text-gray-900 hover:bg-gray-100'
           }`}
         >
@@ -228,7 +228,7 @@ export default function ConversationsPage() {
                 }}
                 className={`w-full px-4 py-2.5 text-left text-sm rounded-lg transition-colors ${
                   selectedEvaluation === 'Success'
-                    ? 'bg-blue-50 text-blue-900 font-medium'
+                    ? 'bg-primary/10 text-primary font-medium'
                     : 'text-gray-900 hover:bg-gray-100'
                 }`}
               >
@@ -241,7 +241,7 @@ export default function ConversationsPage() {
                 }}
                 className={`w-full px-4 py-2.5 text-left text-sm rounded-lg transition-colors ${
                   selectedEvaluation === 'Failure'
-                    ? 'bg-blue-50 text-blue-900 font-medium'
+                    ? 'bg-primary/10 text-primary font-medium'
                     : 'text-gray-900 hover:bg-gray-100'
                 }`}
               >
@@ -254,7 +254,7 @@ export default function ConversationsPage() {
                 }}
                 className={`w-full px-4 py-2.5 text-left text-sm rounded-lg transition-colors ${
                   selectedEvaluation === 'Unknown'
-                    ? 'bg-blue-50 text-blue-900 font-medium'
+                    ? 'bg-primary/10 text-primary font-medium'
                     : 'text-gray-900 hover:bg-gray-100'
                 }`}
               >

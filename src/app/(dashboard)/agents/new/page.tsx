@@ -269,7 +269,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                           </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 The system prompt is used to determine the persona of the agent and the context of the conversation.{' '}
-                <a href="#" className="text-blue-600 hover:underline">Learn more</a>
+                <a href="#" className="text-primary hover:underline">Learn more</a>
               </p>
                               <Input
                 placeholder="Describe the desired agent (e.g., a customer support agent for ElevenLabs)"
@@ -307,7 +307,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
               <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Dynamic Variables</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Variables like <code className="bg-gray-200 px-1 py-0.5 rounded text-xs">{`{{user_name}}`}</code> in your prompts and first message will be replaced with actual values when the conversation starts. These variables can also be updated by agent tools.{' '}
-                <a href="#" className="text-blue-600 hover:underline">Learn more</a>
+                <a href="#" className="text-primary hover:underline">Learn more</a>
               </p>
                           </div>
 
@@ -545,13 +545,13 @@ Your responses should be thoughtful, concise, and conversational—typically thr
             {/* Voice Selection */}
             <div className="bg-white dark:bg-black rounded-lg p-6 border border-gray-200 dark:border-gray-900">
               <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Voice</h3>
-              <p className="text-sm text-blue-600 mb-4">
+              <p className="text-sm text-primary mb-4">
                 Select the ElevenLabs voice you want to use for the agent.
               </p>
               <Select value={selectedVoice} onValueChange={setSelectedVoice}>
                 <SelectTrigger className="w-full max-w-xs bg-white dark:bg-black">
                   <div className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd"/>
                     </svg>
@@ -574,7 +574,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   <span className="px-2 py-0.5 text-xs font-medium bg-black text-white rounded">New</span>
                 </div>
               </div>
-              <p className="text-sm text-blue-600 mb-4">
+              <p className="text-sm text-primary mb-4">
                 Specify additional ElevenLabs voices that the agent can switch to on demand. Useful for multi-party conversations or creating dynamic language tutoring.
               </p>
               <Button variant="outline" className="text-gray-700">
@@ -585,7 +585,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
             {/* Use Flash */}
             <div className="bg-white dark:bg-black rounded-lg p-6 border border-gray-200 dark:border-gray-900">
               <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Use Flash</h3>
-              <p className="text-sm text-blue-600 mb-4">
+              <p className="text-sm text-primary mb-4">
                 Flash is our new recommended model for low latency use cases. For more competitive use, Turbo outperforms Flash. <a href="#" className="text-blue-600 hover:underline">Read more here</a>. Consider using Turbo for better quality at higher latency. We also recommend Turbo v2.5 models with Turbo agents for more competitive use.
               </p>
               <p className="text-xs text-gray-600 mb-4">
