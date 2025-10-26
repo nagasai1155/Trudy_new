@@ -37,17 +37,7 @@ const mockAgents = [
     agentName: 'Alexis',
     avatar: '👩',
     icon: Headphones,
-    knowledgeBase: {
-      filesCount: 12,
-      sources: ['Product Docs', 'FAQ', 'Support Scripts'],
-      files: [
-        { id: 'f1', name: 'Product Documentation.pdf', type: 'pdf', size: 3.2, uploadedAt: '2024-02-10' },
-        { id: 'f2', name: 'FAQ Database.docx', type: 'docx', size: 1.5, uploadedAt: '2024-02-12' },
-        { id: 'f3', name: 'Support Scripts.txt', type: 'txt', size: 0.8, uploadedAt: '2024-02-15' },
-        { id: 'f4', name: 'Troubleshooting Guide.pdf', type: 'pdf', size: 2.1, uploadedAt: '2024-02-18' },
-        { id: 'f5', name: 'Customer Service Best Practices.docx', type: 'docx', size: 1.2, uploadedAt: '2024-02-20' },
-      ]
-    }
+    knowledgeBase: null, // No knowledge base yet
   },
   {
     id: '2',
@@ -65,15 +55,7 @@ const mockAgents = [
     agentName: 'Harper',
     avatar: '💼',
     icon: TrendingUp,
-    knowledgeBase: {
-      filesCount: 8,
-      sources: ['Product Catalog', 'Pricing Guide'],
-      files: [
-        { id: 'f6', name: 'Product Catalog 2024.pdf', type: 'pdf', size: 4.5, uploadedAt: '2024-02-08' },
-        { id: 'f7', name: 'Pricing Guide.xlsx', type: 'xlsx', size: 0.9, uploadedAt: '2024-02-10' },
-        { id: 'f8', name: 'Sales Playbook.pdf', type: 'pdf', size: 2.8, uploadedAt: '2024-02-14' },
-      ]
-    }
+    knowledgeBase: null, // No knowledge base yet
   },
   {
     id: '4',
@@ -82,7 +64,7 @@ const mockAgents = [
     agentName: 'Callum',
     avatar: '🧙',
     icon: Wand2,
-    knowledgeBase: null,
+    knowledgeBase: null, // No knowledge base yet
   },
 ]
 

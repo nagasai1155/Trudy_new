@@ -72,6 +72,7 @@ export default function SettingsPage() {
                   <div className="relative group">
                     <div className="h-24 w-24 rounded-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden border-2 border-gray-200 dark:border-gray-800">
                       {profileImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
                       ) : (
                         <User className="h-12 w-12 text-gray-400 dark:text-gray-500" />

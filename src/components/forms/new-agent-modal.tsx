@@ -79,7 +79,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
               Complete your agent
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Choose a name that reflects your agent's purpose
+              Choose a name that reflects your agent&apos;s purpose
             </p>
 
             {/* Agent Name Input */}
