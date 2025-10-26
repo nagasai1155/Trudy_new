@@ -28,8 +28,31 @@ import { NewSourcePanel } from '@/components/rag/new-source-panel'
 import { Globe, FileText, Type, Search, Plus, Database, Folder, FolderPlus, ChevronRight, ChevronDown, MoreVertical, Edit, Trash, Headphones, Wind, TrendingUp, Wand2, BookOpen, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
+// Local types for RAG page
+interface AgentKnowledgeBase {
+  filesCount: number
+  sources: string[]
+  files?: Array<{
+    id: string
+    name: string
+    type: string
+    size: number
+    uploadedAt: string
+  }>
+}
+
+interface AgentWithKnowledgeBase {
+  id: string
+  name: string
+  description: string
+  agentName: string
+  avatar: string
+  icon: any
+  knowledgeBase: AgentKnowledgeBase | null
+}
+
 // Mock agents data (this would come from useAgents hook in production)
-const mockAgents = [
+const mockAgents: AgentWithKnowledgeBase[] = [
   {
     id: '1',
     name: 'Support agent',
@@ -111,7 +134,7 @@ export default function RAGCollectionsPage() {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
   const [viewingAgent, setViewingAgent] = useState<string | null>(null)
   const [knowledgeHubs, setKnowledgeHubs] = useState(mockKnowledgeHubs)
-  const [agents, setAgents] = useState(mockAgents)
+  const [agents, setAgents] = useState<AgentWithKnowledgeBase[]>(mockAgents)
   const [searchQuery, setSearchQuery] = useState('')
   
   const filteredAgents = agents.filter(agent =>
