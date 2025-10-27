@@ -156,7 +156,7 @@ export default function DashboardPage() {
           key={day}
           onClick={() => handleDateSelect(date)}
           className={`h-8 flex items-center justify-center text-sm transition-colors rounded
-            ${isSelected ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-300'}
+            ${isSelected ? 'bg-primary text-white' : 'hover:bg-primary/10 text-gray-900 dark:text-gray-300'}
             ${isStart || isEnd ? 'font-semibold' : ''}
           `}
         >
@@ -212,8 +212,8 @@ export default function DashboardPage() {
         {/* Top Status Bar */}
         <div className="flex items-center justify-start flex-wrap gap-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full bg-white dark:bg-black whitespace-nowrap">
-              <span className="flex h-2 w-2 rounded-full bg-black dark:bg-white"></span>
+            <div className="flex items-center gap-2 px-4 py-2 border border-primary/30 rounded-full bg-white dark:bg-black whitespace-nowrap">
+              <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
               <span className="text-sm text-gray-700 dark:text-gray-300">Active calls: <strong className="text-gray-900 dark:text-white">0</strong></span>
             </div>
             <Button 
@@ -222,7 +222,7 @@ export default function DashboardPage() {
               className="gap-2 rounded-full whitespace-nowrap"
               onClick={() => setShowNewFeatures(true)}
             >
-              <span className="bg-black dark:bg-white text-white dark:text-black text-xs px-1.5 py-0.5 rounded">New</span>
+              <span className="bg-primary text-white text-xs px-1.5 py-0.5 rounded">New</span>
               <span>View new features</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
             <Button 
               variant="default"
               size="sm" 
-              className="gap-2 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+              className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
               onClick={() => router.push('/agents')}
             >
               <Bot className="h-4 w-4" />
@@ -257,13 +257,13 @@ export default function DashboardPage() {
                   <input
                     type="text"
                     placeholder="Search agents..."
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-800 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-800 bg-white dark:bg-black text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-900" />
                 <DropdownMenuItem className="flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-900">
                   <span className="text-gray-900 dark:text-white">All agents</span>
-                  <Check className="h-4 w-4 text-gray-900 dark:text-white" />
+                  <Check className="h-4 w-4 text-primary" />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-900" />
                 <div className="px-2 py-6 text-center">
@@ -290,7 +290,7 @@ export default function DashboardPage() {
                   className="flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-900 dark:text-white"
                 >
                   <span>Last month</span>
-                  {selectedRange === 'Last month' && <Check className="h-4 w-4" />}
+                  {selectedRange === 'Last month' && <Check className="h-4 w-4 text-primary" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setSelectedRange('Last 3 months')} className="hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-900 dark:text-white">
                   Last 3 months
@@ -413,7 +413,7 @@ export default function DashboardPage() {
                 Cancel
               </Button>
               <Button
-                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="bg-primary hover:bg-primary/90 text-white"
                 onClick={() => {
                   console.log('Adding chart:', { chartType, criteriaId, chartName })
                   setShowAddChart(false)
@@ -438,9 +438,9 @@ export default function DashboardPage() {
             
             <div className="space-y-6 py-4">
               {/* Agent Testing */}
-              <div className="flex items-start gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors cursor-pointer group">
+              <div className="flex items-start gap-4 p-4 hover:bg-primary/5 rounded-lg transition-colors cursor-pointer group border border-transparent hover:border-primary/30">
                 <div className="flex-shrink-0 mt-1">
-                  <FlaskConical className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                  <FlaskConical className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -449,20 +449,20 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     Guarantee maximum reliability with comprehensive test suites. Create tests from existing or hypothetical conversations and automatically verify agent responses or tool calls to iterate with confidence.
                   </p>
-                  <button className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-gray-700 dark:border-gray-300">
-                      <Play className="h-2.5 w-2.5 fill-gray-700 dark:fill-gray-300" />
+                  <button className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
+                    <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-primary">
+                      <Play className="h-2.5 w-2.5 fill-primary" />
                     </div>
                     Watch video
                   </button>
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1 group-hover:text-primary transition-colors" />
               </div>
 
               {/* Agent Workflows */}
-              <div className="flex items-start gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors cursor-pointer group">
+              <div className="flex items-start gap-4 p-4 hover:bg-primary/5 rounded-lg transition-colors cursor-pointer group border border-transparent hover:border-primary/30">
                 <div className="flex-shrink-0 mt-1">
-                  <Workflow className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                  <Workflow className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -471,20 +471,20 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     Visually craft complex logic flows for your conversational agents for fine-grained control over your agent&apos;s behavior.
                   </p>
-                  <button className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-gray-700 dark:border-gray-300">
-                      <Play className="h-2.5 w-2.5 fill-gray-700 dark:fill-gray-300" />
+                  <button className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
+                    <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-primary">
+                      <Play className="h-2.5 w-2.5 fill-primary" />
                     </div>
                     Watch video
                   </button>
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1 group-hover:text-primary transition-colors" />
               </div>
 
               {/* ElevenLabs Hosted LLMs */}
-              <div className="flex items-start gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg transition-colors cursor-pointer group">
+              <div className="flex items-start gap-4 p-4 hover:bg-primary/5 rounded-lg transition-colors cursor-pointer group border border-transparent hover:border-primary/30">
                 <div className="flex-shrink-0 mt-1">
-                  <Cpu className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                  <Cpu className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -493,14 +493,14 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                     Use models like GLM 4.5 Air (recommended), Qwen3-30B-A3B or GPT-OSS hosted by ElevenLabs for ultra-low latency
                   </p>
-                  <button className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-gray-700 dark:border-gray-300">
-                      <Play className="h-2.5 w-2.5 fill-gray-700 dark:fill-gray-300" />
+                  <button className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
+                    <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-primary">
+                      <Play className="h-2.5 w-2.5 fill-primary" />
                   </div>
                     Watch video
                   </button>
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1 group-hover:text-primary transition-colors" />
               </div>
             </div>
           </DialogContent>
@@ -563,7 +563,7 @@ export default function DashboardPage() {
                     setStartDate(lastMonth)
                     setEndDate(today)
                   }}
-                  className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 px-3 py-2 rounded"
+                  className="text-sm text-primary hover:bg-primary/10 hover:text-primary/90 px-3 py-2 rounded font-medium transition-colors"
                 >
                   Last month
                 </button>
@@ -579,7 +579,7 @@ export default function DashboardPage() {
               </Button>
               <Button
                 onClick={applyDateRange}
-                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
                 Apply
               </Button>
@@ -594,8 +594,8 @@ export default function DashboardPage() {
               key={stat.title} 
               className={`cursor-pointer transition-all ${
                 selectedCard === index 
-                  ? 'border-2 border-gray-900 dark:border-white shadow-lg' 
-                  : 'border border-gray-200 dark:border-gray-900 hover:shadow-md'
+                  ? 'border-2 border-primary shadow-lg shadow-primary/20' 
+                  : 'border border-gray-200 dark:border-gray-900 hover:shadow-md hover:border-primary/40'
               }`}
               onClick={() => setSelectedCard(index)}
             >
@@ -604,7 +604,7 @@ export default function DashboardPage() {
                   {stat.title}
                 </CardTitle>
                 {selectedCard === index && (
-                  <div className="flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-green-500 flex-shrink-0">
+                  <div className="flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-primary flex-shrink-0">
                     <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" strokeWidth={3} />
                   </div>
                 )}
@@ -635,7 +635,7 @@ export default function DashboardPage() {
         {/* Overall Success Rate */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-400 dark:border-gray-500"></div>
+            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary bg-primary/10"></div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Overall success rate</h2>
           </div>
           <Card className="border-gray-200 dark:border-gray-900">

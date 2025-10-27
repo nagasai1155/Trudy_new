@@ -135,14 +135,14 @@ export default function AgentsPage() {
               <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                   variant="outline"
-                  className="border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-900 dark:text-white gap-2 flex-1 sm:flex-initial"
+                  className="border-gray-300 dark:border-gray-700 hover:bg-primary/5 hover:border-primary/40 text-gray-900 dark:text-white gap-2 flex-1 sm:flex-initial transition-all"
                   onClick={() => router.push('/agents/playground')}
                 >
                   <Play className="h-4 w-4" />
                   Playground
                 </Button>
                 <Button
-                  className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black gap-2 flex-1 sm:flex-initial"
+                  className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2 flex-1 sm:flex-initial"
                   onClick={() => setShowNewAgentModal(true)}
                 >
                   <Plus className="h-4 w-4" />
@@ -159,14 +159,14 @@ export default function AgentsPage() {
                 placeholder="Search agents..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border-gray-300 dark:border-gray-800 rounded-lg"
+                className="pl-10 pr-4 py-2 w-full border-gray-300 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
             {/* Archived Link */}
             <div className="mb-4">
-              <button className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white flex items-center gap-1">
-                <Plus className="h-4 w-4" />
+              <button className="text-sm text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors">
+                <Archive className="h-4 w-4" />
                 Archived
               </button>
             </div>
@@ -177,9 +177,9 @@ export default function AgentsPage() {
               <div className="grid grid-cols-[2fr,1.5fr,1.5fr,auto] gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-900">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</div>
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Created by</div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 cursor-pointer hover:text-primary transition-colors">
                   Created at
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4 text-primary" />
                 </div>
                 <div className="w-8"></div>
               </div>
@@ -189,7 +189,7 @@ export default function AgentsPage() {
                 {filteredAgents.map((agent) => (
                   <div
                     key={agent.id}
-                    className="grid grid-cols-[2fr,1.5fr,1.5fr,auto] gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors"
+                    className="grid grid-cols-[2fr,1.5fr,1.5fr,auto] gap-4 px-6 py-4 hover:bg-primary/5 cursor-pointer transition-colors border-l-2 border-transparent hover:border-primary"
                     onClick={() => router.push('/agents/new')}
                   >
                     <div className="text-sm font-medium text-gray-900 dark:text-white">{agent.name}</div>
@@ -210,12 +210,12 @@ export default function AgentsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-                          <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                            <ExternalLink className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                            <ExternalLink className="mr-2 h-4 w-4 text-primary" />
                             SDK docs
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                            <ExternalLink className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                            <ExternalLink className="mr-2 h-4 w-4 text-primary" />
                             Conversation history
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-900" />
@@ -227,7 +227,7 @@ export default function AgentsPage() {
                             <Archive className="mr-2 h-4 w-4" />
                             Archive agent
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-900">
+                          <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete agent
                           </DropdownMenuItem>
@@ -244,7 +244,7 @@ export default function AgentsPage() {
               {filteredAgents.map((agent) => (
                 <div
                   key={agent.id}
-                  className="border border-gray-200 dark:border-gray-900 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors"
+                  className="border border-gray-200 dark:border-gray-900 rounded-lg p-4 hover:bg-primary/5 hover:border-primary/40 cursor-pointer transition-all"
                   onClick={() => router.push('/agents/new')}
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -266,12 +266,12 @@ export default function AgentsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-                        <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                          <ExternalLink className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                          <ExternalLink className="mr-2 h-4 w-4 text-primary" />
                           SDK docs
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                          <ExternalLink className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                          <ExternalLink className="mr-2 h-4 w-4 text-primary" />
                           Conversation history
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-900" />
@@ -283,7 +283,7 @@ export default function AgentsPage() {
                           <Archive className="mr-2 h-4 w-4" />
                           Archive agent
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-900">
+                        <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete agent
                         </DropdownMenuItem>

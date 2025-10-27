@@ -123,7 +123,7 @@ export default function CallsPage() {
               placeholder="Search by name or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -162,7 +162,7 @@ export default function CallsPage() {
                   {filteredCalls.map((call) => (
                     <tr 
                       key={call.id} 
-                      className="hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
+                      className="hover:bg-primary/5 cursor-pointer transition-colors"
                       onClick={() => handleCallClick(call)}
                     >
                       <td className="px-4 lg:px-6 py-4">
@@ -226,7 +226,7 @@ export default function CallsPage() {
           {filteredCalls.map((call) => (
             <Card 
               key={call.id} 
-              className="cursor-pointer"
+              className="cursor-pointer hover:border-primary/40 hover:shadow-lg transition-all"
               onClick={() => handleCallClick(call)}
             >
               <CardContent className="p-4">
@@ -261,7 +261,7 @@ export default function CallsPage() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex-1"
+                        className="flex-1 hover:bg-primary/5 hover:border-primary/40 transition-all"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleCallClick(call)
@@ -273,7 +273,7 @@ export default function CallsPage() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex-1"
+                        className="flex-1 hover:bg-primary/5 hover:border-primary/40 transition-all"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Download className="h-3 w-3 mr-1" />

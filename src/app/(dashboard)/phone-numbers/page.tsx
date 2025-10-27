@@ -62,7 +62,7 @@ export default function PhoneNumbersPage() {
           <div className="flex gap-3">
             <Button 
               variant="outline"
-              className="gap-2"
+              className="gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all"
               onClick={() => setAddNumberDialogOpen(true)}
             >
               <Plus className="h-4 w-4" />
@@ -70,16 +70,18 @@ export default function PhoneNumbersPage() {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black gap-2">
+                <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2">
                   <Plus className="h-4 w-4" />
                   Import number
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-                <DropdownMenuItem onClick={() => setTwilioDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
+                <DropdownMenuItem onClick={() => setTwilioDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                  <Phone className="h-4 w-4 mr-2 text-primary" />
                   From Twilio
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSipTrunkDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
+                <DropdownMenuItem onClick={() => setSipTrunkDialogOpen(true)} className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                  <Server className="h-4 w-4 mr-2 text-primary" />
                   From SIP Trunk
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -88,10 +90,10 @@ export default function PhoneNumbersPage() {
         </div>
 
         {/* Empty State */}
-        <div className="border border-gray-200 dark:border-gray-900 rounded-lg bg-white dark:bg-black">
+        <div className="border border-gray-200 dark:border-gray-900 rounded-lg bg-white dark:bg-black hover:border-primary/40 hover:shadow-lg transition-all">
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900 mb-4">
-              <Phone className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+              <Phone className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               No phone numbers
@@ -107,8 +109,8 @@ export default function PhoneNumbersPage() {
           <DialogContent className="max-w-lg bg-white dark:bg-black border-gray-200 dark:border-gray-900">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg text-gray-900 dark:text-white">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-900">
-                  <Phone className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Phone className="h-4 w-4 text-primary" />
                 </div>
                 Add new phone number
               </DialogTitle>
@@ -122,7 +124,7 @@ export default function PhoneNumbersPage() {
                   placeholder="Easy to identify name for this number"
                   value={newNumberLabel}
                   onChange={(e) => setNewNumberLabel(e.target.value)}
-                  className="w-full"
+                  className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
 
@@ -130,7 +132,7 @@ export default function PhoneNumbersPage() {
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-900 dark:text-white">Country</Label>
                 <Select value={newNumberCountryCode} onValueChange={setNewNumberCountryCode}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full focus:ring-2 focus:ring-primary focus:border-primary">
                     <SelectValue>
                       <div className="flex items-center gap-2">
                         <span>{newNumberCountryCode === '+1' ? '🇺🇸' : newNumberCountryCode === '+44' ? '🇬🇧' : '🇮🇳'}</span>
@@ -168,7 +170,7 @@ export default function PhoneNumbersPage() {
                   placeholder="e.g., 212, 415, 202"
                   value={areaCode}
                   onChange={(e) => setAreaCode(e.target.value)}
-                  className="w-full"
+                  className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
                 />
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   Specify a preferred area code for your new number
@@ -195,7 +197,7 @@ export default function PhoneNumbersPage() {
                 Cancel
               </Button>
               <Button
-                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
                 onClick={() => {
                   console.log('Adding new number:', {
                     label: newNumberLabel,
@@ -216,8 +218,8 @@ export default function PhoneNumbersPage() {
           <DialogContent className="max-w-lg bg-white dark:bg-black border-gray-200 dark:border-gray-900">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg text-gray-900 dark:text-white">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-900">
-                  <Phone className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Phone className="h-4 w-4 text-primary" />
                 </div>
                 Import phone number from Twilio
               </DialogTitle>
@@ -231,7 +233,7 @@ export default function PhoneNumbersPage() {
                   placeholder="Easy to identify name of the phone number"
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
-                  className="w-full"
+                  className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
 
@@ -240,7 +242,7 @@ export default function PhoneNumbersPage() {
                 <Label className="text-sm font-medium text-gray-900 dark:text-white">Phone number</Label>
                 <div className="flex gap-2">
                   <Select value={countryCode} onValueChange={setCountryCode}>
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-24 focus:ring-2 focus:ring-primary focus:border-primary">
                       <SelectValue>
                         <div className="flex items-center gap-2">
                           <span>🇺🇸</span>
@@ -273,7 +275,7 @@ export default function PhoneNumbersPage() {
                     placeholder=""
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="flex-1"
+                    className="flex-1 focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
               </div>
@@ -285,7 +287,7 @@ export default function PhoneNumbersPage() {
                   placeholder="Twilio Account SID"
                   value={twilioAccountSid}
                   onChange={(e) => setTwilioAccountSid(e.target.value)}
-                  className="w-full"
+                  className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
             </div>
@@ -293,7 +295,7 @@ export default function PhoneNumbersPage() {
             {/* Footer */}
             <div className="flex justify-end">
               <Button
-                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
                 onClick={() => {
                   console.log('Importing from Twilio:', {
                     label,
@@ -314,8 +316,8 @@ export default function PhoneNumbersPage() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-black border-gray-200 dark:border-gray-900">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg text-gray-900 dark:text-white">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-900">
-                  <Server className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Server className="h-4 w-4 text-primary" />
                 </div>
                 Import SIP Trunk
               </DialogTitle>
@@ -330,7 +332,7 @@ export default function PhoneNumbersPage() {
                     placeholder="Name of the phone number"
                     value={sipLabel}
                     onChange={(e) => setSipLabel(e.target.value)}
-                    className="w-full bg-white dark:bg-black"
+                    className="w-full bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
 
@@ -340,15 +342,15 @@ export default function PhoneNumbersPage() {
                     placeholder="Phone number +12025550123, SIP extension 1234 or any other identifier"
                     value={sipPhoneNumber}
                     onChange={(e) => setSipPhoneNumber(e.target.value)}
-                    className="w-full bg-white dark:bg-black"
+                    className="w-full bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                 </div>
               </div>
 
               {/* Static IP Banner */}
               {showStaticIpBanner && (
-                <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
-                  <Info className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                   <div className="flex-1 space-y-1">
                     <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
                       Static IP SIP Servers Available
@@ -358,7 +360,7 @@ export default function PhoneNumbersPage() {
                       clients requiring IP allowlisting. Static IP infrastructure uses a /24
                       block across US, EU, and India regions. Available for enterprise
                       accounts.{' '}
-                      <button className="font-medium underline text-gray-900 dark:text-white">Contact sales</button> to learn
+                      <button className="font-medium underline text-primary hover:text-primary/80">Contact sales</button> to learn
                       more.
                     </p>
                   </div>
@@ -387,7 +389,7 @@ export default function PhoneNumbersPage() {
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-gray-900 dark:text-white">Media Encryption</Label>
                     <Select value={mediaEncryption} onValueChange={setMediaEncryption}>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full focus:ring-2 focus:ring-primary focus:border-primary">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -407,7 +409,7 @@ export default function PhoneNumbersPage() {
                       Phone numbers that are allowed to use this trunk. Leave empty to allow all
                       numbers.
                     </p>
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all">
                       <Plus className="h-4 w-4" />
                       Add Number
                     </Button>
@@ -419,14 +421,14 @@ export default function PhoneNumbersPage() {
                       <Label className="text-sm font-medium text-gray-900 dark:text-white">
                         Remote Domains (Optional)
                       </Label>
-                      <Info className="h-4 w-4 text-gray-500 dark:text-gray-500" />
+                      <Info className="h-4 w-4 text-primary" />
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Specify the FQDN domains of your SIP servers from which you originate the
                       calls. E.g. example.pstn.twilio.com. These domains are used for TLS
                       certificate validation. Leave this field empty if you don&apos;t use TLS.
                     </p>
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all">
                       <Plus className="h-4 w-4" />
                       Add Domain
                     </Button>
@@ -452,7 +454,7 @@ export default function PhoneNumbersPage() {
                         placeholder="Username for SIP digest authentication"
                         value={sipUsername}
                         onChange={(e) => setSipUsername(e.target.value)}
-                        className="w-full"
+                        className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
                       />
                     </div>
 
@@ -465,7 +467,7 @@ export default function PhoneNumbersPage() {
                         placeholder="Password for SIP digest authentication"
                         value={sipPassword}
                         onChange={(e) => setSipPassword(e.target.value)}
-                        className="w-full"
+                        className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
                       />
                     </div>
                   </div>
@@ -489,10 +491,10 @@ export default function PhoneNumbersPage() {
                     placeholder="example.pstn.twilio.com"
                     value={outboundAddress}
                     onChange={(e) => setOutboundAddress(e.target.value)}
-                    className="w-full"
+                    className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
                   />
                   <div className="flex items-start gap-2 mt-2">
-                    <AlertCircle className="h-4 w-4 text-gray-500 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-gray-600 dark:text-gray-400">
                       Hostname or IP the SIP INVITE is sent to. This is not a SIP URI and
                       shouldn&apos;t contain the sip: protocol. In case of TLS, use the hostname
@@ -506,7 +508,7 @@ export default function PhoneNumbersPage() {
             {/* Footer */}
             <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-900">
               <Button
-                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
                 onClick={() => {
                   console.log('Importing from SIP Trunk:', {
                     sipLabel,

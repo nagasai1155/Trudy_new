@@ -264,8 +264,8 @@ export default function RAGCollectionsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
+            <div className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5">
+              <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
               <span className="text-gray-700 dark:text-gray-300">
                 <strong className="text-gray-900 dark:text-white">0 B</strong> / <strong className="text-gray-900 dark:text-white">1.0 MB</strong>
               </span>
@@ -282,7 +282,7 @@ export default function RAGCollectionsPage() {
               placeholder="Search agents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full sm:max-w-md"
+              className="pl-10 pr-4 py-2 w-full sm:max-w-md focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         )}
@@ -297,7 +297,7 @@ export default function RAGCollectionsPage() {
               return (
                 <Card 
                   key={agent.id} 
-                  className="border-gray-200 dark:border-gray-900 hover:border-gray-300 dark:hover:border-gray-700 transition-all"
+                  className="border-gray-200 dark:border-gray-900 hover:border-primary/40 hover:shadow-lg transition-all"
                 >
                   <CardContent className="p-6">
                     {/* Agent Header */}
@@ -346,7 +346,7 @@ export default function RAGCollectionsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="flex-1 gap-2"
+                            className="flex-1 gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all"
                             onClick={() => {
                               setSelectedAgent(agent.id)
                               setAddFilesOpen(true)
@@ -358,7 +358,7 @@ export default function RAGCollectionsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="flex-1 gap-2"
+                            className="flex-1 gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all"
                             onClick={() => {
                               setViewingAgent(agent.id)
                             }}
@@ -376,7 +376,7 @@ export default function RAGCollectionsPage() {
                           </p>
                         </div>
                         <Button
-                          className="w-full gap-2 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                          className="w-full gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
                           size="sm"
                           onClick={() => {
                             setSelectedAgent(agent.id)
@@ -407,7 +407,7 @@ export default function RAGCollectionsPage() {
                 You need to create agents first before you can add knowledge bases to them.
               </p>
               <Button
-                className="gap-2 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
                 onClick={() => router.push('/agents')}
               >
                 <Plus className="h-4 w-4" />
@@ -435,7 +435,7 @@ export default function RAGCollectionsPage() {
                 placeholder="e.g., Products Overview, Customer Support"
                 value={hubName}
                 onChange={(e) => setHubName(e.target.value)}
-                className="w-full"
+                className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
             <div className="space-y-2">
@@ -456,7 +456,7 @@ export default function RAGCollectionsPage() {
               Cancel
             </Button>
             <Button 
-              className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
               onClick={() => {
                 console.log('Creating hub:', { name: hubName, description: hubDescription })
                 setHubName('')
@@ -487,13 +487,13 @@ export default function RAGCollectionsPage() {
                 placeholder="https://example.com"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="w-full"
+                className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
           </div>
           <div className="flex justify-end">
             <Button 
-              className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
               onClick={() => {
                 // Handle URL submission here
                 console.log('Adding URL:', url)
@@ -524,7 +524,7 @@ export default function RAGCollectionsPage() {
                 placeholder="Enter a name for your text"
                 value={textName}
                 onChange={(e) => setTextName(e.target.value)}
-                className="w-full"
+                className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
             <div className="space-y-2">
@@ -539,7 +539,7 @@ export default function RAGCollectionsPage() {
           </div>
           <div className="flex justify-end">
             <Button 
-              className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
               onClick={() => {
                 // Handle text creation here
                 console.log('Creating text:', { name: textName, content: textContent })
@@ -592,7 +592,7 @@ export default function RAGCollectionsPage() {
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-12 text-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors cursor-pointer"
+              className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-12 text-center hover:border-primary/60 hover:bg-primary/5 transition-colors cursor-pointer"
             >
               <input
                 type="file"
@@ -646,7 +646,7 @@ export default function RAGCollectionsPage() {
               Cancel
             </Button>
             <Button 
-              className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
               disabled={(!selectedAgent && agents.length > 0) || selectedFiles.length === 0}
               onClick={handleAddFiles}
             >
@@ -671,7 +671,7 @@ export default function RAGCollectionsPage() {
                 {/* File List */}
                 <div className="divide-y divide-gray-200 dark:divide-gray-900 border border-gray-200 dark:border-gray-900 rounded-lg overflow-hidden">
                   {agents.find(a => a.id === viewingAgent)?.knowledgeBase?.files?.map((file) => (
-                    <div key={file.id} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                    <div key={file.id} className="flex items-center justify-between px-4 py-3 hover:bg-primary/5 transition-colors">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <FileText className="h-4 w-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -693,7 +693,7 @@ export default function RAGCollectionsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
                           <DropdownMenuItem 
-                            className="text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-900"
+                            className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
                             onClick={() => handleDeleteFile(viewingAgent!, file.id)}
                           >
                             <Trash className="mr-2 h-4 w-4" />
@@ -719,7 +719,7 @@ export default function RAGCollectionsPage() {
               Close
             </Button>
             <Button 
-              className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black gap-2"
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2"
               onClick={() => {
                 setViewingAgent(null)
                 setSelectedAgent(viewingAgent)

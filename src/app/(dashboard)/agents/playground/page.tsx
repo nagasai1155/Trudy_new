@@ -91,7 +91,7 @@ export default function PlaygroundPage() {
         <div className="border-b border-gray-200 dark:border-gray-900 px-6 py-4 flex-shrink-0">
           <button
             onClick={() => router.push('/agents')}
-            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-3"
+            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors mb-3"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to agents
@@ -99,13 +99,13 @@ export default function PlaygroundPage() {
           
           {/* Search Field */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
             <Input
               type="text"
               placeholder="Search agents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full max-w-xs border-gray-300 dark:border-gray-800 rounded-lg"
+              className="pl-10 pr-4 py-2 w-full max-w-xs border-gray-300 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -126,18 +126,18 @@ export default function PlaygroundPage() {
                     onClick={() => setSelectedAgent(agent.id)}
                     className={`relative w-full text-left p-4 rounded-lg border-2 transition-all ${
                       selectedAgent === agent.id
-                        ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-900'
-                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900'
+                        ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
+                        : 'border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:bg-primary/5'
                     }`}
                   >
                     {selectedAgent === agent.id && (
-                      <div className="absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full bg-black dark:bg-white">
-                        <Check className="h-3 w-3 text-white dark:text-black" strokeWidth={3} />
+                      <div className="absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <Check className="h-3 w-3 text-white" strokeWidth={3} />
                       </div>
                     )}
                     
                     <div className="flex items-center gap-3 mb-2">
-                      <agent.icon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                      <agent.icon className="h-4 w-4 text-primary" />
                       <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                         {agent.name}
                       </h3>
@@ -181,7 +181,7 @@ export default function PlaygroundPage() {
               {/* Try a call button */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
                 <Button
-                  className="bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900 text-black dark:text-white border-2 border-gray-200 dark:border-gray-800 shadow-xl gap-2 px-4 py-2 text-sm"
+                  className="bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/30 gap-2 px-4 py-2 text-sm"
                   onClick={() => {
                     // Handle try call
                   }}
@@ -199,13 +199,13 @@ export default function PlaygroundPage() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              className="border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-900 dark:text-white"
+              className="hover:bg-primary/5 hover:border-primary/40 transition-all"
               onClick={() => router.push('/agents/new')}
             >
               Start from blank
             </Button>
             <Button
-              className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
               onClick={() => router.push('/agents/new')}
             >
               Create agent

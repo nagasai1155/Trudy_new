@@ -44,8 +44,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab('profile')}
                 className={`pb-4 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'profile'
-                    ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-primary hover:border-primary/40'
                 }`}
               >
                 Profile
@@ -54,8 +54,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab('workspace')}
                 className={`pb-4 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'workspace'
-                    ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-primary hover:border-primary/40'
                 }`}
               >
                 Workspace Invites
@@ -70,17 +70,17 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between py-4">
                 <div className="flex items-center gap-6">
                   <div className="relative group">
-                    <div className="h-24 w-24 rounded-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden border-2 border-gray-200 dark:border-gray-800">
+                    <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/30 hover:border-primary transition-colors">
                       {profileImage ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
                       ) : (
-                        <User className="h-12 w-12 text-gray-400 dark:text-gray-500" />
+                        <User className="h-12 w-12 text-primary" />
                       )}
                     </div>
                     <label 
                       htmlFor="profile-upload" 
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      className="absolute inset-0 flex items-center justify-center bg-primary/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     >
                       <Camera className="h-6 w-6 text-white" />
                     </label>
@@ -99,7 +99,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex gap-2">
                   <label htmlFor="profile-upload">
-                    <Button variant="outline" className="bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800" asChild>
+                    <Button variant="outline" className="hover:bg-primary/5 hover:border-primary/40 transition-all" asChild>
                       <span>Upload Photo</span>
                     </Button>
                   </label>
@@ -129,7 +129,7 @@ export default function SettingsPage() {
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">Given Name</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Aaroh</p>
                 </div>
-                <Button variant="outline" className="ml-4 shrink-0 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800">
+                <Button variant="outline" className="ml-4 shrink-0 hover:bg-primary/5 hover:border-primary/40 transition-all">
                   Update Given Name
                 </Button>
               </div>
@@ -140,7 +140,7 @@ export default function SettingsPage() {
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">Current Plan</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Free</p>
                 </div>
-                <Button variant="outline" className="ml-4 shrink-0 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800">
+                <Button variant="outline" className="ml-4 shrink-0 hover:bg-primary/5 hover:border-primary/40 transition-all">
                   Manage Subscription
                 </Button>
               </div>
@@ -151,7 +151,7 @@ export default function SettingsPage() {
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">Default Sharing Preferences</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">No default groups selected</p>
                 </div>
-                <Button variant="outline" className="ml-4 shrink-0 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800">
+                <Button variant="outline" className="ml-4 shrink-0 hover:bg-primary/5 hover:border-primary/40 transition-all">
                   Manage Default Sharing
                 </Button>
               </div>
@@ -162,7 +162,7 @@ export default function SettingsPage() {
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">Two-Factor Authentication</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Disabled</p>
                 </div>
-                <Button variant="outline" className="ml-4 shrink-0 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800">
+                <Button variant="outline" className="ml-4 shrink-0 hover:bg-primary/5 hover:border-primary/40 transition-all">
                   Add Two-Factor Authentication
                 </Button>
               </div>
@@ -173,7 +173,7 @@ export default function SettingsPage() {
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">Usage & Credit Ceilings</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Current credit ceiling usage: 0 / Not set characters</p>
                 </div>
-                <Button variant="outline" className="ml-4 shrink-0 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800">
+                <Button variant="outline" className="ml-4 shrink-0 hover:bg-primary/5 hover:border-primary/40 transition-all">
                   See More Details
                 </Button>
               </div>
@@ -186,7 +186,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="ml-4 shrink-0">
                   <Select defaultValue="en">
-                    <SelectTrigger className="w-[150px] bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800">
+                    <SelectTrigger className="w-[150px] focus:ring-2 focus:ring-primary focus:border-primary">
                       <div className="flex items-center gap-2">
                         <span className="text-sm">🇺🇸</span>
                         <SelectValue />
@@ -228,7 +228,7 @@ export default function SettingsPage() {
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white">Sign out of all devices</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Sign out of all devices and sessions. You will need to sign in again on all devices.</p>
                 </div>
-                <Button variant="outline" className="ml-4 shrink-0 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800">
+                <Button variant="outline" className="ml-4 shrink-0 hover:bg-primary/5 hover:border-primary/40 transition-all">
                   Sign out
                 </Button>
               </div>
@@ -253,8 +253,8 @@ export default function SettingsPage() {
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Workspace Invites</h2>
 
               {/* Important Information Box */}
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Important information About Joining Workspaces</h3>
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 space-y-4">
+                <h3 className="text-lg font-semibold text-primary">Important information About Joining Workspaces</h3>
                 
                 <div className="space-y-3 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                   <p>
@@ -280,7 +280,7 @@ export default function SettingsPage() {
               </div>
 
               {/* No Pending Invites */}
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-lg transition-all">
                 <p className="text-gray-600 dark:text-gray-400 text-center py-4">
                   You have no pending workspace invites.
                 </p>

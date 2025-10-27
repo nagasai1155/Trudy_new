@@ -127,11 +127,11 @@ Your responses should be thoughtful, concise, and conversational—typically thr
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
-              <Button className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black gap-2">
+              <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2">
                 <Mic2 className="h-4 w-4" />
                 Test AI agent
                   </Button>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all">
                 <Link2 className="h-4 w-4" />
                 Copy link
                   </Button>
@@ -165,8 +165,8 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 onClick={() => setSelectedTab(tab.id)}
                 className={`relative py-4 text-sm font-medium transition-colors ${
                   selectedTab === tab.id
-                    ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-primary hover:border-primary/40'
                 }`}
               >
                 <span>{tab.label}</span>
@@ -185,7 +185,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 Choose the default language the agent will communicate in.
               </p>
               <Select value={agentLanguage} onValueChange={setAgentLanguage}>
-                <SelectTrigger className="w-full max-w-xs bg-white dark:bg-black">
+                <SelectTrigger className="w-full max-w-xs bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary">
                   <div className="flex items-center gap-2">
                     <span>🇺🇸</span>
                     <SelectValue />
@@ -222,7 +222,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
               </p>
                       <Input
                 placeholder="Add additional languages" 
-                className="max-w-xs bg-white dark:bg-black"
+                className="max-w-xs bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
                       />
                     </div>
 
@@ -235,7 +235,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
               <Textarea
                 value={firstMessage}
                 onChange={(e) => setFirstMessage(e.target.value)}
-                className="min-h-[80px] bg-white dark:bg-black"
+                className="min-h-[80px] bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
               />
               <div className="flex items-center gap-2 mt-4">
                 <input
@@ -243,7 +243,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   id="disable-interruptions"
                   checked={disableInterruptions}
                   onChange={(e) => setDisableInterruptions(e.target.checked)}
-                  className="rounded border-gray-300 dark:border-gray-700"
+                  className="rounded border-gray-300 dark:border-gray-700 text-primary focus:ring-primary"
                 />
                 <label htmlFor="disable-interruptions" className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300">
                   Disable interruptions during first message
@@ -273,12 +273,12 @@ Your responses should be thoughtful, concise, and conversational—typically thr
               </p>
                               <Input
                 placeholder="Describe the desired agent (e.g., a customer support agent for ElevenLabs)"
-                className="mb-4 bg-white dark:bg-black"
+                className="mb-4 bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
               />
               <Textarea
                 value={systemPrompt}
                 onChange={(e) => setSystemPrompt(e.target.value)}
-                className="min-h-[300px] font-mono text-sm bg-white dark:bg-black"
+                className="min-h-[300px] font-mono text-sm bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
               />
               <div className="flex items-center gap-2 mt-4">
                 <input
@@ -319,7 +319,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 If your chosen LLM is not available at the moment or something goes wrong, we will redirect the conversation to another LLM.
               </p>
               <Select value={selectedLLM} onValueChange={setSelectedLLM}>
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full bg-white focus:ring-2 focus:ring-primary focus:border-primary">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -347,21 +347,21 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 <Button
                   variant={backupLLM === 'default' ? 'default' : 'outline'}
                   onClick={() => setBackupLLM('default')}
-                    className={backupLLM === 'default' ? 'bg-black dark:bg-white text-white dark:text-black' : ''}
+                    className={backupLLM === 'default' ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30' : 'hover:bg-primary/5 hover:border-primary/40'}
                 >
                   Default
                 </Button>
                 <Button
                   variant={backupLLM === 'custom' ? 'default' : 'outline'}
                   onClick={() => setBackupLLM('custom')}
-                    className={backupLLM === 'custom' ? 'bg-black dark:bg-white text-white dark:text-black' : ''}
+                    className={backupLLM === 'custom' ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30' : 'hover:bg-primary/5 hover:border-primary/40'}
                 >
                   Custom
                 </Button>
                 <Button
                   variant={backupLLM === 'disabled' ? 'default' : 'outline'}
                   onClick={() => setBackupLLM('disabled')}
-                    className={backupLLM === 'disabled' ? 'bg-black dark:bg-white text-white dark:text-black' : ''}
+                    className={backupLLM === 'disabled' ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30' : 'hover:bg-primary/5 hover:border-primary/40'}
                 >
                   Disabled
                 </Button>
@@ -380,7 +380,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                     key={effort}
                     variant={reasoningEffort === effort.toLowerCase() ? 'default' : 'outline'}
                     onClick={() => setReasoningEffort(effort.toLowerCase())}
-                    className={reasoningEffort === effort.toLowerCase() ? 'bg-black dark:bg-white text-white dark:text-black' : ''}
+                    className={reasoningEffort === effort.toLowerCase() ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30' : 'hover:bg-primary/5 hover:border-primary/40'}
                   >
                     {effort}
                   </Button>
@@ -402,7 +402,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                     step="0.1"
                         value={temperature}
                         onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="absolute left-0 top-6 w-full flex justify-between text-xs text-gray-500">
                   <span>0</span>
@@ -418,7 +418,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                     variant={temperature === preset.value ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setTemperature(preset.value)}
-                    className={temperature === preset.value ? 'bg-black dark:bg-white text-white dark:text-black' : ''}
+                    className={temperature === preset.value ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30' : 'hover:bg-primary/5 hover:border-primary/40'}
                   >
                     {preset.label}
                   </Button>
@@ -436,7 +436,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 type="number"
                 value={limitTokenUsage}
                 onChange={(e) => setLimitTokenUsage(parseInt(e.target.value))}
-                className="max-w-xs bg-white dark:bg-black"
+                className="max-w-xs bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
 
@@ -477,13 +477,11 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                     <button
                       onClick={() => tool.setState(!tool.state)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        tool.state ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-gray-700'
+                        tool.state ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'
                       }`}
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full ${
-                          tool.state ? 'bg-white dark:bg-black' : 'bg-white'
-                        } transition-transform ${
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                           tool.state ? 'translate-x-6' : 'translate-x-1'
                         }`}
                       />
@@ -596,8 +594,8 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   onClick={() => setUseFlash(true)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     useFlash
-                      ? 'bg-black dark:bg-white text-white dark:text-black'
-                      : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                      ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30'
+                      : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-primary/5'
                   }`}
                 >
                   Yes
@@ -606,8 +604,8 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   onClick={() => setUseFlash(false)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     !useFlash
-                      ? 'bg-black dark:bg-white text-white dark:text-black'
-                      : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                      ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30'
+                      : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-primary/5'
                   }`}
                 >
                   No
@@ -669,7 +667,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   step="1"
                   value={streamingLatency}
                   onChange={(e) => setStreamingLatency(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="flex justify-between text-xs text-gray-600 mt-2">
                   <span>0</span>
@@ -696,7 +694,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   step="0.01"
                   value={stability}
                   onChange={(e) => setStability(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="text-sm text-gray-900 dark:text-white mt-2">Current: {stability.toFixed(2)}</div>
               </div>
@@ -716,7 +714,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   step="0.1"
                   value={speed}
                   onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="text-sm text-gray-900 dark:text-white mt-2">Current: {speed.toFixed(1)}</div>
               </div>
@@ -736,7 +734,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   step="0.01"
                   value={similarity}
                   onChange={(e) => setSimilarity(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="text-sm text-gray-900 dark:text-white mt-2">Current: {similarity.toFixed(2)}</div>
               </div>
@@ -757,7 +755,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 type="number"
                 value={turnTimeout}
                 onChange={(e) => setTurnTimeout(parseInt(e.target.value))}
-                className="max-w-xs bg-white dark:bg-black"
+                className="max-w-xs bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -771,7 +769,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 type="number"
                 value={silenceEndCallTimeout}
                 onChange={(e) => setSilenceEndCallTimeout(parseInt(e.target.value))}
-                className="max-w-xs bg-white dark:bg-black"
+                className="max-w-xs bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -785,7 +783,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 type="number"
                 value={maxConversationDuration}
                 onChange={(e) => setMaxConversationDuration(parseInt(e.target.value))}
-                className="max-w-xs bg-white dark:bg-black"
+                className="max-w-xs bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -799,7 +797,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 value={keywords}
                 onChange={(e) => setKeywords(e.target.value)}
                 placeholder="Enter keywords separated by commas..."
-                className="min-h-[100px] bg-white dark:bg-black"
+                className="min-h-[100px] bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -812,13 +810,11 @@ Your responses should be thoughtful, concise, and conversational—typically thr
               <button
                 onClick={() => setChatMode(!chatMode)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      chatMode ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-gray-700'
+                      chatMode ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'
                     }`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full ${
-                        chatMode ? 'bg-white dark:bg-black' : 'bg-white'
-                      } transition-transform ${
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                         chatMode ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
@@ -893,13 +889,11 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   <button
                     onClick={() => setStoreCallAudio(!storeCallAudio)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      storeCallAudio ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-gray-700'
+                      storeCallAudio ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'
                     }`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full ${
-                        storeCallAudio ? 'bg-white dark:bg-black' : 'bg-white'
-                      } transition-transform ${
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                         storeCallAudio ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
@@ -917,13 +911,11 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   <button
                     onClick={() => setZeroPIIRetentionMode(!zeroPIIRetentionMode)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      zeroPIIRetentionMode ? 'bg-black dark:bg-white' : 'bg-gray-300 dark:bg-gray-700'
+                      zeroPIIRetentionMode ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'
                     }`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full ${
-                        zeroPIIRetentionMode ? 'bg-white dark:bg-black' : 'bg-white'
-                      } transition-transform ${
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                         zeroPIIRetentionMode ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
@@ -942,7 +934,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 type="number"
                 value={conversationsRetentionPeriod}
                 onChange={(e) => setConversationsRetentionPeriod(parseInt(e.target.value))}
-                className="max-w-xs bg-white dark:bg-black"
+                className="max-w-xs bg-white dark:bg-black focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
           </div>

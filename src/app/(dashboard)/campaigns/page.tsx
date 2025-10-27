@@ -66,7 +66,7 @@ export default function CampaignsPage() {
               <Button 
                 onClick={handleNavigateToNew}
                 disabled={isNavigating}
-                className="w-full sm:w-auto bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
               >
                 Create a batch call
               </Button>
@@ -78,7 +78,7 @@ export default function CampaignsPage() {
                 placeholder="Search Batch Calls..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
+                className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function CampaignsPage() {
               : 0
 
             return (
-              <Card key={campaign.id}>
+              <Card key={campaign.id} className="hover:border-primary/40 hover:shadow-lg transition-all">
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                     <div className="space-y-1 min-w-0 flex-1">
@@ -112,22 +112,22 @@ export default function CampaignsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                            <Eye className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                            <Eye className="mr-2 h-4 w-4 text-primary" />
                             View Details
                           </DropdownMenuItem>
                           {campaign.status === 'running' ? (
-                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                              <Pause className="mr-2 h-4 w-4" />
+                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                              <Pause className="mr-2 h-4 w-4 text-primary" />
                               Pause
                             </DropdownMenuItem>
                           ) : (
-                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                              <Play className="mr-2 h-4 w-4" />
+                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                              <Play className="mr-2 h-4 w-4 text-primary" />
                               Start
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-900">
+                          <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">
                             <Trash className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>
@@ -171,10 +171,10 @@ export default function CampaignsPage() {
         </div>
 
           {filteredCampaigns.length === 0 && (
-            <Card className="border-gray-200 dark:border-gray-900">
+            <Card className="border-gray-200 dark:border-gray-900 hover:border-primary/40 hover:shadow-lg transition-all">
               <CardContent className="flex flex-col items-center justify-center py-16">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900 mb-4">
-                  <PhoneOutgoing className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+                  <PhoneOutgoing className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   No batch calls found

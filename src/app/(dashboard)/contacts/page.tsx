@@ -63,17 +63,17 @@ export default function ContactsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" className="flex-1 sm:flex-none">
+            <Button variant="outline" className="flex-1 sm:flex-none hover:bg-primary/5 hover:border-primary/40 transition-all">
               <Upload className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Import</span>
               <span className="sm:hidden">Import</span>
             </Button>
-            <Button variant="outline" className="flex-1 sm:flex-none">
+            <Button variant="outline" className="flex-1 sm:flex-none hover:bg-primary/5 hover:border-primary/40 transition-all">
               <Download className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Export</span>
               <span className="sm:hidden">Export</span>
             </Button>
-            <Button className="flex-1 sm:flex-none">
+            <Button className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30">
               <Plus className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Add Contact</span>
               <span className="sm:hidden">Add</span>
@@ -83,17 +83,17 @@ export default function ContactsPage() {
 
         {/* Search */}
         <div className="relative max-w-full sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
           <Input
             placeholder="Search contacts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 focus:ring-2 focus:ring-primary focus:border-primary"
           />
         </div>
 
         {/* Contacts Table - Desktop */}
-        <Card className="hidden md:block">
+        <Card className="hidden md:block hover:border-primary/40 hover:shadow-lg transition-all">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -108,7 +108,7 @@ export default function ContactsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-900">
                   {filteredContacts.map((contact) => (
-                    <tr key={contact.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                    <tr key={contact.id} className="hover:bg-primary/5 cursor-pointer transition-colors border-l-2 border-transparent hover:border-primary">
                       <td className="px-4 lg:px-6 py-4">
                         <div className="text-xs lg:text-sm font-medium text-gray-900 dark:text-white">
                           {contact.firstName} {contact.lastName}
@@ -131,11 +131,11 @@ export default function ContactsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
+                            <DropdownMenuItem className="hover:bg-primary/5">
+                              <Edit className="mr-2 h-4 w-4 text-primary" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem className="text-destructive hover:bg-red-50 dark:hover:bg-red-950">
                               <Trash className="mr-2 h-4 w-4" />
                               Delete
                             </DropdownMenuItem>
@@ -153,7 +153,7 @@ export default function ContactsPage() {
         {/* Contacts Cards - Mobile */}
         <div className="md:hidden space-y-3">
           {filteredContacts.map((contact) => (
-            <Card key={contact.id}>
+            <Card key={contact.id} className="hover:border-primary/40 hover:shadow-lg transition-all">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -171,11 +171,11 @@ export default function ContactsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Edit className="mr-2 h-4 w-4" />
+                      <DropdownMenuItem className="hover:bg-primary/5">
+                        <Edit className="mr-2 h-4 w-4 text-primary" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem className="text-destructive hover:bg-red-50 dark:hover:bg-red-950">
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
@@ -188,7 +188,7 @@ export default function ContactsPage() {
         </div>
 
         {filteredContacts.length === 0 && (
-          <Card>
+          <Card className="hover:border-primary/40 hover:shadow-lg transition-all">
             <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
               <h3 className="mt-3 sm:mt-4 text-base sm:text-lg font-semibold text-gray-900 dark:text-white">No contacts found</h3>
               <p className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center px-4">

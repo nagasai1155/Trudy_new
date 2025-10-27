@@ -94,7 +94,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
                   value={agentName}
                   onChange={(e) => setAgentName(e.target.value.slice(0, 50))}
                   placeholder="Enter agent name"
-                  className="pr-16 text-sm"
+                  className="pr-16 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                   maxLength={50}
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400">
@@ -117,7 +117,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
                     onChange={(e) => setChatOnly(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black dark:peer-checked:bg-white"></div>
+                  <div className="w-11 h-6 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
                 <div>
                   <div className="text-sm font-medium text-gray-900 dark:text-white">Chat only</div>
@@ -134,7 +134,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
                 onClick={() => setStep('select')}
                 className="h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-700 transition-all duration-200"
               />
-              <div className="h-2 w-6 rounded-full bg-black dark:bg-white transition-all duration-200" />
+              <div className="h-2 w-6 rounded-full bg-primary transition-all duration-200" />
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
             <Button
               onClick={handleCreateAgent}
               disabled={!agentName.trim()}
-              className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 disabled:cursor-not-allowed px-8"
+              className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed px-8"
             >
               Create Agent
             </Button>
@@ -201,13 +201,13 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
               className={cn(
                 "relative flex items-center justify-center gap-2.5 p-3 border-2 rounded-lg transition-all duration-200 w-full",
                 selectedTemplate === 'blank' 
-                  ? "border-black dark:border-white shadow-lg" 
-                  : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
+                  ? "border-primary shadow-lg shadow-primary/20" 
+                  : "border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-md"
               )}
             >
               {selectedTemplate === 'blank' && (
-                <div className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-black dark:bg-white">
-                  <Check className="h-2.5 w-2.5 text-white dark:text-black" strokeWidth={3} />
+                <div className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                  <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                 </div>
               )}
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900">
@@ -225,13 +225,13 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
               className={cn(
                 "relative flex flex-col items-start p-3 border-2 rounded-lg transition-all duration-200 text-left w-full",
                 selectedTemplate === 'personal' 
-                  ? "border-black dark:border-white shadow-lg" 
-                  : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
+                  ? "border-primary shadow-lg shadow-primary/20" 
+                  : "border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-md"
               )}
             >
               {selectedTemplate === 'personal' && (
-                <div className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-black dark:bg-white">
-                  <Check className="h-2.5 w-2.5 text-white dark:text-black" strokeWidth={3} />
+                <div className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                  <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                 </div>
               )}
               <div className="flex items-center gap-2.5 mb-3">
@@ -241,7 +241,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Personal Assistant</h3>
               </div>
               <div className="space-y-2 w-full">
-                <div className="bg-black dark:bg-white text-white dark:text-black p-2.5 rounded-2xl rounded-br-sm text-xs max-w-[85%]">
+                <div className="bg-primary text-white p-2.5 rounded-2xl rounded-br-sm text-xs max-w-[85%]">
                   Could you see whether I have any urgent outstanding emails?
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-2.5 rounded-2xl rounded-bl-sm text-xs ml-auto max-w-[85%]">
@@ -256,13 +256,13 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
               className={cn(
                 "relative flex flex-col items-start p-3 border-2 rounded-lg transition-all duration-200 text-left w-full",
                 selectedTemplate === 'business' 
-                  ? "border-black dark:border-white shadow-lg" 
-                  : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
+                  ? "border-primary shadow-lg shadow-primary/20" 
+                  : "border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-md"
               )}
             >
               {selectedTemplate === 'business' && (
-                <div className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-black dark:bg-white">
-                  <Check className="h-2.5 w-2.5 text-white dark:text-black" strokeWidth={3} />
+                <div className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                  <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
                 </div>
               )}
               <div className="flex items-center gap-2.5 mb-3">
@@ -272,7 +272,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Business Agent</h3>
               </div>
               <div className="space-y-2 w-full">
-                <div className="bg-black dark:bg-white text-white dark:text-black p-2.5 rounded-2xl rounded-br-sm text-xs max-w-[85%]">
+                <div className="bg-primary text-white p-2.5 rounded-2xl rounded-br-sm text-xs max-w-[85%]">
                   Can you tell me more about pricing?
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-2.5 rounded-2xl rounded-bl-sm text-xs ml-auto max-w-[85%]">
@@ -289,7 +289,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
                 key={templateId}
                 className={cn(
                   "h-2 w-2 rounded-full transition-all duration-200",
-                  selectedTemplate === templateId ? "bg-black dark:bg-white w-6" : "bg-gray-300 dark:bg-gray-700"
+                  selectedTemplate === templateId ? "bg-primary w-6" : "bg-gray-300 dark:bg-gray-700"
                 )}
                 onClick={() => setSelectedTemplate(templateId as 'blank' | 'personal' | 'business')}
               />
@@ -304,7 +304,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
           <Button
             onClick={handleContinue}
             disabled={!selectedTemplate}
-            className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black disabled:opacity-50 disabled:cursor-not-allowed px-8"
+            className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed px-8"
           >
             Continue
           </Button>

@@ -198,10 +198,10 @@ export default function VoiceCloningPage() {
           <div className="flex items-center gap-6">
             <button
               onClick={() => setActiveTab('explore')}
-              className={`flex items-center gap-2 text-sm font-medium pb-1 border-b transition-all duration-200 ${
+              className={`flex items-center gap-2 text-sm font-medium pb-1 border-b-2 transition-all duration-200 ${
                 activeTab === 'explore'
-                  ? 'border-gray-400 dark:border-gray-400 text-gray-900 dark:text-white'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-gray-700'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-primary hover:border-primary/40'
               }`}
             >
               <Mic className="h-4 w-4" />
@@ -209,10 +209,10 @@ export default function VoiceCloningPage() {
             </button>
             <button
               onClick={() => setActiveTab('my-voices')}
-              className={`text-sm font-medium pb-1 border-b transition-all duration-200 ${
+              className={`text-sm font-medium pb-1 border-b-2 transition-all duration-200 ${
                 activeTab === 'my-voices'
-                  ? 'border-gray-400 dark:border-gray-400 text-gray-900 dark:text-white'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-gray-700'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-primary hover:border-primary/40'
               }`}
             >
               My Voices
@@ -249,7 +249,7 @@ export default function VoiceCloningPage() {
               }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 focus:ring-2 focus:ring-primary focus:border-primary"
           />
         </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -311,7 +311,7 @@ export default function VoiceCloningPage() {
                   <X className="h-3 w-3" />
                 </button>
               </div>
-              <button className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white underline">
+              <button className="text-sm text-primary hover:text-primary/80 underline font-medium">
                 Reset filters
               </button>
             </div>
@@ -324,7 +324,7 @@ export default function VoiceCloningPage() {
           {filteredVoices.map((voice) => (
                 <div
                   key={voice.id}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white dark:bg-black border border-gray-200 dark:border-gray-900 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white dark:bg-black border border-gray-200 dark:border-gray-900 rounded-lg hover:bg-primary/5 hover:border-primary/40 transition-all"
                 >
                   {/* Top Row - Mobile */}
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -365,9 +365,9 @@ export default function VoiceCloningPage() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">Add to Agent</DropdownMenuItem>
-                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">Clone Voice</DropdownMenuItem>
-                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">View Details</DropdownMenuItem>
+                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Add to Agent</DropdownMenuItem>
+                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Clone Voice</DropdownMenuItem>
+                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">View Details</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -413,9 +413,9 @@ export default function VoiceCloningPage() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">Add to Agent</DropdownMenuItem>
-                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">Clone Voice</DropdownMenuItem>
-                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">View Details</DropdownMenuItem>
+                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Add to Agent</DropdownMenuItem>
+                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Clone Voice</DropdownMenuItem>
+                          <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">View Details</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -527,8 +527,8 @@ export default function VoiceCloningPage() {
                       }}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                         selectedCategories.includes(category)
-                          ? 'bg-gray-900 dark:bg-white text-white dark:text-black'
-                          : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-primary/10'
                       }`}
                     >
                       {category}
@@ -545,8 +545,8 @@ export default function VoiceCloningPage() {
                     onClick={() => setSelectedQuality('Any')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       selectedQuality === 'Any'
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-black'
-                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-primary/10'
                     }`}
                   >
                     Any
@@ -555,8 +555,8 @@ export default function VoiceCloningPage() {
                     onClick={() => setSelectedQuality('High-Quality')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       selectedQuality === 'High-Quality'
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-black'
-                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-primary/10'
                     }`}
                   >
                     High-Quality
@@ -634,8 +634,8 @@ export default function VoiceCloningPage() {
                     onClick={() => setCustomRates('Include')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       customRates === 'Include'
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-black'
-                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-primary/10'
                     }`}
                   >
                     Include
@@ -644,8 +644,8 @@ export default function VoiceCloningPage() {
                     onClick={() => setCustomRates('Exclude')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       customRates === 'Exclude'
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-black'
-                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-primary/10'
                     }`}
                   >
                     Exclude
@@ -661,8 +661,8 @@ export default function VoiceCloningPage() {
                     onClick={() => setLiveModerationEnabled('Include')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       liveModerationEnabled === 'Include'
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-black'
-                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-primary/10'
                     }`}
                   >
                     Include
@@ -671,8 +671,8 @@ export default function VoiceCloningPage() {
                     onClick={() => setLiveModerationEnabled('Exclude')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       liveModerationEnabled === 'Exclude'
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-black'
-                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-primary/10'
                     }`}
                   >
                     Exclude
@@ -700,7 +700,7 @@ export default function VoiceCloningPage() {
                 Reset all
               </Button>
                 <Button 
-                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
                 onClick={() => {
                   console.log('Applying filters:', {
                     language: selectedLanguage,
@@ -750,7 +750,7 @@ export default function VoiceCloningPage() {
                   We don&apos;t respond to submissions, but we read all of them carefully
                 </p>
                 <Button 
-                  className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black flex-shrink-0"
+                  className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 flex-shrink-0"
                   onClick={() => {
                     console.log('Feedback submitted:', feedbackText)
                     setFeedbackText('')

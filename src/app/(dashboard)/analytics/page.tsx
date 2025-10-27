@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px] focus:ring-2 focus:ring-primary focus:border-primary">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -121,12 +121,14 @@ export default function AnalyticsPage() {
           {stats.map((stat) => {
             const Icon = stat.icon
             return (
-              <Card key={stat.title}>
+              <Card key={stat.title} className="hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-400">
                     {stat.title}
                   </CardTitle>
-                  <Icon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Icon className="h-4 w-4 text-primary" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
@@ -158,7 +160,7 @@ export default function AnalyticsPage() {
           <TabsContent value="calls" className="space-y-4 sm:space-y-6">
             <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
               {/* Calls Over Time */}
-              <Card>
+              <Card className="hover:border-primary/40 hover:shadow-lg transition-all">
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-white">Calls Over Time</CardTitle>
                   <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -175,8 +177,8 @@ export default function AnalyticsPage() {
                       <Area
                         type="monotone"
                         dataKey="calls"
-                        stroke="#3b82f6"
-                        fill="#3b82f6"
+                        stroke="hsl(217, 100%, 60%)"
+                        fill="hsl(217, 100%, 60%)"
                         fillOpacity={0.2}
                       />
                     </AreaChart>
@@ -185,7 +187,7 @@ export default function AnalyticsPage() {
               </Card>
 
               {/* Calls by Status */}
-              <Card>
+              <Card className="hover:border-primary/40 hover:shadow-lg transition-all">
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-white">Calls by Status</CardTitle>
                   <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -221,7 +223,7 @@ export default function AnalyticsPage() {
 
           <TabsContent value="performance" className="space-y-4 sm:space-y-6">
             {/* Agent Performance */}
-            <Card>
+            <Card className="hover:border-primary/40 hover:shadow-lg transition-all">
               <CardHeader>
                 <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-white">Agent Performance</CardTitle>
                 <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -237,7 +239,7 @@ export default function AnalyticsPage() {
                     <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
                     <Tooltip contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar yAxisId="left" dataKey="calls" fill="#3b82f6" name="Total Calls" />
+                    <Bar yAxisId="left" dataKey="calls" fill="hsl(217, 100%, 60%)" name="Total Calls" />
                     <Bar yAxisId="right" dataKey="successRate" fill="#10b981" name="Success Rate %" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -247,7 +249,7 @@ export default function AnalyticsPage() {
 
           <TabsContent value="costs" className="space-y-4 sm:space-y-6">
             {/* Cost Over Time */}
-            <Card>
+            <Card className="hover:border-primary/40 hover:shadow-lg transition-all">
               <CardHeader>
                 <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-white">Cost Trends</CardTitle>
                 <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">

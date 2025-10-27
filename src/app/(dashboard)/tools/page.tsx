@@ -59,8 +59,8 @@ export default function ToolsPage() {
               onClick={() => setMode('basic')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
                 mode === 'basic'
-                  ? 'bg-white dark:bg-black text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-primary'
               }`}
             >
               Basic Settings
@@ -69,8 +69,8 @@ export default function ToolsPage() {
               onClick={() => setMode('advanced')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
                 mode === 'advanced'
-                  ? 'bg-white dark:bg-black text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-primary'
               }`}
             >
               Advanced Mode
@@ -85,16 +85,16 @@ export default function ToolsPage() {
             <div className="flex gap-3">
           <button
             onClick={() => setWebhookDialogOpen(true)}
-            className="flex items-center gap-3 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all"
+            className="flex items-center gap-3 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all"
           >
-            <Webhook className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            <Webhook className="h-5 w-5 text-primary" />
             <span className="text-sm font-medium text-gray-900 dark:text-white">Add webhook tool</span>
           </button>
           <button
             onClick={() => setClientToolDialogOpen(true)}
-            className="flex items-center gap-3 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all"
+            className="flex items-center gap-3 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all"
           >
-            <Wrench className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            <Wrench className="h-5 w-5 text-primary" />
             <span className="text-sm font-medium text-gray-900 dark:text-white">Add client tool</span>
           </button>
         </div>
@@ -107,7 +107,7 @@ export default function ToolsPage() {
               placeholder="Search integrations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
           <DropdownMenu>
@@ -118,16 +118,16 @@ export default function ToolsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40 bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-              <DropdownMenuItem onClick={() => setSelectedType('client')} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                <Wrench className="h-4 w-4 mr-2" />
+              <DropdownMenuItem onClick={() => setSelectedType('client')} className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                <Wrench className="h-4 w-4 mr-2 text-primary" />
                 Client
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedType('webhook')} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                <Webhook className="h-4 w-4 mr-2" />
+              <DropdownMenuItem onClick={() => setSelectedType('webhook')} className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                <Webhook className="h-4 w-4 mr-2 text-primary" />
                 Webhook
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSelectedType('system')} className="text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                <Target className="h-4 w-4 mr-2" />
+              <DropdownMenuItem onClick={() => setSelectedType('system')} className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">
+                <Target className="h-4 w-4 mr-2 text-primary" />
                 System
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -164,7 +164,7 @@ export default function ToolsPage() {
                     Access advanced configuration options, custom webhooks, API integrations, and detailed logging.
                   </p>
                   <div className="pt-4">
-                    <Button className="gap-2">
+                    <Button className="gap-2 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30">
                       <Code className="h-4 w-4" />
                       Configure Advanced Settings
                     </Button>
@@ -201,7 +201,7 @@ export default function ToolsPage() {
               <Input
                 value={toolName}
                 onChange={(e) => setToolName(e.target.value)}
-                className="w-full"
+                className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -238,7 +238,7 @@ export default function ToolsPage() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://api.example.com/endpoint"
-                  className="w-full"
+                  className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
             </div>
@@ -292,7 +292,7 @@ export default function ToolsPage() {
                 Cancel
               </Button>
               <Button 
-                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
                 onClick={() => {
                   console.log('Adding webhook tool:', {
                     name: toolName,
@@ -337,7 +337,7 @@ export default function ToolsPage() {
               <Input
                 value={clientToolName}
                 onChange={(e) => setClientToolName(e.target.value)}
-                className="w-full"
+                className="w-full focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -423,7 +423,7 @@ export default function ToolsPage() {
                 Cancel
               </Button>
               <Button 
-                className="bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black"
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30"
                 onClick={() => {
                   console.log('Adding client tool:', {
                     name: clientToolName,

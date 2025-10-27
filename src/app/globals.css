@@ -16,21 +16,21 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
     
-    /* Primary brand color - Professional blue */
-    --primary: 211 100% 50%;
+    /* Primary brand color - Vibrant blue from reference image */
+    --primary: 217 100% 60%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Light gray for subtle accents */
-    --secondary: 210 40% 98%;
+    /* Secondary - Light blue for subtle accents */
+    --secondary: 217 100% 97%;
     --secondary-foreground: 0 0% 9%;
     
-    /* Muted - Very light gray for backgrounds */
-    --muted: 210 40% 97%;
+    /* Muted - Very light blue-tinted backgrounds */
+    --muted: 217 40% 97%;
     --muted-foreground: 0 0% 45%;
     
-    /* Accent - Light hover states */
-    --accent: 210 40% 98%;
-    --accent-foreground: 0 0% 9%;
+    /* Accent - Light blue hover states */
+    --accent: 217 100% 95%;
+    --accent-foreground: 217 100% 30%;
     
     /* Destructive - Clean red for errors */
     --destructive: 0 72% 51%;
@@ -39,7 +39,7 @@
     /* Borders - Subtle gray */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 211 100% 50%;
+    --ring: 217 100% 60%;
     --radius: 0.5rem;
     
     /* Success color */
@@ -54,19 +54,19 @@
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 0%;
     --popover-foreground: 0 0% 100%;
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 217 100% 60%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 10%;
     --muted-foreground: 0 0% 70%;
-    --accent: 0 0% 10%;
+    --accent: 217 100% 20%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 217 100% 60%;
   }
 }
 
@@ -543,7 +543,7 @@ button, a, input, textarea, select, [role="button"] {
   transform: translateY(-50%);
   width: 3px;
   height: 20px;
-  @apply bg-black dark:bg-white;
+  background: hsl(217, 100%, 60%);
   border-radius: 0 2px 2px 0;
   animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -579,8 +579,9 @@ button, a, input, textarea, select, [role="button"] {
 }
 
 .sidebar-upgrade-btn {
-  @apply w-full bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg py-3;
+  @apply w-full text-white font-medium rounded-lg py-3;
   @apply flex items-center justify-center space-x-2;
+  background: hsl(217, 100%, 60%);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(1);
   position: relative;
@@ -599,9 +600,9 @@ button, a, input, textarea, select, [role="button"] {
 }
 
 .sidebar-upgrade-btn:hover {
-  @apply bg-gray-800 dark:bg-gray-200;
+  background: hsl(217, 100%, 55%);
   transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 25px rgba(38, 128, 255, 0.4);
 }
 
 .sidebar-upgrade-btn:hover::before {
