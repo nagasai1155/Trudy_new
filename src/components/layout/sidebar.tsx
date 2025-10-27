@@ -112,22 +112,13 @@ export function Sidebar() {
                   onClick={() => handleNavigation('/dashboard')} 
                   className="flex items-center space-x-3 group cursor-pointer relative"
                 >
-                  {/* Light mode logo */}
+                  {/* Logo for both light and dark mode */}
                   <Image
                     src="/icons/image2.jpg"
                     alt="Truedy AI Logo"
                     width={120}
                     height={32}
-                    className="h-8 w-auto object-contain transition-all duration-200 group-hover:opacity-80 group-active:scale-95 dark:hidden"
-                    priority
-                  />
-                  {/* Dark mode logo */}
-                  <Image
-                    src="/icons/image3.jpg"
-                    alt="Truedy AI Logo"
-                    width={120}
-                    height={32}
-                    className="h-8 w-auto object-contain transition-all duration-200 group-hover:opacity-80 group-active:scale-95 hidden dark:block"
+                    className="h-8 w-auto object-contain transition-all duration-200 group-hover:opacity-80 group-active:scale-95"
                     priority
                   />
                 </button>

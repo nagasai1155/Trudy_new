@@ -31,22 +31,13 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-black/95 backdrop-blur shadow-sm">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center space-x-2">
-            {/* Light mode logo */}
+            {/* Logo for both light and dark mode */}
             <Image
               src="/icons/image2.jpg"
               alt="Truedy AI"
               width={140}
               height={36}
-              className="h-9 w-auto object-contain dark:hidden"
-              priority
-            />
-            {/* Dark mode logo */}
-            <Image
-              src="/icons/image3.jpg"
-              alt="Truedy AI"
-              width={140}
-              height={36}
-              className="h-9 w-auto object-contain hidden dark:block"
+              className="h-9 w-auto object-contain"
               priority
             />
           </div>
@@ -298,21 +289,13 @@ export default function LandingPage() {
       <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black py-12">
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex items-center space-x-2">
-            {/* Light mode logo */}
+            {/* Logo for both light and dark mode */}
             <Image
               src="/icons/image2.jpg"
               alt="Truedy AI"
               width={120}
               height={32}
-              className="h-8 w-auto object-contain dark:hidden"
-            />
-            {/* Dark mode logo */}
-            <Image
-              src="/icons/image3.jpg"
-              alt="Truedy AI"
-              width={120}
-              height={32}
-              className="h-8 w-auto object-contain hidden dark:block"
+              className="h-8 w-auto object-contain"
             />
           </div>
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
