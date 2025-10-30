@@ -44,8 +44,10 @@ const DropdownMenuSubContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.SubContent
     ref={ref}
+    style={{ animation: 'none !important', transition: 'none !important' } as React.CSSProperties}
     className={cn(
-      "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-900 bg-white dark:bg-black p-1 text-gray-900 dark:text-white shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+      "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-900 bg-white dark:bg-black p-1 text-gray-900 dark:text-white shadow-lg",
+      "![animation:none] ![transition:none]",
       className
     )}
     {...props}
@@ -57,19 +59,48 @@ DropdownMenuSubContent.displayName =
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-900 bg-white dark:bg-black p-1 text-gray-900 dark:text-white shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        className
-      )}
-      {...props}
-    />
-  </DropdownMenuPrimitive.Portal>
-))
+>(({ className, sideOffset = 4, ...props }, ref) => {
+  const internalRef = React.useRef<HTMLDivElement>(null)
+  
+  React.useEffect(() => {
+    if (internalRef.current) {
+      const element = internalRef.current
+      // Remove animations but keep any positioning transforms that Radix adds
+      element.style.animation = 'none'
+      element.style.transition = 'none'
+      element.style.opacity = '1'
+      
+      // Remove all animation-related classes
+      const classesToRemove = ['animate-in', 'animate-out', 'fade-in-0', 'fade-out-0', 'zoom-in-95', 'zoom-out-95',
+        'slide-in-from-top-2', 'slide-in-from-bottom-2', 'slide-in-from-left-2', 'slide-in-from-right-2',
+        'slide-out-to-left-2', 'slide-out-to-right-2', 'slide-out-to-top-2', 'slide-out-to-bottom-2']
+      classesToRemove.forEach(cls => element.classList.remove(cls))
+    }
+  }, [])
+  
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content
+        ref={(node) => {
+          internalRef.current = node as HTMLDivElement
+          if (typeof ref === 'function') {
+            ref(node)
+          } else if (ref) {
+            ref.current = node
+          }
+        }}
+        sideOffset={sideOffset}
+        onAnimationEnd={(e) => e.stopPropagation()}
+        className={cn(
+          "z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-900 bg-white dark:bg-black p-1 text-gray-900 dark:text-white shadow-lg",
+          "![animation:none] ![transition:none]",
+          className
+        )}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
+  )
+})
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
 const DropdownMenuItem = React.forwardRef<

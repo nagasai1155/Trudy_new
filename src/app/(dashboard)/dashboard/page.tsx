@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -34,17 +33,10 @@ import {
   ChevronDown,
   ChevronLeft,
   Check,
-  Play,
-  FlaskConical,
-  Workflow,
-  Cpu,
-  Trash2,
-  GripVertical,
   Plus,
   Bot
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useAppStore } from '@/stores/app-store'
 
 // Mock data - in real app, this would come from API
 const stats = [
@@ -79,11 +71,9 @@ const stats = [
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user } = useAppStore()
   const [selectedRange, setSelectedRange] = useState('Last month')
   const [selectedCard, setSelectedCard] = useState<number | null>(null) // No card selected by default
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [showNewFeatures, setShowNewFeatures] = useState(false)
   const [showAddChart, setShowAddChart] = useState(false)
   const [chartType, setChartType] = useState<'evaluation' | 'datacollection' | ''>('')
   const [criteriaId, setCriteriaId] = useState('')
@@ -216,16 +206,6 @@ export default function DashboardPage() {
               <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
               <span className="text-sm text-gray-700 dark:text-gray-300">Active calls: <strong className="text-gray-900 dark:text-white">0</strong></span>
             </div>
-            <Button 
-              variant="outline"
-              size="sm" 
-              className="gap-2 rounded-full whitespace-nowrap"
-              onClick={() => setShowNewFeatures(true)}
-            >
-              <span className="bg-primary text-white text-xs px-1.5 py-0.5 rounded">New</span>
-              <span>View new features</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
@@ -428,83 +408,6 @@ export default function DashboardPage() {
           </DialogContent>
         </Dialog>
 
-
-        {/* What's New Dialog */}
-        <Dialog open={showNewFeatures} onOpenChange={setShowNewFeatures}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-black border-gray-200 dark:border-gray-900">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-white">What&apos;s new in Agents Platform</DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-6 py-4">
-              {/* Agent Testing */}
-              <div className="flex items-start gap-4 p-4 hover:bg-primary/5 rounded-lg transition-colors cursor-pointer group border border-transparent hover:border-primary/30">
-                <div className="flex-shrink-0 mt-1">
-                  <FlaskConical className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Agent Testing is here
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Guarantee maximum reliability with comprehensive test suites. Create tests from existing or hypothetical conversations and automatically verify agent responses or tool calls to iterate with confidence.
-                  </p>
-                  <button className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-primary">
-                      <Play className="h-2.5 w-2.5 fill-primary" />
-                    </div>
-                    Watch video
-                  </button>
-                </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1 group-hover:text-primary transition-colors" />
-              </div>
-
-              {/* Agent Workflows */}
-              <div className="flex items-start gap-4 p-4 hover:bg-primary/5 rounded-lg transition-colors cursor-pointer group border border-transparent hover:border-primary/30">
-                <div className="flex-shrink-0 mt-1">
-                  <Workflow className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Agent Workflows
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Visually craft complex logic flows for your conversational agents for fine-grained control over your agent&apos;s behavior.
-                  </p>
-                  <button className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-primary">
-                      <Play className="h-2.5 w-2.5 fill-primary" />
-                    </div>
-                    Watch video
-                  </button>
-                </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1 group-hover:text-primary transition-colors" />
-              </div>
-
-              {/* ElevenLabs Hosted LLMs */}
-              <div className="flex items-start gap-4 p-4 hover:bg-primary/5 rounded-lg transition-colors cursor-pointer group border border-transparent hover:border-primary/30">
-                <div className="flex-shrink-0 mt-1">
-                  <Cpu className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    ElevenLabs Hosted LLMs
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Use models like GLM 4.5 Air (recommended), Qwen3-30B-A3B or GPT-OSS hosted by ElevenLabs for ultra-low latency
-                  </p>
-                  <button className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-primary">
-                      <Play className="h-2.5 w-2.5 fill-primary" />
-                  </div>
-                    Watch video
-                  </button>
-                </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-1 group-hover:text-primary transition-colors" />
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         {/* Custom Date Range Dialog */}
         <Dialog open={showDatePicker} onOpenChange={setShowDatePicker}>

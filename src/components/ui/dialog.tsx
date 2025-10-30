@@ -30,25 +30,56 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] sm:w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 dark:border-gray-900 bg-white dark:bg-black p-4 sm:p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-lg",
-        className
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 disabled:pointer-events-none text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-))
+>(({ className, children, ...props }, ref) => {
+  const internalRef = React.useRef<HTMLDivElement>(null)
+  
+  React.useEffect(() => {
+    if (internalRef.current) {
+      const element = internalRef.current
+      // Keep positioning transforms but remove animations
+      element.style.animation = 'none'
+      element.style.transition = 'none'
+      element.style.opacity = '1'
+      
+      // Remove all animation-related classes but keep positioning
+      const classesToRemove = ['animate-in', 'animate-out', 'fade-in-0', 'fade-out-0', 'zoom-in-95', 'zoom-out-95',
+        'slide-in-from-left-1/2', 'slide-in-from-top-48%', 'slide-out-to-left-1/2', 'slide-out-to-top-48%']
+      classesToRemove.forEach(cls => element.classList.remove(cls))
+    }
+  }, [])
+  
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={(node) => {
+          internalRef.current = node as HTMLDivElement
+          if (typeof ref === 'function') {
+            ref(node)
+          } else if (ref) {
+            ref.current = node
+          }
+        }}
+        onAnimationEnd={(e) => e.stopPropagation()}
+        className={cn(
+          "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] sm:w-full max-w-lg gap-4 border border-gray-200 dark:border-gray-900 bg-white dark:bg-black p-4 sm:p-6 shadow-lg rounded-lg",
+          // Critical: Keep these transforms for centering
+          "translate-x-[-50%] translate-y-[-50%]",
+          // Remove animations but keep positioning
+          "![animation:none]",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 disabled:pointer-events-none text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  )
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
