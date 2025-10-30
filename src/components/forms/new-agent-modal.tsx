@@ -35,12 +35,6 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
     setStep('select')
   }
 
-  const handleContinue = () => {
-    if (selectedTemplate) {
-      setStep('complete')
-    }
-  }
-
   const handleCreateAgent = () => {
     if (selectedTemplate && agentName.trim()) {
       // Add agent to store
@@ -211,7 +205,10 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
           {/* Blank Agent - Full width on top */}
           <div className="mb-3">
             <button
-              onClick={() => setSelectedTemplate('blank')}
+              onClick={() => {
+                setSelectedTemplate('blank')
+                setStep('complete')
+              }}
               className={cn(
                 "relative flex items-center justify-center gap-2.5 p-3 border-2 rounded-lg transition-all duration-200 w-full",
                 selectedTemplate === 'blank' 
@@ -235,7 +232,10 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
             {/* Personal Assistant */}
             <button
-              onClick={() => setSelectedTemplate('personal')}
+              onClick={() => {
+                setSelectedTemplate('personal')
+                setStep('complete')
+              }}
               className={cn(
                 "relative flex flex-col items-start p-3 border-2 rounded-lg transition-all duration-200 text-left w-full",
                 selectedTemplate === 'personal' 
@@ -266,7 +266,10 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
 
             {/* Business Agent */}
             <button
-              onClick={() => setSelectedTemplate('business')}
+              onClick={() => {
+                setSelectedTemplate('business')
+                setStep('complete')
+              }}
               className={cn(
                 "relative flex flex-col items-start p-3 border-2 rounded-lg transition-all duration-200 text-left w-full",
                 selectedTemplate === 'business' 
@@ -309,19 +312,6 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
               />
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Footer - Fixed at bottom */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-900 p-4 sm:p-5 bg-white dark:bg-black">
-        <div className="max-w-2xl mx-auto flex justify-end">
-          <Button
-            onClick={handleContinue}
-            disabled={!selectedTemplate}
-            className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed px-8"
-          >
-            Continue
-          </Button>
         </div>
       </div>
     </div>
