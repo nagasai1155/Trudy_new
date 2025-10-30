@@ -3,8 +3,8 @@ import { Agent, CreateAgentData, UpdateAgentData } from '@/types'
 import { apiClient, endpoints } from '@/lib/api'
 
 interface AgentState {
-  agents: Agent[]
-  selectedAgent: Agent | null
+  agents: any[] // Using any for now since we're using mock data
+  selectedAgent: any | null
   isLoading: boolean
   error: string | null
   
@@ -14,6 +14,7 @@ interface AgentState {
   createAgent: (data: CreateAgentData) => Promise<Agent>
   updateAgent: (id: string, data: UpdateAgentData) => Promise<Agent>
   deleteAgent: (id: string) => Promise<void>
+  addAgent: (data: any) => any // Add local agent without API, returns new agent
   setSelectedAgent: (agent: Agent | null) => void
   testAgent: (id: string, phoneNumber: string) => Promise<void>
 }
@@ -100,6 +101,28 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   
   setSelectedAgent: (agent: Agent | null) => {
     set({ selectedAgent: agent })
+  },
+  
+  addAgent: (data: any) => {
+    // Create a new agent with local ID and timestamp
+    const newAgent = {
+      ...data,
+      id: Date.now(), // Simple ID generation
+      createdAt: new Date().toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric', 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      }),
+      createdBy: data.createdBy || 'You',
+    }
+    set((state) => ({
+      agents: [newAgent, ...state.agents],
+      selectedAgent: newAgent, // Automatically select the newly created agent
+    }))
+    return newAgent
   },
   
   testAgent: async (id: string, phoneNumber: string) => {

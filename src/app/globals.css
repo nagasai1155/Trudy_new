@@ -832,3 +832,9 @@ div[data-radix-popover-content],
   }
 }
 
+/* Override border color for hover states on table rows */
+div.hover\:border-primary:hover,
+tr.hover\:border-primary:hover {
+  border-left-color: hsl(var(--primary)) !important;
+}
+

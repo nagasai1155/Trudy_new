@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/app-store'
+import { useAgentStore } from '@/stores/agent-store'
 
 interface NewAgentModalProps {
   isOpen: boolean
   onClose: () => void
-  onSelectType: (type: 'blank' | 'personal' | 'business') => void
+  onSelectType?: (type: 'blank' | 'personal' | 'business') => void
 }
 
 export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalProps) {
@@ -19,6 +20,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
   const [agentName, setAgentName] = useState('')
   const [chatOnly, setChatOnly] = useState(false)
   const { sidebarCollapsed } = useAppStore()
+  const { addAgent } = useAgentStore()
 
   const handleClose = () => {
     // Reset state when closing
@@ -41,12 +43,24 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
 
   const handleCreateAgent = () => {
     if (selectedTemplate && agentName.trim()) {
-      onSelectType(selectedTemplate)
-      // Reset state
+      // Add agent to store
+      addAgent({
+        name: agentName,
+        type: selectedTemplate,
+        chatOnly: chatOnly,
+      })
+      
+      // Call the onSelectType callback if provided (for navigation)
+      if (onSelectType) {
+        onSelectType(selectedTemplate)
+      }
+      
+      // Reset state and close
       setStep('select')
       setSelectedTemplate(null)
       setAgentName('')
       setChatOnly(false)
+      onClose()
     }
   }
 

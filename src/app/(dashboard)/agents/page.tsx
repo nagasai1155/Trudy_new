@@ -11,9 +11,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { NewAgentModal } from '@/components/forms/new-agent-modal'
+import { AgentIcon } from '@/components/agent-icon'
+import { useAgentStore } from '@/stores/agent-store'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Headphones, Wind, TrendingUp, Wand2, Check, Mic2, Search, Plus, MoreHorizontal, ChevronDown, ExternalLink, Copy, Archive, Trash2, Play } from 'lucide-react'
+import { Headphones, Wind, TrendingUp, Wand2, Check, Mic2, Search, Plus, MoreHorizontal, ExternalLink, Copy, Trash2 } from 'lucide-react'
 
 // Mock agents data with color schemes
 const agents = [
@@ -93,24 +95,27 @@ const agents = [
 
 export default function AgentsPage() {
   const router = useRouter()
+  const { agents: storeAgents, setSelectedAgent } = useAgentStore()
   const [view, setView] = useState<'list'>('list')
-  const [selectedAgent, setSelectedAgent] = useState<number | null>(1)
+  const [localSelectedAgent, setLocalSelectedAgent] = useState<number | null>(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [showNewAgentModal, setShowNewAgentModal] = useState(false)
   
-  const currentAgent = agents.find(agent => agent.id === selectedAgent)
-  const activeColors = currentAgent?.colors || agents[0].colors
+  // Merge initial agents with agents from store (new agents first)
+  const allAgents = [...agents, ...storeAgents]
   
-  const filteredAgents = agents.filter(agent => 
+  const currentAgent = allAgents.find(agent => agent.id === localSelectedAgent)
+  const activeColors = currentAgent?.colors || allAgents[0]?.colors || agents[0].colors
+  
+  const filteredAgents = allAgents.filter(agent => 
     agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    agent.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    agent.agentName.toLowerCase().includes(searchQuery.toLowerCase())
+    agent.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    agent.agentName?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const handleAgentTypeSelect = (type: 'blank' | 'personal' | 'business') => {
+    // Just close the modal - agent is already added to store
     setShowNewAgentModal(false)
-    // Navigate to the appropriate agent creation page based on type
-    router.push('/agents/new')
   }
 
   // List View
@@ -134,14 +139,6 @@ export default function AgentsPage() {
               </div>
               <div className="flex gap-2 w-full sm:w-auto">
                 <Button
-                  variant="outline"
-                  className="border-gray-300 dark:border-gray-700 hover:bg-primary/5 hover:border-primary/40 text-gray-900 dark:text-white gap-2 flex-1 sm:flex-initial transition-all"
-                  onClick={() => router.push('/agents/playground')}
-                >
-                  <Play className="h-4 w-4" />
-                  Playground
-                </Button>
-                <Button
                   className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2 flex-1 sm:flex-initial"
                   onClick={() => setShowNewAgentModal(true)}
                 >
@@ -163,23 +160,14 @@ export default function AgentsPage() {
               />
             </div>
 
-            {/* Archived Link */}
-            <div className="mb-4">
-              <button className="text-sm text-primary hover:text-primary/80 flex items-center gap-1 font-medium transition-colors">
-                <Archive className="h-4 w-4" />
-                Archived
-              </button>
-            </div>
-
             {/* Table - Desktop/Tablet */}
             <div className="hidden md:block border border-gray-200 dark:border-gray-900 rounded-lg overflow-hidden">
               {/* Table Header */}
               <div className="grid grid-cols-[2fr,1.5fr,1.5fr,auto] gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-900">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</div>
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Created by</div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1 cursor-pointer hover:text-primary transition-colors">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Created at
-                  <ChevronDown className="h-4 w-4 text-primary" />
                 </div>
                 <div className="w-8"></div>
               </div>
@@ -189,10 +177,16 @@ export default function AgentsPage() {
                 {filteredAgents.map((agent) => (
                   <div
                     key={agent.id}
-                    className="grid grid-cols-[2fr,1.5fr,1.5fr,auto] gap-4 px-6 py-4 hover:bg-primary/5 cursor-pointer transition-colors border-l-2 border-transparent hover:border-primary"
-                    onClick={() => router.push('/agents/new')}
+                    className="grid grid-cols-[2fr,1.5fr,1.5fr,auto] gap-4 px-6 py-4 hover:bg-primary/5 cursor-pointer transition-all border-l-2 border-transparent hover:border-primary"
+                    onClick={() => {
+                      setSelectedAgent(agent)
+                      router.push('/agents/new')
+                    }}
                   >
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">{agent.name}</div>
+                    <div className="flex items-center gap-3">
+                      <AgentIcon agentId={agent.id} size={40} />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{agent.name}</span>
+                    </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">{agent.createdBy}</div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">{agent.createdAt}</div>
                     <div>
@@ -223,10 +217,6 @@ export default function AgentsPage() {
                             <Copy className="mr-2 h-4 w-4" />
                             Duplicate agent
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                            <Archive className="mr-2 h-4 w-4" />
-                            Archive agent
-                          </DropdownMenuItem>
                           <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete agent
@@ -245,12 +235,18 @@ export default function AgentsPage() {
                 <div
                   key={agent.id}
                   className="border border-gray-200 dark:border-gray-900 rounded-lg p-4 hover:bg-primary/5 hover:border-primary/40 cursor-pointer transition-all"
-                  onClick={() => router.push('/agents/new')}
+                  onClick={() => {
+                    setSelectedAgent(agent)
+                    router.push('/agents/new')
+                  }}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">{agent.name}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">By {agent.createdBy}</p>
+                      <div className="flex items-center gap-3">
+                        <AgentIcon agentId={agent.id} size={36} />
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">{agent.name}</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 ml-11">By {agent.createdBy}</p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -278,10 +274,6 @@ export default function AgentsPage() {
                         <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
                           <Copy className="mr-2 h-4 w-4" />
                           Duplicate agent
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                          <Archive className="mr-2 h-4 w-4" />
-                          Archive agent
                         </DropdownMenuItem>
                         <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">
                           <Trash2 className="mr-2 h-4 w-4" />

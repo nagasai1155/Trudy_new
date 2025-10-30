@@ -14,9 +14,12 @@ import {
 } from '@/components/ui/select'
 import { useRouter } from 'next/navigation'
 import { ChevronRight, Link2, MoreHorizontal, Mic2 } from 'lucide-react'
+import { useAgentStore } from '@/stores/agent-store'
 
 export default function NewAgentPage() {
   const router = useRouter()
+  const { selectedAgent } = useAgentStore()
+  const agentName = selectedAgent?.name || 'Support agent'
   const [selectedTab, setSelectedTab] = useState('agent')
   const [agentLanguage, setAgentLanguage] = useState('english')
   const [firstMessage, setFirstMessage] = useState("Hey there, I'm Alexis from ElevenLabs support. How can I help you today?")
@@ -122,7 +125,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                 Agents
               </button>
               <ChevronRight className="h-4 w-4" />
-              <span className="text-gray-900 dark:text-white font-medium">Support agent</span>
+              <span className="text-gray-900 dark:text-white font-medium">{agentName}</span>
             </div>
 
             {/* Action Buttons */}
@@ -148,7 +151,7 @@ Your responses should be thoughtful, concise, and conversational—typically thr
         {/* Agent Title */}
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-900">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Support agent</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{agentName}</h1>
             <span className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded">
               Public
             </span>
