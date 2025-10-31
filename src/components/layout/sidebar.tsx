@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/stores/app-store'
 import { NAV_ITEMS } from '@/constants'
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import {
   Home,
@@ -33,7 +33,17 @@ import {
   Code,
   Infinity,
   Wand2,
+  Search,
+  Check,
+  Plus,
+  LogOut,
+  BookOpen,
+  FileText,
+  TrendingUp,
+  Award,
+  BarChart2,
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 
 const iconMap: Record<string, any> = {
   Home,
@@ -57,6 +67,29 @@ export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar, mobileMenuOpen, setMobileMenuOpen } = useAppStore()
   const [isPending, startTransition] = useTransition()
   const [clickedPath, setClickedPath] = useState<string | null>(null)
+  const [workspaceModalOpen, setWorkspaceModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState<'workspaces' | 'settings'>('workspaces')
+  const workspaceButtonRef = useRef<HTMLDivElement>(null)
+  const collapsedWorkspaceButtonRef = useRef<HTMLButtonElement>(null)
+  const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 })
+
+  // Calculate modal position when it opens - position to the right of the clicked button
+  useEffect(() => {
+    if (workspaceModalOpen) {
+      setTimeout(() => {
+        const anchor = workspaceButtonRef.current || collapsedWorkspaceButtonRef.current
+        if (anchor) {
+          const rect = anchor.getBoundingClientRect()
+          // Add more top/left margins for visual spacing
+          setModalPosition({
+            top: Math.max(16, Math.min(rect.top + 20, window.innerHeight - 600 - 16)),
+            left: Math.min(rect.right + 8 + 20, window.innerWidth - 320 - 16),
+          })
+        }
+      }, 0)
+    }
+  }, [workspaceModalOpen])
 
   const handleNavigation = (href: string) => {
     // Optimistic UI - immediately show as active
@@ -399,15 +432,26 @@ export function Sidebar() {
               </div>
 
               {/* Workspace Selector */}
-              <div className="sidebar-workspace-selector">
-                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-900 rounded-full flex items-center justify-center">
-                  <Infinity className="sidebar-icon-small text-gray-600 dark:text-gray-400" />
+              <div className="relative">
+                <div 
+                  ref={workspaceButtonRef}
+                  className="sidebar-workspace-selector cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setWorkspaceModalOpen(!workspaceModalOpen)
+                  }}
+                >
+                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-900 rounded-full flex items-center justify-center">
+                    <Infinity className="sidebar-icon-small text-gray-600 dark:text-gray-400" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">Truedy AI</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">My Workspace</div>
+                  </div>
+                  <ChevronDown className="sidebar-icon-small text-gray-500 dark:text-gray-500" />
                 </div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">Truedy AI</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-500">My Workspace</div>
-                </div>
-                <ChevronDown className="sidebar-icon-small text-gray-500 dark:text-gray-500" />
+
+                {/* Workspace Modal (moved to root to support collapsed mode as well) */}
               </div>
             </div>
           )}
@@ -425,12 +469,244 @@ export function Sidebar() {
                 <ChevronRight className="h-5 w-5" />
               </Button>
               
-              {/* Theme Toggle */}
+              {/* Theme Toggle - should appear above workspace icon in collapsed mode */}
               <ThemeToggle />
+
+              {/* Workspace Button (collapsed) */}
+              <button
+                ref={collapsedWorkspaceButtonRef}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const anchor = collapsedWorkspaceButtonRef.current
+                  if (anchor) {
+                    const rect = anchor.getBoundingClientRect()
+                    const computedTop = Math.max(16, Math.min(rect.top + 20, window.innerHeight - 600 - 16))
+                    const computedLeft = Math.min(rect.right + 28, window.innerWidth - 320 - 16)
+                    setModalPosition({ top: computedTop, left: computedLeft })
+                  }
+                  setWorkspaceModalOpen(true)
+                }}
+                className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-900 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800"
+                aria-label="Open workspace"
+                title="My Workspace"
+              >
+                <Infinity className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              </button>
             </div>
           )}
 
       </div>
+      {/* Global Workspace Modal (always rendered for both expanded and collapsed modes) */}
+      {workspaceModalOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-[100] bg-transparent" 
+            onClick={() => setWorkspaceModalOpen(false)}
+          />
+          <div 
+            className="fixed z-[101] w-[320px] h-[600px] bg-white dark:bg-black border-2 border-gray-300 dark:border-gray-700 rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              top: `${modalPosition.top}px`,
+              left: `${modalPosition.left}px`,
+              maxHeight: '600px'
+            }}
+          >
+            <div className="flex flex-col h-full">
+              {/* Tabs */}
+              <div className="flex border-b border-gray-200 dark:border-gray-800">
+                <button
+                  onClick={() => setActiveTab('workspaces')}
+                  className={cn(
+                    "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+                    activeTab === 'workspaces'
+                      ? "text-primary border-b-2 border-primary bg-gray-50 dark:bg-gray-900"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  )}
+                >
+                  Workspaces
+                </button>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={cn(
+                    "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+                    activeTab === 'settings'
+                      ? "text-primary border-b-2 border-primary bg-gray-50 dark:bg-gray-900"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  )}
+                >
+                  Settings
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto">
+                {activeTab === 'workspaces' ? (
+                  <>
+                    {/* Search */}
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        <Input
+                          type="text"
+                          placeholder="Search workspaces..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 w-full"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Workspace List */}
+                    <div className="px-4 py-3">
+                      <div className="space-y-2">
+                        {/* Current Workspace */}
+                        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-900 rounded-lg flex items-center justify-center">
+                              <Infinity className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">Truedy AI</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-2">
+                                <Users className="h-3 w-3" />
+                                4 people
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-gray-500 dark:text-gray-500">Free</span>
+                            <Check className="h-5 w-5 text-primary" />
+                          </div>
+                        </div>
+
+                        {/* Create New Workspace Option */}
+                        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors">
+                          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Plus className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">Create New Workspace</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-500">Start a new workspace</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer Button */}
+                    <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
+                      <Button className="w-full gap-2">
+                        <Plus className="h-4 w-4" />
+                        Create New Workspace
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="px-4 py-3 space-y-6">
+                    {/* Credits Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600"></div>
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Credits</h4>
+                        </div>
+                        <Button size="sm" className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
+                          Upgrade
+                        </Button>
+                      </div>
+                      <div className="space-y-2 pl-6">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Total</span>
+                          <span className="font-medium text-gray-900 dark:text-white">10,000</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Remaining</span>
+                          <span className="font-medium text-gray-900 dark:text-white">10,000</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Settings Section */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Settings</h4>
+                      <div className="space-y-1">
+                        <button className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Subscription</span>
+                        </button>
+                        <button className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Pronunciation dictionaries</span>
+                        </button>
+                        <button className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Theme</span>
+                          <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Payouts Section */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Payouts</h4>
+                      <div className="space-y-1">
+                        <button className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors">
+                          <Award className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Become an affiliate</span>
+                        </button>
+                        <button className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors">
+                          <TrendingUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Apply for Impact Program</span>
+                        </button>
+                        <button className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors">
+                          <BarChart2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Usage analytics</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Voiceover Studio Section */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Voiceover Studio</h4>
+                      <div className="space-y-1">
+                        <button className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors">
+                          <Code className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">AI Speech Classifier</span>
+                        </button>
+                        <button className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors">
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Docs and resources</span>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        </button>
+                        <button className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Terms and privacy</span>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Sign Out */}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                      <button 
+                        className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 text-left transition-colors"
+                        onClick={() => {
+                          setWorkspaceModalOpen(false)
+                          router.push('/')
+                        }}
+                      >
+                        <LogOut className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Sign out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </aside>
     </>
   )
