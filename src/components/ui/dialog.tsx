@@ -19,7 +19,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/50 dark:bg-black/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[70] bg-black/50 dark:bg-black/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -67,7 +67,7 @@ const DialogContent = React.forwardRef<
         }}
         onAnimationEnd={(e) => e.stopPropagation()}
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] sm:w-full max-w-lg gap-4 border border-gray-200 dark:border-gray-900 bg-white dark:bg-black p-4 sm:p-6 shadow-lg rounded-lg",
+          "fixed left-[50%] top-[50%] z-[70] grid w-[calc(100%-2rem)] sm:w-full max-w-lg gap-4 border border-gray-200 dark:border-gray-900 bg-white dark:bg-black p-4 sm:p-6 shadow-lg rounded-lg",
           // Critical: Keep these transforms for centering
           "translate-x-[-50%] translate-y-[-50%]",
           // Remove animations but keep positioning
