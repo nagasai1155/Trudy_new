@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { AddCustomVoiceModal } from '@/components/voice/add-custom-voice-modal'
+import { AgentIcon } from '@/components/agent-icon'
 import {
   Select,
   SelectContent,
@@ -163,6 +164,19 @@ const mockVoices = [
   },
 ]
 
+interface MyVoice {
+  id: string
+  name: string
+  description: string
+  language: string
+  languageCode: string
+  accent: string
+  category: string
+  createdAt: Date
+  source: 'voice-clone' | 'community-voices'
+  provider?: string
+}
+
 export default function VoiceCloningPage() {
   const [activeTab, setActiveTab] = useState('explore')
   const [searchQuery, setSearchQuery] = useState('')
@@ -172,6 +186,7 @@ export default function VoiceCloningPage() {
   const [filtersDialogOpen, setFiltersDialogOpen] = useState(false)
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false)
   const [feedbackText, setFeedbackText] = useState('')
+  const [myVoices, setMyVoices] = useState<MyVoice[]>([])
   
   // Filter states
   const [selectedLanguage, setSelectedLanguage] = useState('')
@@ -188,6 +203,38 @@ export default function VoiceCloningPage() {
     voice.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     voice.description.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const filteredMyVoices = myVoices.filter(voice =>
+    voice.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    voice.description.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const handleAddVoice = (voiceData: { name: string; source: 'voice-clone' | 'community-voices'; provider?: string }) => {
+    console.log('Adding voice:', voiceData)
+    const newVoice: MyVoice = {
+      id: `my-voice-${Date.now()}`,
+      name: voiceData.name,
+      description: `${voiceData.source === 'voice-clone' ? 'Cloned voice' : `Voice from ${voiceData.provider || 'Community'}`}`,
+      language: 'English',
+      languageCode: 'en-US',
+      accent: 'Standard',
+      category: 'Conversational',
+      createdAt: new Date(),
+      source: voiceData.source,
+      provider: voiceData.provider,
+    }
+    console.log('New voice created:', newVoice)
+    setMyVoices(prev => {
+      const updated = [...prev, newVoice]
+      console.log('Updated voices list:', updated)
+      return updated
+    })
+    setCreateVoiceDialogOpen(false)
+    // Switch to My Voices tab to show the newly added voice
+    setActiveTab('my-voices')
+    // Clear search to show all voices
+    setSearchQuery('')
+  }
 
   return (
     <AppLayout>
@@ -431,32 +478,134 @@ export default function VoiceCloningPage() {
           <>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">My Voices</h2>
             
-            {/* Empty State */}
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="relative mb-6">
-                <div className="h-20 w-20 rounded-full border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-black" />
-                <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-white dark:bg-black border border-gray-300 dark:border-gray-700 flex items-center justify-center">
-                  <Info className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            {filteredMyVoices.length === 0 ? (
+              /* Empty State */
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="relative mb-6">
+                  <div className="h-20 w-20 rounded-full border-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-black" />
+                  <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-white dark:bg-black border border-gray-300 dark:border-gray-700 flex items-center justify-center">
+                    <Info className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                  </div>
                 </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  No voice found
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-1">
+                  Add some from library
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
+                  or create a new voice
+                </p>
+                <Button 
+                  onClick={() => setCreateVoiceDialogOpen(true)}
+                  variant="outline" 
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create a voice
+                </Button>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No voice found
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-1">
-                Add some from library
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
-                or create a new voice
-              </p>
-              <Button 
-                onClick={() => setCreateVoiceDialogOpen(true)}
-                variant="outline" 
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Create a voice
-              </Button>
-            </div>
+            ) : (
+              /* Voices List */
+              <div className="space-y-3">
+                {filteredMyVoices.map((voice, index) => {
+                  // Generate a numeric ID for the icon based on the voice's position
+                  const iconId = index + 1000
+                  return (
+                  <div
+                    key={voice.id}
+                    className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white dark:bg-black border border-gray-200 dark:border-gray-900 rounded-lg hover:bg-primary/5 hover:border-primary/40 transition-all"
+                  >
+                    {/* Top Row - Mobile */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {/* Voice Icon - using AgentIcon with unique gradient */}
+                      <AgentIcon agentId={iconId} size={40} />
+
+                      {/* Voice Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {voice.name}
+                        </h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                          {voice.description}
+                        </p>
+                        {/* Mobile: Show language inline */}
+                        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mt-1 sm:hidden">
+                          <span>{voice.language}</span>
+                          <span>•</span>
+                          <span>{voice.accent}</span>
+                        </div>
+                      </div>
+
+                      {/* Actions - Mobile */}
+                      <div className="flex items-center gap-1 sm:hidden flex-shrink-0">
+                        <button className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
+                          <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-900">
+                              <MoreVertical className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
+                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Add to Agent</DropdownMenuItem>
+                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Edit Voice</DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">Delete</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+
+                    {/* Desktop/Tablet Additional Info */}
+                    <div className="hidden sm:flex items-center gap-4 flex-shrink-0">
+                      {/* Language */}
+                      <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 min-w-[140px]">
+                        <div>
+                          <div className="font-medium">{voice.language}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-500">{voice.accent}</div>
+                        </div>
+                      </div>
+
+                      {/* Category - Hidden on tablet */}
+                      <div className="hidden lg:block text-sm text-gray-700 dark:text-gray-300 min-w-[120px]">
+                        {voice.category}
+                      </div>
+
+                      {/* Created Date */}
+                      <div className="hidden lg:block text-sm text-gray-600 dark:text-gray-400 min-w-[120px]">
+                        {voice.createdAt.toLocaleDateString()}
+                      </div>
+
+                      {/* Source */}
+                      <div className="text-sm font-medium text-gray-900 dark:text-white min-w-[100px] text-right">
+                        {voice.source === 'voice-clone' ? 'Cloned' : voice.provider || 'Community'}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2">
+                        <button className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
+                          <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-900">
+                              <MoreVertical className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
+                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Add to Agent</DropdownMenuItem>
+                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Edit Voice</DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">Delete</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </div>
+                  )
+                })}
+              </div>
+            )}
           </>
         )}
 
@@ -465,6 +614,7 @@ export default function VoiceCloningPage() {
         <AddCustomVoiceModal
           isOpen={createVoiceDialogOpen}
           onClose={() => setCreateVoiceDialogOpen(false)}
+          onSave={handleAddVoice}
         />
 
 

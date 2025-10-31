@@ -14,38 +14,51 @@ import { Upload, Cloud } from 'lucide-react'
 interface AddCustomVoiceModalProps {
   isOpen: boolean
   onClose: () => void
+  onSave?: (voiceData: { name: string; source: 'voice-clone' | 'community-voices'; provider?: string }) => void
 }
 
-export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProps) {
+export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceModalProps) {
   const [activeTab, setActiveTab] = useState('voice-clone')
   const [voiceName, setVoiceName] = useState('')
   const [hasAgreed, setHasAgreed] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState('')
 
   const handleSave = () => {
-    console.log('Saving voice:', { voiceName, activeTab, selectedProvider })
-    onClose()
+    if (!voiceName || !hasAgreed || (activeTab === 'community-voices' && !selectedProvider)) {
+      return
+    }
+    
+    // Call the onSave callback with voice data
+    if (onSave) {
+      onSave({
+        name: voiceName,
+        source: activeTab === 'voice-clone' ? 'voice-clone' : 'community-voices',
+        provider: activeTab === 'community-voices' ? selectedProvider : undefined
+      })
+    }
+    
     // Reset form
     setVoiceName('')
     setHasAgreed(false)
     setSelectedProvider('')
+    onClose()
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-white dark:bg-black border-gray-200 dark:border-gray-900">
+      <DialogContent className="max-w-md w-[95vw] sm:w-full bg-white dark:bg-black border-gray-200 dark:border-gray-900 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+          <DialogTitle className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
             Add Custom Voice
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 sm:space-y-5 py-2 sm:py-4">
           {/* Voice Source Tabs */}
           <div className="flex space-x-1 bg-gray-100 dark:bg-gray-900 p-1 rounded-lg">
             <button
               onClick={() => setActiveTab('voice-clone')}
-              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+              className={`flex-1 py-1.5 sm:py-2 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md transition-colors ${
                 activeTab === 'voice-clone'
                   ? 'bg-white dark:bg-black text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -55,7 +68,7 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
             </button>
             <button
               onClick={() => setActiveTab('community-voices')}
-              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+              className={`flex-1 py-1.5 sm:py-2 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md transition-colors ${
                 activeTab === 'community-voices'
                   ? 'bg-white dark:bg-black text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -66,26 +79,26 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
           </div>
 
           {/* Voice Name Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-900 dark:text-white">Voice Name</label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <label className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">Voice Name</label>
             <Input
               value={voiceName}
               onChange={(e) => setVoiceName(e.target.value)}
               placeholder="Enter a voice name"
-              className="w-full"
+              className="w-full text-sm"
             />
           </div>
 
           {/* Upload Audio Clip Section */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-900 dark:text-white">Upload audio clip</label>
-            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors cursor-pointer">
-              <div className="flex flex-col items-center space-y-3">
-                <div className="p-3 bg-gray-100 dark:bg-gray-900 rounded-full">
-                  <Upload className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+          <div className="space-y-1.5 sm:space-y-2">
+            <label className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">Upload audio clip</label>
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-4 sm:p-6 text-center hover:border-gray-400 dark:hover:border-gray-600 transition-colors cursor-pointer">
+              <div className="flex flex-col items-center space-y-2 sm:space-y-3">
+                <div className="p-2 sm:p-3 bg-gray-100 dark:bg-gray-900 rounded-full">
+                  <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 dark:text-gray-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                     Choose a file or drag & drop it here
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
@@ -98,23 +111,23 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
 
           {/* Provider Selection (for Community Voices tab) */}
           {activeTab === 'community-voices' && (
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-900 dark:text-white">Select Provider</label>
-              <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-2 sm:space-y-3">
+              <label className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">Select Provider</label>
+              <div className="grid grid-cols-1 gap-2 sm:gap-3">
                 <button
                   onClick={() => setSelectedProvider('elevenlabs')}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
+                  className={`p-3 sm:p-4 border-2 rounded-lg text-left transition-colors ${
                     selectedProvider === 'elevenlabs'
                       ? 'border-primary bg-primary/10 dark:bg-primary/20'
                       : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-black dark:bg-white rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white dark:text-black text-xs font-bold">E</span>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">ElevenLabs</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">ElevenLabs</h3>
                       <p className="text-xs text-gray-600 dark:text-gray-400">High-quality AI voices</p>
                     </div>
                   </div>
@@ -122,18 +135,18 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
 
                 <button
                   onClick={() => setSelectedProvider('google-cartesia')}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
+                  className={`p-3 sm:p-4 border-2 rounded-lg text-left transition-colors ${
                     selectedProvider === 'google-cartesia'
                       ? 'border-primary bg-primary/10 dark:bg-primary/20'
                       : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white text-xs font-bold">G</span>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Google Cartesia</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">Google Cartesia</h3>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Advanced voice synthesis</p>
                     </div>
                   </div>
@@ -141,18 +154,18 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
 
                 <button
                   onClick={() => setSelectedProvider('lmnt')}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
+                  className={`p-3 sm:p-4 border-2 rounded-lg text-left transition-colors ${
                     selectedProvider === 'lmnt'
                       ? 'border-primary bg-primary/10 dark:bg-primary/20'
                       : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white text-xs font-bold">L</span>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">LMNT</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">LMNT</h3>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Real-time voice generation</p>
                     </div>
                   </div>
@@ -162,32 +175,32 @@ export function AddCustomVoiceModal({ isOpen, onClose }: AddCustomVoiceModalProp
           )}
 
           {/* Confirmation Checkbox */}
-          <div className="flex items-start space-x-3">
+          <div className="flex items-start space-x-2 sm:space-x-3">
             <input
               type="checkbox"
               id="agreement"
               checked={hasAgreed}
               onChange={(e) => setHasAgreed(e.target.checked)}
-              className="mt-1 h-4 w-4 text-primary border-gray-300 dark:border-gray-700 rounded focus:ring-primary dark:focus:ring-primary"
+              className="mt-0.5 sm:mt-1 h-4 w-4 text-primary border-gray-300 dark:border-gray-700 rounded focus:ring-primary dark:focus:ring-primary flex-shrink-0"
             />
-            <label htmlFor="agreement" className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+            <label htmlFor="agreement" className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
               I hereby confirm that I have all necessary rights or consents to upload and clone these voice samples and that I will not use the platform-generated content for any illegal, fraudulent, or harmful purpose.
             </label>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 sm:space-x-0 pt-2 sm:pt-4">
             <Button
               variant="outline"
               onClick={onClose}
-              className="bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800"
+              className="w-full sm:w-auto bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-800 text-sm"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSave}
               disabled={!voiceName || !hasAgreed || (activeTab === 'community-voices' && !selectedProvider)}
-              className="bg-gray-600 dark:bg-gray-300 hover:bg-gray-700 dark:hover:bg-gray-400 text-white dark:text-black disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto bg-gray-600 dark:bg-gray-300 hover:bg-gray-700 dark:hover:bg-gray-400 text-white dark:text-black disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               Save
             </Button>
