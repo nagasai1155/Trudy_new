@@ -69,7 +69,16 @@ const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => {
-  const internalRef = React.useRef<HTMLDivElement>(null)
+  const internalRef = React.useRef<HTMLDivElement | null>(null)
+  
+  // Helper to safely set forwarded refs (function or object) without TS readonly errors
+  function setForwardedRef<T>(forwardedRef: React.ForwardedRef<T>, value: T | null) {
+    if (typeof forwardedRef === 'function') {
+      forwardedRef(value)
+    } else if (forwardedRef) {
+      ;(forwardedRef as React.MutableRefObject<T | null>).current = value
+    }
+  }
   
   React.useEffect(() => {
     if (internalRef.current) {
@@ -91,12 +100,8 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         ref={(node) => {
-          internalRef.current = node as HTMLDivElement
-          if (typeof ref === 'function') {
-            ref(node)
-          } else if (ref) {
-            ref.current = node
-          }
+          (internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node as HTMLDivElement | null
+          setForwardedRef(ref, node as React.ElementRef<typeof SelectPrimitive.Content> | null)
         }}
         onAnimationEnd={(e) => e.stopPropagation()}
         className={cn(
