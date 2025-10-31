@@ -9,7 +9,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { sidebarCollapsed, mobileMenuOpen, setMobileMenuOpen } = useAppStore()
+  const { sidebarCollapsed, mobileMenuOpen, setMobileMenuOpen, modalOpen } = useAppStore()
 
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-black">
@@ -27,7 +27,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         className={cn(
           'flex flex-1 flex-col transition-all duration-300 ease-out w-full',
           // Desktop XL: adjust margin based on sidebar state (1280px+)
-          sidebarCollapsed ? 'xl:ml-16' : 'xl:ml-72',
+          // When modal is open, no margin needed
+          modalOpen ? 'xl:ml-0' : (sidebarCollapsed ? 'xl:ml-16' : 'xl:ml-72'),
           // Mobile/Tablet: full width (below 1280px)
           'ml-0'
         )}

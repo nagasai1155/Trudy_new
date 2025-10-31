@@ -64,7 +64,7 @@ const iconMap: Record<string, any> = {
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { sidebarCollapsed, toggleSidebar, mobileMenuOpen, setMobileMenuOpen } = useAppStore()
+  const { sidebarCollapsed, toggleSidebar, mobileMenuOpen, setMobileMenuOpen, modalOpen } = useAppStore()
   const [isPending, startTransition] = useTransition()
   const [clickedPath, setClickedPath] = useState<string | null>(null)
   const [workspaceModalOpen, setWorkspaceModalOpen] = useState(false)
@@ -111,7 +111,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Menu Button - Right side for mobile */}
-      {!mobileMenuOpen && (
+      {!mobileMenuOpen && !modalOpen && (
         <Button
           variant="default"
           size="icon"
@@ -128,9 +128,11 @@ export function Sidebar() {
           // Mobile/Tablet (< 1280px): slide in from right
           'w-72 right-0',
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full',
-          // Desktop (xl: 1280px+): fixed on left, always visible
+          // Desktop (xl: 1280px+): fixed on left, always visible unless modal is open
           'xl:left-0 xl:right-auto xl:translate-x-0',
-          sidebarCollapsed ? 'xl:w-20' : 'xl:w-72'
+          sidebarCollapsed ? 'xl:w-20' : 'xl:w-72',
+          // Hide sidebar when modal is open
+          modalOpen && 'hidden'
         )}
       >
       <div className="flex h-full flex-col">

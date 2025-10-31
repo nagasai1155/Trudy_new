@@ -31,6 +31,8 @@ interface AppState {
   mobileMenuOpen: boolean
   toggleMobileMenu: () => void
   setMobileMenuOpen: (open: boolean) => void
+  modalOpen: boolean
+  setModalOpen: (open: boolean) => void
   
   // Theme
   theme: 'light' | 'dark' | 'system'
@@ -108,6 +110,8 @@ export const useAppStore = create<AppState>()(
       toggleMobileMenu: () =>
         set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
       setMobileMenuOpen: (open) => set({ mobileMenuOpen: open }),
+      modalOpen: false,
+      setModalOpen: (open) => set({ modalOpen: open }),
       
       // Theme
       theme: 'system',

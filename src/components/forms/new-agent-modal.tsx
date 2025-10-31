@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Bot, Headphones, Wind, Check, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,8 +19,17 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
   const [selectedTemplate, setSelectedTemplate] = useState<'blank' | 'personal' | 'business' | null>(null)
   const [agentName, setAgentName] = useState('')
   const [chatOnly, setChatOnly] = useState(false)
-  const { sidebarCollapsed } = useAppStore()
+  const { sidebarCollapsed, setModalOpen } = useAppStore()
   const { addAgent } = useAgentStore()
+
+  // Sync modal open state with app store
+  useEffect(() => {
+    setModalOpen(isOpen)
+    return () => {
+      // Reset when component unmounts
+      setModalOpen(false)
+    }
+  }, [isOpen, setModalOpen])
 
   const handleClose = () => {
     // Reset state when closing
@@ -28,6 +37,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
     setSelectedTemplate(null)
     setAgentName('')
     setChatOnly(false)
+    setModalOpen(false)
     onClose()
   }
 
@@ -54,6 +64,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
       setSelectedTemplate(null)
       setAgentName('')
       setChatOnly(false)
+      setModalOpen(false)
       onClose()
     }
   }
@@ -66,7 +77,6 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
       <div 
         className={cn(
           "fixed inset-0 z-50 bg-white dark:bg-black flex flex-col transition-all duration-300",
-          sidebarCollapsed ? 'xl:left-20' : 'xl:left-72',
           'left-0'
         )}
       >
@@ -177,59 +187,56 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
     <div 
       className={cn(
         "fixed inset-0 z-50 bg-white dark:bg-black flex flex-col transition-all duration-300",
-        // Adjust left position based on sidebar state on desktop
-        sidebarCollapsed ? 'xl:left-20' : 'xl:left-72',
-        // Full width on mobile/tablet
         'left-0'
       )}
     >
-      {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between p-4 sm:p-5 lg:p-6">
-        <div className="flex-1 text-center">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">New agent</h1>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1.5">What type of agent would you like to create?</p>
-        </div>
+      {/* Header - Only Close Icon */}
+      <div className="flex-shrink-0 flex items-center justify-end p-4">
         <Button
           variant="ghost"
           size="icon"
           onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-900"
+          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-full transition-all"
         >
           <X className="h-5 w-5" />
         </Button>
       </div>
 
       {/* Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 flex items-center justify-center">
-        <div className="w-full max-w-2xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-6 sm:p-8 lg:p-10 flex items-center justify-center bg-gray-50/30 dark:bg-gray-950/30">
+        <div className="w-full max-w-3xl mx-auto pt-4">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">New agent</h1>
+            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">What type of agent would you like to create?</p>
+          </div>
           {/* Blank Agent - Full width on top */}
-          <div className="mb-3">
+          <div className="mb-4">
             <button
               onClick={() => {
                 setSelectedTemplate('blank')
                 setStep('complete')
               }}
               className={cn(
-                "relative flex items-center justify-center gap-2.5 p-3 border-2 rounded-lg transition-all duration-200 w-full",
+                "relative flex items-center justify-center gap-3 p-3 sm:p-3.5 border-2 rounded-xl transition-all duration-300 w-full bg-white dark:bg-gray-900",
                 selectedTemplate === 'blank' 
-                  ? "border-primary shadow-lg shadow-primary/20" 
-                  : "border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-md"
+                  ? "border-primary shadow-xl shadow-primary/20 scale-[1.02]" 
+                  : "border-gray-200 dark:border-gray-800 hover:border-primary/50 hover:shadow-lg hover:scale-[1.01] bg-white dark:bg-gray-900"
               )}
             >
               {selectedTemplate === 'blank' && (
-                <div className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
-                  <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+                <div className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-md animate-in zoom-in-50 duration-200">
+                  <Check className="h-3 w-3 text-white" strokeWidth={3} />
                 </div>
               )}
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900">
-                <Bot className="h-3.5 w-3.5 text-gray-700 dark:text-gray-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 shadow-sm">
+                <Bot className="h-5 w-5 text-gray-700 dark:text-gray-300" />
               </div>
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white">Blank Agent</h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Blank Agent</h3>
             </button>
           </div>
 
           {/* Personal Assistant and Business Agent - Side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             {/* Personal Assistant */}
             <button
               onClick={() => {
@@ -237,28 +244,28 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
                 setStep('complete')
               }}
               className={cn(
-                "relative flex flex-col items-start p-3 border-2 rounded-lg transition-all duration-200 text-left w-full",
+                "relative flex flex-col items-start p-5 sm:p-6 border-2 rounded-xl transition-all duration-300 text-left w-full bg-white dark:bg-gray-900",
                 selectedTemplate === 'personal' 
-                  ? "border-primary shadow-lg shadow-primary/20" 
-                  : "border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-md"
+                  ? "border-primary shadow-xl shadow-primary/20 scale-[1.02]" 
+                  : "border-gray-200 dark:border-gray-800 hover:border-primary/50 hover:shadow-lg hover:scale-[1.01]"
               )}
             >
               {selectedTemplate === 'personal' && (
-                <div className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
-                  <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+                <div className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-md animate-in zoom-in-50 duration-200">
+                  <Check className="h-3 w-3 text-white" strokeWidth={3} />
                 </div>
               )}
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 dark:bg-primary/20">
-                  <Headphones className="h-4 w-4 text-primary dark:text-primary" />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 dark:from-primary/30 dark:to-primary/20 shadow-sm">
+                  <Headphones className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Personal Assistant</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Personal Assistant</h3>
               </div>
-              <div className="space-y-2 w-full">
-                <div className="bg-primary text-white p-2.5 rounded-2xl rounded-br-sm text-xs max-w-[85%]">
+              <div className="space-y-2.5 w-full">
+                <div className="bg-gradient-to-br from-primary to-primary/90 text-white p-3 rounded-2xl rounded-br-sm text-xs leading-relaxed max-w-[88%] shadow-sm">
                   Could you see whether I have any urgent outstanding emails?
                 </div>
-                <div className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-2.5 rounded-2xl rounded-bl-sm text-xs ml-auto max-w-[85%]">
+                <div className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-3 rounded-2xl rounded-bl-sm text-xs ml-auto max-w-[88%] shadow-sm">
                   Sure, let me check. You&apos;ve got one urgent email from your manager about tomorrow&apos;s meeting. Want a quick summary?
                 </div>
               </div>
@@ -271,28 +278,28 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
                 setStep('complete')
               }}
               className={cn(
-                "relative flex flex-col items-start p-3 border-2 rounded-lg transition-all duration-200 text-left w-full",
+                "relative flex flex-col items-start p-5 sm:p-6 border-2 rounded-xl transition-all duration-300 text-left w-full bg-white dark:bg-gray-900",
                 selectedTemplate === 'business' 
-                  ? "border-primary shadow-lg shadow-primary/20" 
-                  : "border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-md"
+                  ? "border-primary shadow-xl shadow-primary/20 scale-[1.02]" 
+                  : "border-gray-200 dark:border-gray-800 hover:border-primary/50 hover:shadow-lg hover:scale-[1.01]"
               )}
             >
               {selectedTemplate === 'business' && (
-                <div className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
-                  <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+                <div className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-md animate-in zoom-in-50 duration-200">
+                  <Check className="h-3 w-3 text-white" strokeWidth={3} />
                 </div>
               )}
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                  <Wind className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 shadow-sm">
+                  <Wind className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Business Agent</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Business Agent</h3>
               </div>
-              <div className="space-y-2 w-full">
-                <div className="bg-primary text-white p-2.5 rounded-2xl rounded-br-sm text-xs max-w-[85%]">
+              <div className="space-y-2.5 w-full">
+                <div className="bg-gradient-to-br from-primary to-primary/90 text-white p-3 rounded-2xl rounded-br-sm text-xs leading-relaxed max-w-[88%] shadow-sm">
                   Can you tell me more about pricing?
                 </div>
-                <div className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-2.5 rounded-2xl rounded-bl-sm text-xs ml-auto max-w-[85%]">
+                <div className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-3 rounded-2xl rounded-bl-sm text-xs ml-auto max-w-[88%] shadow-sm">
                   Absolutely! We offer three plans, Starter, Pro, and Enterprise. Want a quick breakdown, or should I help you pick the best fit?
                 </div>
               </div>
@@ -300,13 +307,15 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
           </div>
 
           {/* Pagination Dots */}
-          <div className="flex justify-center space-x-2 mt-6">
+          <div className="flex justify-center items-center space-x-2 mt-8">
             {['blank', 'personal', 'business'].map((templateId, index) => (
               <button
                 key={templateId}
                 className={cn(
-                  "h-2 w-2 rounded-full transition-all duration-200",
-                  selectedTemplate === templateId ? "bg-primary w-6" : "bg-gray-300 dark:bg-gray-700"
+                  "h-2 rounded-full transition-all duration-300",
+                  selectedTemplate === templateId 
+                    ? "bg-primary w-8 shadow-md shadow-primary/30" 
+                    : "bg-gray-300 dark:bg-gray-700 w-2 hover:bg-gray-400 dark:hover:bg-gray-600"
                 )}
                 onClick={() => setSelectedTemplate(templateId as 'blank' | 'personal' | 'business')}
               />
