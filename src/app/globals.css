@@ -544,18 +544,15 @@ div[data-radix-popover-content],
 
 .sidebar-nav-item {
   @apply relative flex items-center px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-400 rounded-lg;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateX(0);
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-nav-item:hover {
   @apply text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900;
-  transform: translateX(4px);
 }
 
 .sidebar-nav-item.active {
   @apply bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white;
-  transform: translateX(4px);
 }
 
 .sidebar-nav-item.active::before {
@@ -573,11 +570,6 @@ div[data-radix-popover-content],
 
 /* Collapsed sidebar - prevent transform overflow */
 @media (min-width: 1280px) {
-  .sidebar-nav-item.justify-center:hover,
-  .sidebar-nav-item.justify-center.active {
-    transform: scale(1.1);
-  }
-  
   .sidebar-nav-item.justify-center.active::before {
     display: none;
   }
