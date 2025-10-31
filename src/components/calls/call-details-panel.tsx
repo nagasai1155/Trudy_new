@@ -98,16 +98,16 @@ export function CallDetailsPanel({ isOpen, onClose, call }: CallDetailsPanelProp
         onClick={onClose}
       />
 
-      {/* Centered Modal */}
+      {/* Right-side Panel */}
       <div 
-        className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[95vw] sm:w-[90vw] md:w-[800px] lg:w-[900px] max-w-[95vw] max-h-[90vh] bg-white dark:bg-black shadow-2xl rounded-lg z-[201] transition-all duration-300 ease-out ${
-          isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+        className={`fixed top-0 right-0 h-full w-full sm:w-[600px] lg:w-[700px] max-w-[95vw] bg-white dark:bg-black shadow-2xl z-[201] transition-transform duration-300 ease-out flex flex-col ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex flex-col h-full max-h-[90vh]">
+        <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-900 flex-shrink-0 rounded-t-lg">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-900 flex-shrink-0">
             <div className="min-w-0 flex-1 pr-4">
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
                 Conversation with {call.agent}
@@ -260,7 +260,7 @@ export function CallDetailsPanel({ isOpen, onClose, call }: CallDetailsPanelProp
           </div>
 
           {/* Metadata Panel - Fixed at Bottom */}
-          <div className="border-t border-gray-200 dark:border-gray-900 p-4 sm:p-6 bg-gray-50 dark:bg-gray-900 flex-shrink-0 rounded-b-lg">
+          <div className="border-t border-gray-200 dark:border-gray-900 p-4 sm:p-6 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs sm:text-sm">
                 <div className="flex items-center space-x-2">
