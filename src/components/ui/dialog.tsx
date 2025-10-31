@@ -31,10 +31,10 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  const internalRef = React.useRef<HTMLDivElement>(null)
+  const internalRef = React.useRef<HTMLDivElement | null>(null)
   
   // Helper to safely set forwarded refs (function or object) without TS readonly errors
-  function setForwardedRef<T>(forwardedRef: React.ForwardedRef<T>, value: T) {
+  function setForwardedRef<T>(forwardedRef: React.ForwardedRef<T>, value: T | null) {
     if (typeof forwardedRef === 'function') {
       forwardedRef(value)
     } else if (forwardedRef) {
@@ -62,8 +62,8 @@ const DialogContent = React.forwardRef<
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={(node) => {
-          internalRef.current = node as HTMLDivElement
-          setForwardedRef(ref, node as React.ElementRef<typeof DialogPrimitive.Content>)
+          (internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node as HTMLDivElement | null
+          setForwardedRef(ref, node as React.ElementRef<typeof DialogPrimitive.Content> | null)
         }}
         onAnimationEnd={(e) => e.stopPropagation()}
         className={cn(
