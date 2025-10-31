@@ -87,6 +87,33 @@ const stats = [
     trend: 'up',
     icon: CheckCircle,
   },
+  {
+    title: 'Answered Calls',
+    value: '1,850',
+    change: '+8.1%',
+    trend: 'up',
+    icon: Phone,
+  },
+  {
+    title: 'Conversion Rate',
+    value: '12.4%',
+    change: '+1.1%',
+    trend: 'up',
+    icon: TrendingUp,
+  },
+]
+
+// Additional mock datasets
+const hourlyDistributionData = [
+  { hour: '00', calls: 12 }, { hour: '03', calls: 6 }, { hour: '06', calls: 18 },
+  { hour: '09', calls: 42 }, { hour: '12', calls: 65 }, { hour: '15', calls: 58 },
+  { hour: '18', calls: 49 }, { hour: '21', calls: 23 }
+]
+
+const topCampaigns = [
+  { name: 'Winter Promo', calls: 540, success: '22%' },
+  { name: 'Renewals Q1', calls: 410, success: '31%' },
+  { name: 'Feedback Survey', calls: 320, success: '27%' },
 ]
 
 export default function AnalyticsPage() {
@@ -117,7 +144,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6">
           {stats.map((stat) => {
             const Icon = stat.icon
             return (
@@ -216,6 +243,53 @@ export default function AnalyticsPage() {
                       <Tooltip contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
                     </PieChart>
                   </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Extra row */}
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+              {/* Hourly Distribution */}
+              <Card className="hover:border-primary/40 hover:shadow-lg transition-all">
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-white">Hourly Distribution</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                    Volume by time of day
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={hourlyDistributionData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-gray-800" />
+                      <XAxis dataKey="hour" tick={{ fontSize: 12, fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                      <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                      <Tooltip contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
+                      <Line type="monotone" dataKey="calls" stroke="#3b82f6" strokeWidth={2} name="Calls" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Top Campaigns */}
+              <Card className="hover:border-primary/40 hover:shadow-lg transition-all">
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-white">Top Campaigns</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                    Highest call volumes and success
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {topCampaigns.map((c) => (
+                      <div key={c.name} className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-800 px-3 py-2">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">Calls: {c.calls.toLocaleString()}</div>
+                        </div>
+                        <div className="text-sm font-semibold text-green-600 dark:text-green-400">{c.success}</div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
