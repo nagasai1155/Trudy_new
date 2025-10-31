@@ -25,7 +25,6 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Loader2,
   Menu,
   ChevronDown,
   ChevronUp,
@@ -65,7 +64,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { sidebarCollapsed, toggleSidebar, mobileMenuOpen, setMobileMenuOpen, modalOpen } = useAppStore()
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const [clickedPath, setClickedPath] = useState<string | null>(null)
   const [workspaceModalOpen, setWorkspaceModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -215,18 +214,13 @@ export function Sidebar() {
             <div className="mb-6">
               <button
                 onClick={() => handleNavigation('/dashboard')}
-                disabled={isPending && clickedPath === '/dashboard'}
                 className={cn(
                   'sidebar-nav-item w-full',
                   (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) && 'active',
                   sidebarCollapsed && !mobileMenuOpen && 'justify-center px-2'
                 )}
               >
-                {isPending && clickedPath === '/dashboard' ? (
-                  <Loader2 className={cn('animate-spin sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                ) : (
-                  <Home className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                )}
+                <Home className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
                 {(!sidebarCollapsed || mobileMenuOpen) && <span className="transition-all">Home</span>}
               </button>
             </div>
@@ -246,25 +240,18 @@ export function Sidebar() {
                   const Icon = iconMap[item.icon]
                   const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                   const isClickedActive = clickedPath === item.href
-                  const isNavigating = isPending && isClickedActive
 
               return (
                     <button
                       key={item.href}
                       onClick={() => handleNavigation(item.href)}
-                      disabled={isNavigating}
                   className={cn(
                         'sidebar-nav-item w-full',
                         (isActive || isClickedActive) && 'active',
-                        isNavigating && 'opacity-70 cursor-wait',
                         sidebarCollapsed && !mobileMenuOpen && 'justify-center px-2'
                       )}
                     >
-                      {isNavigating ? (
-                        <Loader2 className={cn('animate-spin sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                      ) : (
-                        <Icon className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                      )}
+                      <Icon className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
                       {(!sidebarCollapsed || mobileMenuOpen) && <span className="transition-all">{item.title}</span>}
                     </button>
                   )
@@ -285,25 +272,18 @@ export function Sidebar() {
                   const Icon = iconMap[item.icon]
                   const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                   const isClickedActive = clickedPath === item.href
-                  const isNavigating = isPending && isClickedActive
 
                   return (
                     <button
                       key={item.href}
                       onClick={() => handleNavigation(item.href)}
-                      disabled={isNavigating}
                       className={cn(
                         'sidebar-nav-item w-full',
                         (isActive || isClickedActive) && 'active',
-                        isNavigating && 'opacity-70 cursor-wait',
                         sidebarCollapsed && !mobileMenuOpen && 'justify-center px-2'
                       )}
                     >
-                      {isNavigating ? (
-                        <Loader2 className={cn('animate-spin sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                      ) : (
-                        <Icon className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                      )}
+                      <Icon className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
                       {(!sidebarCollapsed || mobileMenuOpen) && <span className="transition-all">{item.title}</span>}
                     </button>
                   )
@@ -324,25 +304,18 @@ export function Sidebar() {
             const Icon = iconMap[item.icon]
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
             const isClickedActive = clickedPath === item.href
-            const isNavigating = isPending && isClickedActive
             
                   return (
                     <button
                       key={item.href}
                       onClick={() => handleNavigation(item.href)}
-                      disabled={isNavigating}
                       className={cn(
                         'sidebar-nav-item w-full',
                         (isActive || isClickedActive) && 'active',
-                        isNavigating && 'opacity-70 cursor-wait',
                         sidebarCollapsed && !mobileMenuOpen && 'justify-center px-2'
                       )}
                     >
-                      {isNavigating ? (
-                        <Loader2 className={cn('animate-spin sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                      ) : (
-                        <Icon className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                      )}
+                      <Icon className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
                       {(!sidebarCollapsed || mobileMenuOpen) && <span className="transition-all">{item.title}</span>}
                     </button>
                   )
@@ -362,25 +335,18 @@ export function Sidebar() {
                   const Icon = iconMap[item.icon]
                   const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                   const isClickedActive = clickedPath === item.href
-                  const isNavigating = isPending && isClickedActive
 
                   return (
                     <button
                       key={item.href}
                       onClick={() => handleNavigation(item.href)}
-                      disabled={isNavigating}
                       className={cn(
                         'sidebar-nav-item w-full',
                         (isActive || isClickedActive) && 'active',
-                        isNavigating && 'opacity-70 cursor-wait',
                         sidebarCollapsed && !mobileMenuOpen && 'justify-center px-2'
                       )}
                     >
-                      {isNavigating ? (
-                        <Loader2 className={cn('animate-spin sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                      ) : (
-                        <Icon className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
-                      )}
+                      <Icon className={cn('sidebar-icon', sidebarCollapsed && !mobileMenuOpen ? '' : 'mr-3')} />
                       {(!sidebarCollapsed || mobileMenuOpen) && <span className="transition-all">{item.title}</span>}
                     </button>
                   )
@@ -396,26 +362,19 @@ export function Sidebar() {
                 const Icon = iconMap[item.icon] || Settings
                 const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 const isClickedActive = clickedPath === item.href
-                const isNavigating = isPending && isClickedActive
                 const isCollapsed = sidebarCollapsed && !mobileMenuOpen
 
              return (
                   <button
                 key={item.href}
                 onClick={() => handleNavigation(item.href)}
-                disabled={isNavigating}
                 className={cn(
                       'sidebar-nav-item w-full',
                       (isActive || isClickedActive) && 'active',
-                  isCollapsed && 'justify-center px-2',
-                      isNavigating && 'opacity-70 cursor-wait'
+                  isCollapsed && 'justify-center px-2'
                 )}
               >
-                {isNavigating ? (
-                      <Loader2 className={cn('animate-spin sidebar-icon', isCollapsed ? '' : 'mr-3')} />
-                ) : (
                       <Icon className={cn('sidebar-icon', isCollapsed ? '' : 'mr-3')} />
-                )}
                 {!isCollapsed && <span className="transition-all">{item.title}</span>}
                   </button>
             )
