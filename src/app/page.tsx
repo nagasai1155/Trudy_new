@@ -31,13 +31,21 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-black/95 backdrop-blur shadow-sm">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center space-x-2">
-            {/* Logo for both light and dark mode */}
+            {/* Logo for both light and dark mode - using CSS to prevent flash */}
+            <Image
+              src="/icons/Frame 1000004887.png"
+              alt="Truedy AI"
+              width={175}
+              height={45}
+              className="h-11 w-auto object-contain dark:block hidden"
+              priority
+            />
             <Image
               src="/icons/image2.jpg"
               alt="Truedy AI"
               width={140}
               height={36}
-              className="h-9 w-auto object-contain"
+              className="h-9 w-auto object-contain dark:hidden block"
               priority
             />
           </div>
@@ -289,13 +297,20 @@ export default function LandingPage() {
       <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black py-12">
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex items-center space-x-2">
-            {/* Logo for both light and dark mode */}
+            {/* Logo for both light and dark mode - using CSS to prevent flash */}
+            <Image
+              src="/icons/Frame 1000004887.png"
+              alt="Truedy AI"
+              width={150}
+              height={40}
+              className="h-10 w-auto object-contain dark:block hidden"
+            />
             <Image
               src="/icons/image2.jpg"
               alt="Truedy AI"
               width={120}
               height={32}
-              className="h-8 w-auto object-contain"
+              className="h-8 w-auto object-contain dark:hidden block"
             />
           </div>
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">

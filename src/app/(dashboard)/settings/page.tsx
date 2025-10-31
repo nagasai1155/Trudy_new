@@ -9,12 +9,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useState } from 'react'
-import { Camera, User } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Camera, User, Users, Mail, UserPlus, Shield, Trash2, RefreshCw } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+
+interface WorkspaceDeveloper {
+  id: string
+  name: string
+  email: string
+  role: 'admin' | 'developer' | 'member'
+  avatar?: string
+  joinedAt: string
+  lastActive?: string
+}
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile')
   const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [developers, setDevelopers] = useState<WorkspaceDeveloper[]>([])
+  const [pendingInvites, setPendingInvites] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<'developer' | 'member'>('developer')
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -24,6 +49,99 @@ export default function SettingsPage() {
         setProfileImage(reader.result as string)
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  // Real-time fetch function for developers
+  const fetchDevelopers = useCallback(async () => {
+    try {
+      // Simulated API call - replace with actual API endpoint
+      // const response = await apiClient.get('/workspaces/members')
+      
+      // Mock data for demonstration - replace with real API call
+      const mockDevelopers: WorkspaceDeveloper[] = [
+        {
+          id: '1',
+          name: 'John Doe',
+          email: 'john.doe@example.com',
+          role: 'admin',
+          joinedAt: '2024-01-15',
+          lastActive: 'Just now'
+        },
+        {
+          id: '2',
+          name: 'Jane Smith',
+          email: 'jane.smith@example.com',
+          role: 'developer',
+          joinedAt: '2024-02-20',
+          lastActive: '2 minutes ago'
+        },
+        {
+          id: '3',
+          name: 'Bob Johnson',
+          email: 'bob.johnson@example.com',
+          role: 'developer',
+          joinedAt: '2024-03-10',
+          lastActive: '1 hour ago'
+        },
+      ]
+      
+      setDevelopers(mockDevelopers)
+      setIsLoading(false)
+    } catch (error) {
+      console.error('Failed to fetch developers:', error)
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Real-time polling for developers (updates every 5 seconds)
+  useEffect(() => {
+    if (activeTab === 'workspace') {
+      fetchDevelopers()
+      const interval = setInterval(() => {
+        fetchDevelopers()
+      }, 5000) // Poll every 5 seconds for real-time updates
+
+      return () => clearInterval(interval)
+    }
+  }, [activeTab, fetchDevelopers])
+
+  const handleInviteDeveloper = async () => {
+    if (!inviteEmail.trim()) return
+
+    try {
+      // Simulated API call - replace with actual API endpoint
+      // await apiClient.post('/workspaces/invite', {
+      //   email: inviteEmail,
+      //   role: inviteRole
+      // })
+      
+      // Mock - add to pending invites
+      setPendingInvites([...pendingInvites, {
+        id: Date.now().toString(),
+        email: inviteEmail,
+        role: inviteRole,
+        status: 'pending'
+      }])
+      
+      setInviteEmail('')
+      setInviteDialogOpen(false)
+      
+      // Refresh immediately after invite
+      fetchDevelopers()
+    } catch (error) {
+      console.error('Failed to invite developer:', error)
+    }
+  }
+
+  const handleRemoveDeveloper = async (id: string) => {
+    try {
+      // Simulated API call - replace with actual API endpoint
+      // await apiClient.delete(`/workspaces/members/${id}`)
+      
+      setDevelopers(developers.filter(d => d.id !== id))
+    } catch (error) {
+      console.error('Failed to remove developer:', error)
     }
   }
 
@@ -249,8 +367,62 @@ export default function SettingsPage() {
           {/* Workspace Invites Tab Content */}
           {activeTab === 'workspace' && (
             <div className="space-y-8">
-              {/* Title */}
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Workspace Invites</h2>
+              {/* Title with Invite Button */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Workspace Developers</h2>
+                <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2">
+                      <UserPlus className="h-4 w-4" />
+                      Invite Developer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Invite Developer</DialogTitle>
+                      <DialogDescription>
+                        Invite a developer to join your workspace. They will receive an email invitation.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                          Email Address
+                        </label>
+                        <Input
+                          type="email"
+                          placeholder="developer@example.com"
+                          value={inviteEmail}
+                          onChange={(e) => setInviteEmail(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                          Role
+                        </label>
+                        <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as 'developer' | 'member')}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="developer">Developer</SelectItem>
+                            <SelectItem value="member">Member</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex justify-end gap-2 pt-2">
+                        <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleInviteDeveloper} disabled={!inviteEmail.trim()}>
+                          Send Invite
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
 
               {/* Important Information Box */}
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 space-y-4">
@@ -279,12 +451,142 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* No Pending Invites */}
-              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-lg transition-all">
-                <p className="text-gray-600 dark:text-gray-400 text-center py-4">
-                  You have no pending workspace invites.
-                </p>
+              {/* Developers List */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Team Members ({developers.length})
+                  </h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={fetchDevelopers}
+                    className="gap-2"
+                    disabled={isLoading}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
+
+                {isLoading ? (
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+                    <p className="text-gray-600 dark:text-gray-400 text-center">Loading developers...</p>
+                  </div>
+                ) : developers.length === 0 ? (
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
+                    <p className="text-gray-600 dark:text-gray-400 text-center">No developers in this workspace yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {developers.map((developer) => (
+                      <div
+                        key={developer.id}
+                        className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-lg transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 flex-1">
+                            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/30">
+                              {developer.avatar ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={developer.avatar} alt={developer.name} className="h-full w-full rounded-full object-cover" />
+                              ) : (
+                                <User className="h-6 w-6 text-primary" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-semibold text-gray-900 dark:text-white">{developer.name}</h4>
+                                {developer.role === 'admin' && (
+                                  <span className="flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">
+                                    <Shield className="h-3 w-3" />
+                                    Admin
+                                  </span>
+                                )}
+                                {developer.role === 'developer' && (
+                                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded">
+                                    Developer
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-4 mt-1">
+                                <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                                  <Mail className="h-3 w-3" />
+                                  {developer.email}
+                                </span>
+                                {developer.lastActive && (
+                                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                                    Active {developer.lastActive}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 dark:text-gray-500">
+                              Joined {new Date(developer.joinedAt).toLocaleDateString()}
+                            </span>
+                            {developer.role !== 'admin' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRemoveDeveloper(developer.id)}
+                                className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 border-red-300 dark:border-red-800"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* Pending Invites */}
+              {pendingInvites.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    Pending Invites ({pendingInvites.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {pendingInvites.map((invite) => (
+                      <div
+                        key={invite.id}
+                        className="bg-yellow-50 dark:bg-yellow-950/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-900"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white">{invite.email}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Role: {invite.role} • Status: {invite.status}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPendingInvites(pendingInvites.filter(i => i.id !== invite.id))}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No Pending Invites (old section - keeping for invites from other workspaces) */}
+              {pendingInvites.length === 0 && (
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 hover:border-primary/40 hover:shadow-lg transition-all">
+                  <p className="text-gray-600 dark:text-gray-400 text-center py-4">
+                    You have no pending workspace invites.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
