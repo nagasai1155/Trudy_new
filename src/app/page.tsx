@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { SignInModal } from '@/components/auth/sign-in-modal'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { 
   Bot, 
@@ -21,11 +20,9 @@ import {
 } from 'lucide-react'
 
 export default function LandingPage() {
-  const [showSignInModal, setShowSignInModal] = useState(false)
+  const router = useRouter()
 
   return (
-    <>
-      <SignInModal open={showSignInModal} onOpenChange={setShowSignInModal} />
     <div className="flex min-h-screen flex-col">
        {/* Navigation */}
       <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-black/95 backdrop-blur shadow-sm">
@@ -51,10 +48,10 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center space-x-4">
             <ThemeToggle />
-            <Button variant="ghost" onClick={() => setShowSignInModal(true)}>
+            <Button variant="ghost" onClick={() => router.push('/signin')}>
               Sign In
             </Button>
-            <Button onClick={() => setShowSignInModal(true)}>
+            <Button onClick={() => router.push('/signin')}>
               Get Started
             </Button>
           </div>
@@ -78,7 +75,7 @@ export default function LandingPage() {
             <Button 
               size="lg" 
               className="gap-2"
-              onClick={() => setShowSignInModal(true)}
+              onClick={() => router.push('/signin')}
             >
               Start Free Trial
               <ArrowRight className="h-4 w-4" />
@@ -86,7 +83,7 @@ export default function LandingPage() {
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => setShowSignInModal(true)}
+              onClick={() => router.push('/signin')}
             >
               Watch Demo
             </Button>
@@ -277,7 +274,7 @@ export default function LandingPage() {
             <Button 
               size="lg" 
               className="gap-2"
-              onClick={() => setShowSignInModal(true)}
+              onClick={() => router.push('/signin')}
             >
               Get Started Free
               <ArrowRight className="h-4 w-4" />
@@ -285,7 +282,7 @@ export default function LandingPage() {
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => setShowSignInModal(true)}
+              onClick={() => router.push('/signin')}
             >
               Talk to Sales
             </Button>
@@ -317,29 +314,28 @@ export default function LandingPage() {
             © 2024 Truedy AI Platform. All rights reserved.
           </p>
           <div className="flex gap-4">
-            <button 
-              onClick={() => setShowSignInModal(true)}
+            <a 
+              href="/privacy"
               className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:underline"
             >
               Privacy
-            </button>
-            <button 
-              onClick={() => setShowSignInModal(true)}
+            </a>
+            <a 
+              href="/terms"
               className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:underline"
             >
               Terms
-            </button>
-            <button 
-              onClick={() => setShowSignInModal(true)}
+            </a>
+            <a 
+              href="/contact"
               className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:underline"
             >
               Contact
-            </button>
+            </a>
           </div>
         </div>
       </footer>
     </div>
-    </>
   )
 }
 
