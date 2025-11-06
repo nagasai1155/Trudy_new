@@ -1,7 +1,7 @@
 """
 Retry Logic with Exponential Backoff
 """
-import time
+import asyncio
 import random
 import logging
 from typing import Callable, TypeVar, Optional
@@ -73,8 +73,4 @@ async def retry_with_backoff(
     # Should not reach here, but just in case
     if last_exception:
         raise last_exception
-
-
-# Import asyncio for sleep
-import asyncio
 

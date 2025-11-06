@@ -123,6 +123,9 @@ async def get_current_user(
         if x_client_id != client_id:
             raise ForbiddenError("client_id mismatch")
     
+    # Note: request.state is set by middleware after authentication
+    # The logging middleware will extract client_id/user_id from the request
+    
     return {
         "user_id": user_id,
         "client_id": client_id or x_client_id,

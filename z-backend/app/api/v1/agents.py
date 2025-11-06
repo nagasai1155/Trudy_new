@@ -2,13 +2,17 @@
 Agent Endpoints
 """
 from fastapi import APIRouter, Header, Depends
+from starlette.requests import Request
 from typing import Optional
 from datetime import datetime
 import uuid
+import json
 
 from app.core.auth import get_current_user
 from app.core.database import DatabaseService
 from app.core.exceptions import NotFoundError, ForbiddenError, ValidationError
+from app.core.idempotency import check_idempotency_key, store_idempotency_response
+from app.core.events import emit_agent_created, emit_agent_updated
 from app.services.ultravox import ultravox_client
 from app.models.schemas import (
     AgentCreate,
@@ -23,12 +27,30 @@ router = APIRouter()
 @router.post("")
 async def create_agent(
     agent_data: AgentCreate,
+    request: Request,
     current_user: dict = Depends(get_current_user),
     x_client_id: Optional[str] = Header(None),
+    idempotency_key: Optional[str] = Header(None, alias="X-Idempotency-Key"),
 ):
     """Create agent"""
     if current_user["role"] not in ["client_admin", "agency_admin"]:
         raise ForbiddenError("Insufficient permissions")
+    
+    # Check idempotency key
+    body_dict = agent_data.dict() if hasattr(agent_data, 'dict') else json.loads(json.dumps(agent_data, default=str))
+    if idempotency_key:
+        cached = await check_idempotency_key(
+            current_user["client_id"],
+            idempotency_key,
+            request,
+            body_dict,
+        )
+        if cached:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                content=cached["response_body"],
+                status_code=cached["status_code"],
+            )
     
     db = DatabaseService(current_user["token"])
     db.set_auth(current_user["token"])
@@ -125,13 +147,33 @@ async def create_agent(
         )
         raise
     
-    return {
+    response_data = {
         "data": AgentResponse(**agent_record),
         "meta": ResponseMeta(
             request_id=str(uuid.uuid4()),
             ts=datetime.utcnow(),
         ),
     }
+    
+    # Emit EventBridge event
+    await emit_agent_created(
+        agent_id=agent_id,
+        client_id=current_user["client_id"],
+        ultravox_agent_id=agent_record["ultravox_agent_id"],
+    )
+    
+    # Store idempotency response
+    if idempotency_key:
+        await store_idempotency_response(
+            current_user["client_id"],
+            idempotency_key,
+            request,
+            body_dict,
+            response_data,
+            201,
+        )
+    
+    return response_data
 
 
 @router.patch("/{agent_id}")
@@ -172,6 +214,13 @@ async def update_agent(
     
     # Get updated agent
     updated_agent = db.get_agent(agent_id, current_user["client_id"])
+    
+    # Emit EventBridge event
+    await emit_agent_updated(
+        agent_id=agent_id,
+        client_id=current_user["client_id"],
+        changes=update_data,
+    )
     
     return {
         "data": AgentResponse(**updated_agent),

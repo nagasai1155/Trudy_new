@@ -25,19 +25,25 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    """Log all requests"""
+    """Log all requests with enhanced context"""
     
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
         request_id = getattr(request.state, "request_id", None)
+        
+        # Extract client_id and user_id from JWT if available (set by auth middleware)
+        client_id = getattr(request.state, "client_id", None)
+        user_id = getattr(request.state, "user_id", None)
         
         # Log request
         logger.info(
             f"Request: {request.method} {request.url.path}",
             extra={
                 "request_id": request_id,
+                "client_id": client_id,
+                "user_id": user_id,
                 "method": request.method,
-                "path": request.url.path,
+                "endpoint": request.url.path,
                 "client_ip": request.client.host if request.client else None,
             },
         )
@@ -52,8 +58,10 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             f"Response: {request.method} {request.url.path} - {response.status_code}",
             extra={
                 "request_id": request_id,
+                "client_id": client_id,
+                "user_id": user_id,
                 "method": request.method,
-                "path": request.url.path,
+                "endpoint": request.url.path,
                 "status_code": response.status_code,
                 "duration_ms": duration_ms,
             },

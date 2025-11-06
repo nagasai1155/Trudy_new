@@ -8,7 +8,8 @@ import uuid
 
 from app.core.auth import get_current_user
 from app.core.database import DatabaseService
-from app.core.exceptions import NotFoundError, ForbiddenError, ConflictError
+from app.core.encryption import encrypt_api_key, decrypt_api_key
+from app.core.exceptions import NotFoundError, ForbiddenError, ConflictError, ValidationError
 from app.models.schemas import (
     UserResponse,
     ClientResponse,
@@ -73,9 +74,6 @@ async def create_api_key(
     x_client_id: Optional[str] = Header(None),
 ):
     """Create API key (encrypted storage)"""
-    # TODO: Encrypt API key using AWS KMS or client-side encryption
-    # For now, store as-is (should be encrypted in production)
-    
     if current_user["role"] not in ["client_admin", "agency_admin"]:
         raise ForbiddenError("Insufficient permissions")
     
@@ -94,6 +92,11 @@ async def create_api_key(
     if existing:
         raise ConflictError("API key with this name already exists")
     
+    # Encrypt API key
+    encrypted_key = encrypt_api_key(api_key_data.api_key)
+    if not encrypted_key:
+        raise ValidationError("Failed to encrypt API key")
+    
     # Insert API key
     api_key_record = db.insert(
         "api_keys",
@@ -101,7 +104,7 @@ async def create_api_key(
             "client_id": current_user["client_id"],
             "service": api_key_data.service,
             "key_name": api_key_data.key_name,
-            "encrypted_key": api_key_data.api_key,  # TODO: Encrypt
+            "encrypted_key": encrypted_key,
             "settings": api_key_data.settings,
             "is_active": True,
         },
@@ -145,12 +148,17 @@ async def update_tts_provider(
         },
     )
     
+    # Encrypt API key
+    encrypted_key = encrypt_api_key(provider_data.api_key)
+    if not encrypted_key:
+        raise ValidationError("Failed to encrypt API key")
+    
     if existing:
         api_key_record = db.update(
             "api_keys",
             {"id": existing["id"]},
             {
-                "encrypted_key": provider_data.api_key,  # TODO: Encrypt
+                "encrypted_key": encrypted_key,
                 "settings": provider_data.settings,
                 "is_active": True,
             },
@@ -162,7 +170,7 @@ async def update_tts_provider(
                 "client_id": current_user["client_id"],
                 "service": provider_data.provider,
                 "key_name": f"{provider_data.provider.title()} TTS Key",
-                "encrypted_key": provider_data.api_key,  # TODO: Encrypt
+                "encrypted_key": encrypted_key,
                 "settings": provider_data.settings,
                 "is_active": True,
             },

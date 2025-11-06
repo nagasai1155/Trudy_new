@@ -334,6 +334,15 @@ class CampaignContactsUpload(BaseModel):
         return v
 
 
+class CampaignUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    agent_id: Optional[str] = None
+    schedule_type: Optional[CampaignScheduleType] = None
+    scheduled_at: Optional[datetime] = None
+    timezone: Optional[str] = None
+    max_concurrent_calls: Optional[int] = Field(None, ge=1, le=100)
+
+
 class CampaignResponse(BaseModel):
     id: str
     client_id: str
@@ -342,10 +351,12 @@ class CampaignResponse(BaseModel):
     schedule_type: str
     scheduled_at: Optional[datetime] = None
     timezone: str
+    max_concurrent_calls: int
     status: str
     ultravox_batch_ids: Optional[List[str]] = None
     stats: Dict[str, int]
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
 
 # ============================================
@@ -360,14 +371,23 @@ class WebhookEndpointCreate(BaseModel):
     retry_config: Optional[Dict[str, Any]] = None
 
 
+class WebhookEndpointUpdate(BaseModel):
+    url: Optional[str] = Field(None, pattern=r"^https://")
+    event_types: Optional[List[str]] = Field(None, min_items=1)
+    enabled: Optional[bool] = None
+    retry_config: Optional[Dict[str, Any]] = None
+
+
 class WebhookEndpointResponse(BaseModel):
     id: str
     client_id: str
     url: str
     event_types: List[str]
-    secret: str
+    secret: Optional[str] = None  # Only returned on creation
     enabled: bool
+    retry_config: Optional[Dict[str, Any]] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
 
 # ============================================
@@ -385,14 +405,30 @@ class ToolCreate(BaseModel):
     response_schema: Optional[Dict[str, Any]] = None
 
 
+class ToolUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = None
+    category: Optional[str] = None
+    endpoint: Optional[str] = Field(None, pattern=r"^https://")
+    method: Optional[str] = Field(None, pattern=r"^(GET|POST|PUT|DELETE)$")
+    authentication: Optional[Dict[str, Any]] = None
+    parameters: Optional[Dict[str, Any]] = None
+    response_schema: Optional[Dict[str, Any]] = None
+
+
 class ToolResponse(BaseModel):
     id: str
     client_id: str
     ultravox_tool_id: Optional[str] = None
     name: str
     description: Optional[str] = None
+    category: Optional[str] = None
     endpoint: str
     method: str
+    authentication: Optional[Dict[str, Any]] = None
+    parameters: Optional[Dict[str, Any]] = None
+    response_schema: Optional[Dict[str, Any]] = None
     status: str
     created_at: datetime
+    updated_at: Optional[datetime] = None
 

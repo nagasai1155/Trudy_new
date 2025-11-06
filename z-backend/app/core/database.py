@@ -8,21 +8,43 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Global Supabase client
+# Global Supabase clients
 _supabase_client: Optional[Client] = None
+_supabase_admin_client: Optional[Client] = None
 
 
 def get_supabase_client() -> Client:
-    """Get or create Supabase client"""
+    """Get or create Supabase client with anon key (respects RLS)"""
     global _supabase_client
     
     if _supabase_client is None:
         _supabase_client = create_client(
             settings.SUPABASE_URL,
-            settings.SUPABASE_KEY,
+            settings.SUPABASE_KEY,  # Anon key - respects RLS
         )
     
     return _supabase_client
+
+
+def get_supabase_admin_client() -> Client:
+    """Get or create Supabase admin client with service role key (bypasses RLS)
+    
+    WARNING: This client bypasses Row Level Security. Use only for:
+    - Admin operations that need full database access
+    - Background jobs/webhooks without user JWT tokens
+    - System-level operations
+    """
+    global _supabase_admin_client
+    
+    if _supabase_admin_client is None:
+        if not settings.SUPABASE_SERVICE_KEY:
+            raise ValueError("SUPABASE_SERVICE_KEY is required for admin operations")
+        _supabase_admin_client = create_client(
+            settings.SUPABASE_URL,
+            settings.SUPABASE_SERVICE_KEY,  # Service role key - bypasses RLS
+        )
+    
+    return _supabase_admin_client
 
 
 def set_auth_context(token: str):
@@ -144,4 +166,62 @@ class DatabaseService:
         }
         
         return self.update("campaigns", {"id": campaign_id}, {"stats": stats})
+
+
+class DatabaseAdminService:
+    """Database admin service that bypasses RLS using service role key
+    
+    WARNING: This service bypasses Row Level Security. Use only for:
+    - Admin operations that need full database access
+    - Background jobs/webhooks without user JWT tokens
+    - System-level operations
+    """
+    
+    def __init__(self):
+        self.client = get_supabase_admin_client()
+    
+    # Generic CRUD operations (same as DatabaseService but with admin client)
+    def select(self, table: str, filters: Optional[Dict[str, Any]] = None, order_by: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Select records from table (bypasses RLS)"""
+        query = self.client.table(table).select("*")
+        
+        if filters:
+            for key, value in filters.items():
+                query = query.eq(key, value)
+        
+        if order_by:
+            query = query.order(order_by, desc=True)
+        
+        response = query.execute()
+        return response.data if response.data else []
+    
+    def select_one(self, table: str, filters: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Select single record (bypasses RLS)"""
+        results = self.select(table, filters)
+        return results[0] if results else None
+    
+    def insert(self, table: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Insert record (bypasses RLS)"""
+        response = self.client.table(table).insert(data).execute()
+        return response.data[0] if response.data else {}
+    
+    def update(self, table: str, filters: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update records (bypasses RLS)"""
+        query = self.client.table(table).update(data)
+        
+        for key, value in filters.items():
+            query = query.eq(key, value)
+        
+        response = query.execute()
+        return response.data[0] if response.data else {}
+    
+    def delete(self, table: str, filters: Dict[str, Any]) -> bool:
+        """Delete records (bypasses RLS)"""
+        query = self.client.table(table).delete()
+        
+        for key, value in filters.items():
+            query = query.eq(key, value)
+        
+        response = query.execute()
+        return len(response.data) > 0
 

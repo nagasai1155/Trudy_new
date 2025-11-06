@@ -138,6 +138,15 @@ class UltravoxClient:
         response = await self._request("POST", "/tools", data=tool_data)
         return response.get("data", {})
     
+    async def update_tool(self, tool_id: str, tool_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update tool in Ultravox"""
+        response = await self._request("PATCH", f"/tools/{tool_id}", data=tool_data)
+        return response.get("data", {})
+    
+    async def delete_tool(self, tool_id: str) -> None:
+        """Delete tool from Ultravox"""
+        await self._request("DELETE", f"/tools/{tool_id}")
+    
     # TTS API Keys
     async def update_tts_api_key(self, provider: str, api_key_data: Dict[str, Any]) -> Dict[str, Any]:
         """Update TTS API key for provider"""

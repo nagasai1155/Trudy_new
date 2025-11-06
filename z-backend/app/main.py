@@ -9,7 +9,11 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.logging import setup_logging
+from app.core.rate_limiting import RateLimitMiddleware
+from app.core.middleware import RequestIDMiddleware, LoggingMiddleware
 from app.api.v1 import api_router
+from app.api.internal import routes as internal_routes
+from app.api.admin import routes as admin_routes
 from app.core.exceptions import TrudyException
 
 # Setup logging
@@ -45,6 +49,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request ID Middleware (must be first to set request_id)
+app.add_middleware(RequestIDMiddleware)
+
+# Logging Middleware (must be after RequestIDMiddleware)
+app.add_middleware(LoggingMiddleware)
+
+# Rate Limiting Middleware
+app.add_middleware(RateLimitMiddleware)
 
 
 # Exception Handlers
@@ -92,4 +105,6 @@ async def health_check():
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(internal_routes.router)
+app.include_router(admin_routes.router, prefix="/api/v1")
 

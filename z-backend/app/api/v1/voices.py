@@ -1,15 +1,19 @@
 """
 Voice Endpoints
 """
-from fastapi import APIRouter, Header, Depends, Request
+from fastapi import APIRouter, Header, Depends
+from starlette.requests import Request
 from typing import Optional
 from datetime import datetime
 import uuid
+import json
 
 from app.core.auth import get_current_user
 from app.core.database import DatabaseService
 from app.core.s3 import generate_presigned_url, check_object_exists
 from app.core.exceptions import NotFoundError, ValidationError, PaymentRequiredError, ForbiddenError
+from app.core.idempotency import check_idempotency_key, store_idempotency_response
+from app.core.events import emit_voice_training_started, emit_voice_created
 from app.services.ultravox import ultravox_client
 from app.models.schemas import (
     VoiceCreate,
@@ -65,6 +69,7 @@ async def presign_voice_files(
 @router.post("")
 async def create_voice(
     voice_data: VoiceCreate,
+    request: Request,
     current_user: dict = Depends(get_current_user),
     x_client_id: Optional[str] = Header(None),
     idempotency_key: Optional[str] = Header(None, alias="X-Idempotency-Key"),
@@ -73,10 +78,24 @@ async def create_voice(
     if current_user["role"] not in ["client_admin", "agency_admin"]:
         raise ForbiddenError("Insufficient permissions")
     
+    # Check idempotency key
+    body_dict = voice_data.dict() if hasattr(voice_data, 'dict') else json.loads(json.dumps(voice_data, default=str))
+    if idempotency_key:
+        cached = await check_idempotency_key(
+            current_user["client_id"],
+            idempotency_key,
+            request,
+            body_dict,
+        )
+        if cached:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                content=cached["response_body"],
+                status_code=cached["status_code"],
+            )
+    
     db = DatabaseService(current_user["token"])
     db.set_auth(current_user["token"])
-    
-    # TODO: Check idempotency key
     
     # Credit check for native training
     if voice_data.strategy == "native":
@@ -185,13 +204,26 @@ async def create_voice(
     
     # TODO: Trigger Step Function for native training
     
-    return {
+    response_data = {
         "data": VoiceResponse(**voice_record),
         "meta": ResponseMeta(
             request_id=str(uuid.uuid4()),
             ts=datetime.utcnow(),
         ),
     }
+    
+    # Store idempotency response
+    if idempotency_key:
+        await store_idempotency_response(
+            current_user["client_id"],
+            idempotency_key,
+            request,
+            body_dict,
+            response_data,
+            201,
+        )
+    
+    return response_data
 
 
 @router.get("")

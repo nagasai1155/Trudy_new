@@ -2,14 +2,18 @@
 Knowledge Base Endpoints
 """
 from fastapi import APIRouter, Header, Depends
+from starlette.requests import Request
 from typing import Optional
 from datetime import datetime
 import uuid
+import json
 
 from app.core.auth import get_current_user
 from app.core.database import DatabaseService
 from app.core.s3 import generate_presigned_url, check_object_exists
 from app.core.exceptions import NotFoundError, ForbiddenError, ValidationError
+from app.core.idempotency import check_idempotency_key, store_idempotency_response
+from app.core.events import emit_knowledge_base_created, emit_knowledge_base_ingestion_started
 from app.services.ultravox import ultravox_client
 from app.models.schemas import (
     KnowledgeBaseCreate,
@@ -27,12 +31,30 @@ router = APIRouter()
 @router.post("")
 async def create_knowledge_base(
     kb_data: KnowledgeBaseCreate,
+    request: Request,
     current_user: dict = Depends(get_current_user),
     x_client_id: Optional[str] = Header(None),
+    idempotency_key: Optional[str] = Header(None, alias="X-Idempotency-Key"),
 ):
     """Create knowledge base"""
     if current_user["role"] not in ["client_admin", "agency_admin"]:
         raise ForbiddenError("Insufficient permissions")
+    
+    # Check idempotency key
+    body_dict = kb_data.dict() if hasattr(kb_data, 'dict') else json.loads(json.dumps(kb_data, default=str))
+    if idempotency_key:
+        cached = await check_idempotency_key(
+            current_user["client_id"],
+            idempotency_key,
+            request,
+            body_dict,
+        )
+        if cached:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                content=cached["response_body"],
+                status_code=cached["status_code"],
+            )
     
     db = DatabaseService(current_user["token"])
     db.set_auth(current_user["token"])
@@ -78,13 +100,33 @@ async def create_knowledge_base(
         )
         raise
     
-    return {
+    # Emit EventBridge event
+    await emit_knowledge_base_created(
+        kb_id=kb_id,
+        client_id=current_user["client_id"],
+        ultravox_corpus_id=kb_record["ultravox_corpus_id"],
+    )
+    
+    response_data = {
         "data": KnowledgeBaseResponse(**kb_record),
         "meta": ResponseMeta(
             request_id=str(uuid.uuid4()),
             ts=datetime.utcnow(),
         ),
     }
+    
+    # Store idempotency response
+    if idempotency_key:
+        await store_idempotency_response(
+            current_user["client_id"],
+            idempotency_key,
+            request,
+            body_dict,
+            response_data,
+            201,
+        )
+    
+    return response_data
 
 
 @router.post("/{kb_id}/files/presign")

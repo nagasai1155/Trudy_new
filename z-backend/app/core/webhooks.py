@@ -78,6 +78,65 @@ def generate_webhook_signature(
     return signature, timestamp
 
 
+def verify_stripe_signature(
+    payload: str,
+    signature: str,
+    secret: str,
+    tolerance: int = 300,
+) -> bool:
+    """
+    Verify Stripe webhook signature
+    
+    Args:
+        payload: Raw request body as string
+        signature: Stripe-Signature header value
+        secret: Stripe webhook signing secret
+        tolerance: Maximum age of timestamp in seconds (default 5 minutes)
+    
+    Returns:
+        True if signature is valid, False otherwise
+    """
+    try:
+        import time
+        
+        # Parse signature header (format: t=timestamp,v1=signature,v0=signature)
+        sig_parts = {}
+        for part in signature.split(','):
+            if '=' in part:
+                key, value = part.split('=', 1)
+                sig_parts[key.strip()] = value.strip()
+        
+        timestamp = sig_parts.get('t')
+        sig = sig_parts.get('v1')
+        
+        if not timestamp or not sig:
+            logger.error("Invalid Stripe signature format")
+            return False
+        
+        # Check timestamp age
+        current_time = int(time.time())
+        if abs(current_time - int(timestamp)) > tolerance:
+            logger.error(f"Stripe webhook timestamp too old or too far in future: {timestamp}")
+            return False
+        
+        # Reconstruct signed payload
+        signed_payload = f"{timestamp}.{payload}"
+        
+        # Calculate expected signature
+        expected_sig = hmac.new(
+            secret.encode('utf-8'),
+            signed_payload.encode('utf-8'),
+            hashlib.sha256,
+        ).hexdigest()
+        
+        # Constant-time comparison
+        return hmac.compare_digest(sig, expected_sig)
+        
+    except Exception as e:
+        logger.error(f"Stripe signature verification error: {e}")
+        return False
+
+
 async def deliver_webhook(
     url: str,
     payload: Dict[str, Any],

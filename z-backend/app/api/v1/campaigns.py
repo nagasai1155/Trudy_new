@@ -2,19 +2,24 @@
 Campaign Endpoints
 """
 from fastapi import APIRouter, Header, Depends
+from starlette.requests import Request
 from typing import Optional
 from datetime import datetime
 import uuid
 import csv
 import io
+import json
 
 from app.core.auth import get_current_user
 from app.core.database import DatabaseService
 from app.core.s3 import generate_presigned_url, get_s3_client
 from app.core.exceptions import NotFoundError, ForbiddenError, ValidationError
+from app.core.idempotency import check_idempotency_key, store_idempotency_response
+from app.core.events import emit_campaign_created, emit_campaign_scheduled
 from app.services.ultravox import ultravox_client
 from app.models.schemas import (
     CampaignCreate,
+    CampaignUpdate,
     CampaignContactsUpload,
     CampaignResponse,
     ResponseMeta,
@@ -27,12 +32,30 @@ router = APIRouter()
 @router.post("")
 async def create_campaign(
     campaign_data: CampaignCreate,
+    request: Request,
     current_user: dict = Depends(get_current_user),
     x_client_id: Optional[str] = Header(None),
+    idempotency_key: Optional[str] = Header(None, alias="X-Idempotency-Key"),
 ):
     """Create campaign"""
     if current_user["role"] not in ["client_admin", "agency_admin"]:
         raise ForbiddenError("Insufficient permissions")
+    
+    # Check idempotency key
+    body_dict = campaign_data.dict() if hasattr(campaign_data, 'dict') else json.loads(json.dumps(campaign_data, default=str))
+    if idempotency_key:
+        cached = await check_idempotency_key(
+            current_user["client_id"],
+            idempotency_key,
+            request,
+            body_dict,
+        )
+        if cached:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                content=cached["response_body"],
+                status_code=cached["status_code"],
+            )
     
     db = DatabaseService(current_user["token"])
     db.set_auth(current_user["token"])
@@ -61,13 +84,34 @@ async def create_campaign(
     
     db.insert("campaigns", campaign_record)
     
-    return {
+    # Emit EventBridge event
+    await emit_campaign_created(
+        campaign_id=campaign_id,
+        client_id=current_user["client_id"],
+        agent_id=campaign_data.agent_id,
+        name=campaign_data.name,
+    )
+    
+    response_data = {
         "data": CampaignResponse(**campaign_record),
         "meta": ResponseMeta(
             request_id=str(uuid.uuid4()),
             ts=datetime.utcnow(),
         ),
     }
+    
+    # Store idempotency response
+    if idempotency_key:
+        await store_idempotency_response(
+            current_user["client_id"],
+            idempotency_key,
+            request,
+            body_dict,
+            response_data,
+            201,
+        )
+    
+    return response_data
 
 
 @router.post("/{campaign_id}/contacts/presign")
@@ -275,6 +319,15 @@ async def schedule_campaign(
             },
         )
         
+        # Emit EventBridge event
+        await emit_campaign_scheduled(
+            campaign_id=campaign_id,
+            client_id=current_user["client_id"],
+            scheduled_at=campaign.get("scheduled_at"),
+            contact_count=len(pending_contacts),
+            batch_ids=batch_ids,
+        )
+        
         # TODO: Trigger Step Function
         
     except Exception as e:
@@ -293,6 +346,55 @@ async def schedule_campaign(
             request_id=str(uuid.uuid4()),
             ts=datetime.utcnow(),
         ),
+    }
+
+
+@router.get("")
+async def list_campaigns(
+    current_user: dict = Depends(get_current_user),
+    x_client_id: Optional[str] = Header(None),
+    agent_id: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    """List campaigns with filtering and pagination"""
+    db = DatabaseService(current_user["token"])
+    db.set_auth(current_user["token"])
+    
+    # Build filters
+    filters = {"client_id": current_user["client_id"]}
+    if agent_id:
+        filters["agent_id"] = agent_id
+    if status:
+        filters["status"] = status
+    
+    # Get campaigns with pagination
+    all_campaigns = db.select("campaigns", filters, order_by="created_at")
+    
+    # Apply pagination manually
+    total = len(all_campaigns)
+    paginated_campaigns = all_campaigns[offset:offset + limit]
+    
+    # Update stats for each campaign
+    for campaign in paginated_campaigns:
+        db.update_campaign_stats(campaign["id"])
+    
+    # Refresh campaigns after stats update
+    paginated_campaigns = [db.get_campaign(c["id"], current_user["client_id"]) for c in paginated_campaigns]
+    
+    return {
+        "data": [CampaignResponse(**campaign) for campaign in paginated_campaigns],
+        "meta": ResponseMeta(
+            request_id=str(uuid.uuid4()),
+            ts=datetime.utcnow(),
+        ),
+        "pagination": {
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "has_more": offset + limit < total,
+        },
     }
 
 
@@ -316,6 +418,116 @@ async def get_campaign(
     
     return {
         "data": CampaignResponse(**campaign),
+        "meta": ResponseMeta(
+            request_id=str(uuid.uuid4()),
+            ts=datetime.utcnow(),
+        ),
+    }
+
+
+@router.patch("/{campaign_id}")
+async def update_campaign(
+    campaign_id: str,
+    campaign_data: CampaignUpdate,
+    current_user: dict = Depends(get_current_user),
+    x_client_id: Optional[str] = Header(None),
+):
+    """Update campaign"""
+    if current_user["role"] not in ["client_admin", "agency_admin"]:
+        raise ForbiddenError("Insufficient permissions")
+    
+    db = DatabaseService(current_user["token"])
+    db.set_auth(current_user["token"])
+    
+    # Check if campaign exists
+    campaign = db.get_campaign(campaign_id, current_user["client_id"])
+    if not campaign:
+        raise NotFoundError("campaign", campaign_id)
+    
+    # Only allow updates for draft campaigns
+    if campaign.get("status") != "draft":
+        raise ValidationError("Campaign can only be updated when in draft status")
+    
+    # Prepare update data (only non-None fields)
+    update_data = campaign_data.dict(exclude_unset=True)
+    if not update_data:
+        # No updates provided
+        return {
+            "data": CampaignResponse(**campaign),
+            "meta": ResponseMeta(
+                request_id=str(uuid.uuid4()),
+                ts=datetime.utcnow(),
+            ),
+        }
+    
+    # Validate agent if agent_id is being updated
+    if "agent_id" in update_data:
+        agent = db.get_agent(update_data["agent_id"], current_user["client_id"])
+        if not agent:
+            raise NotFoundError("agent", update_data["agent_id"])
+        if agent.get("status") != "active":
+            raise ValidationError("Agent must be active")
+    
+    # Convert enum to string if needed
+    if "schedule_type" in update_data and hasattr(update_data["schedule_type"], "value"):
+        update_data["schedule_type"] = update_data["schedule_type"].value
+    
+    # Convert datetime to ISO string if needed
+    if "scheduled_at" in update_data and update_data["scheduled_at"]:
+        if hasattr(update_data["scheduled_at"], "isoformat"):
+            update_data["scheduled_at"] = update_data["scheduled_at"].isoformat()
+    
+    # Update database
+    update_data["updated_at"] = datetime.utcnow().isoformat()
+    db.update("campaigns", {"id": campaign_id}, update_data)
+    
+    # Get updated campaign
+    updated_campaign = db.get_campaign(campaign_id, current_user["client_id"])
+    
+    return {
+        "data": CampaignResponse(**updated_campaign),
+        "meta": ResponseMeta(
+            request_id=str(uuid.uuid4()),
+            ts=datetime.utcnow(),
+        ),
+    }
+
+
+@router.delete("/{campaign_id}")
+async def delete_campaign(
+    campaign_id: str,
+    current_user: dict = Depends(get_current_user),
+    x_client_id: Optional[str] = Header(None),
+):
+    """Delete campaign"""
+    if current_user["role"] not in ["client_admin", "agency_admin"]:
+        raise ForbiddenError("Insufficient permissions")
+    
+    db = DatabaseService(current_user["token"])
+    db.set_auth(current_user["token"])
+    
+    # Check if campaign exists
+    campaign = db.get_campaign(campaign_id, current_user["client_id"])
+    if not campaign:
+        raise NotFoundError("campaign", campaign_id)
+    
+    # Only allow deletion for draft or failed campaigns
+    if campaign.get("status") not in ["draft", "failed"]:
+        raise ValidationError("Campaign can only be deleted when in draft or failed status")
+    
+    # Delete campaign contacts first (if cascade delete is not enabled)
+    try:
+        contacts = db.get_campaign_contacts(campaign_id)
+        for contact in contacts:
+            db.delete("campaign_contacts", {"id": contact["id"]})
+    except Exception:
+        pass  # Continue even if contacts deletion fails
+    
+    # Delete campaign
+    db.delete("campaigns", {"id": campaign_id})
+    
+    return {
+        "data": {"id": campaign_id, "deleted": True},
         "meta": ResponseMeta(
             request_id=str(uuid.uuid4()),
             ts=datetime.utcnow(),

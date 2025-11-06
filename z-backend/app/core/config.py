@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
     S3_BUCKET_UPLOADS: str = os.getenv("S3_BUCKET_UPLOADS", "trudy-uploads")
     S3_BUCKET_RECORDINGS: str = os.getenv("S3_BUCKET_RECORDINGS", "trudy-recordings")
+    KMS_KEY_ID: str = os.getenv("KMS_KEY_ID", "")  # KMS key ID for encryption
     
     # External APIs
     ULTRAVOX_API_KEY: str = os.getenv("ULTRAVOX_API_KEY", "")
@@ -67,6 +68,13 @@ class Settings(BaseSettings):
     
     # Idempotency
     IDEMPOTENCY_TTL_DAYS: int = int(os.getenv("IDEMPOTENCY_TTL_DAYS", "7"))
+    
+    # Internal API
+    INTERNAL_API_KEY: str = os.getenv("INTERNAL_API_KEY", "")
+    
+    # EventBridge
+    EVENTBRIDGE_ENABLED: bool = os.getenv("EVENTBRIDGE_ENABLED", "true").lower() == "true"
+    EVENTBRIDGE_SOURCE: str = os.getenv("EVENTBRIDGE_SOURCE", "trudy-backend")
     
     class Config:
         env_file = ".env"
