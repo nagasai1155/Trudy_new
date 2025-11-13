@@ -1,0 +1,1143 @@
+{
+  "info": {
+    "name": "Trudy Backend API",
+    "description": "Complete API collection for Trudy voice AI platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "your_token_here",
+      "type": "string"
+    },
+    {
+      "key": "client_id",
+      "value": "your_client_id",
+      "type": "string"
+    },
+    {
+      "key": "agent_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "voice_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "campaign_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "call_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "kb_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check if API is running"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Get Current User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.client_id) {",
+                  "        pm.collectionVariables.set('client_id', response.data.client_id);",
+                  "        console.log('Saved client_id: ' + response.data.client_id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Get current user information and verify authentication"
+          }
+        },
+        {
+          "name": "List Clients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/clients",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "clients"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Voices",
+      "item": [
+        {
+          "name": "Create Voice (Reference)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('voice_id', response.data.id);",
+                  "        console.log('Saved voice_id: ' + response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Voice\",\n  \"strategy\": \"reference\",\n  \"source\": {\n    \"provider_voice_id\": \"elevenlabs-default-voice\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/voices",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "voices"]
+            },
+            "description": "Create a voice using external provider reference"
+          }
+        },
+        {
+          "name": "List Voices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/voices",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "voices"]
+            }
+          }
+        },
+        {
+          "name": "Get Voice",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/voices/{{voice_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "voices", "{{voice_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Presigned URLs for Voice Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"files\": [\n    {\n      \"filename\": \"sample1.wav\",\n      \"content_type\": \"audio/wav\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/voices/files/presign",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "voices", "files", "presign"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Agents",
+      "item": [
+        {
+          "name": "Create Agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('agent_id', response.data.id);",
+                  "        console.log('Saved agent_id: ' + response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Sales Agent\",\n  \"description\": \"Agent for testing purposes\",\n  \"voice_id\": \"{{voice_id}}\",\n  \"system_prompt\": \"You are a friendly sales assistant. Be helpful and professional.\",\n  \"model\": \"gpt-4\",\n  \"tools\": [],\n  \"knowledge_bases\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/agents",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "agents"]
+            },
+            "description": "Create a new AI agent"
+          }
+        },
+        {
+          "name": "List Agents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/agents",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "agents"]
+            }
+          }
+        },
+        {
+          "name": "Get Agent",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/agents/{{agent_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "agents", "{{agent_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Agent",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Sales Agent\",\n  \"system_prompt\": \"You are a professional sales representative.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/agents/{{agent_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "agents", "{{agent_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Campaigns",
+      "item": [
+        {
+          "name": "Create Campaign",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('campaign_id', response.data.id);",
+                  "        console.log('Saved campaign_id: ' + response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Campaign\",\n  \"agent_id\": \"{{agent_id}}\",\n  \"schedule_type\": \"immediate\",\n  \"scheduled_at\": null,\n  \"timezone\": \"America/New_York\",\n  \"max_concurrent_calls\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/campaigns",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "campaigns"]
+            }
+          }
+        },
+        {
+          "name": "Add Contacts to Campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contacts\": [\n    {\n      \"phone_number\": \"+14155551234\",\n      \"first_name\": \"Test\",\n      \"last_name\": \"User\",\n      \"email\": \"test@example.com\",\n      \"custom_fields\": {}\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/campaigns/{{campaign_id}}/contacts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "campaigns", "{{campaign_id}}", "contacts"]
+            }
+          }
+        },
+        {
+          "name": "Schedule Campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/campaigns/{{campaign_id}}/schedule",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "campaigns", "{{campaign_id}}", "schedule"]
+            },
+            "description": "⚠️ WARNING: This will start making actual calls!"
+          }
+        },
+        {
+          "name": "List Campaigns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/campaigns?limit=50&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "campaigns"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "status",
+                  "value": "draft",
+                  "disabled": true
+                },
+                {
+                  "key": "agent_id",
+                  "value": "{{agent_id}}",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Campaign",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/campaigns/{{campaign_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "campaigns", "{{campaign_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Campaign",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Campaign Name\",\n  \"max_concurrent_calls\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/campaigns/{{campaign_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "campaigns", "{{campaign_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Campaign",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/campaigns/{{campaign_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "campaigns", "{{campaign_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Presigned URL for Contacts CSV",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/campaigns/{{campaign_id}}/contacts/presign",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "campaigns", "{{campaign_id}}", "contacts", "presign"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Calls",
+      "item": [
+        {
+          "name": "Create Call",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('call_id', response.data.id);",
+                  "        console.log('Saved call_id: ' + response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"{{agent_id}}\",\n  \"phone_number\": \"+14155551234\",\n  \"context\": {\n    \"customer_name\": \"John Doe\",\n    \"account_id\": \"ACC123\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/calls",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "calls"]
+            },
+            "description": "⚠️ WARNING: This will make an actual call!"
+          }
+        },
+        {
+          "name": "Get Call",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/calls/{{call_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "calls", "{{call_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Call Transcript",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/calls/{{call_id}}/transcript",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "calls", "{{call_id}}", "transcript"]
+            }
+          }
+        },
+        {
+          "name": "Get Call Recording URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/calls/{{call_id}}/recording",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "calls", "{{call_id}}", "recording"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Knowledge Bases",
+      "item": [
+        {
+          "name": "Create Knowledge Base",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('kb_id', response.data.id);",
+                  "        console.log('Saved kb_id: ' + response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Product Documentation\",\n  \"description\": \"All product docs and FAQs\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/kb",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "kb"]
+            }
+          }
+        },
+        {
+          "name": "Get Knowledge Base",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/kb/{{kb_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "kb", "{{kb_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Presigned URLs for KB Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"files\": [\n    {\n      \"filename\": \"product-guide.pdf\",\n      \"content_type\": \"application/pdf\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/kb/{{kb_id}}/files/presign",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "kb", "{{kb_id}}", "files", "presign"]
+            }
+          }
+        },
+        {
+          "name": "Ingest KB Files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"files\": [\n    {\n      \"s3_key\": \"uploads/client_xxx/kb/yyy/product-guide.pdf\",\n      \"filename\": \"product-guide.pdf\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/kb/{{kb_id}}/files/ingest",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "kb", "{{kb_id}}", "files", "ingest"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Tools",
+      "item": [
+        {
+          "name": "Create Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Get Weather\",\n  \"type\": \"api\",\n  \"description\": \"Get current weather for a location\",\n  \"config\": {\n    \"endpoint\": \"https://api.weather.com/v1/current\",\n    \"method\": \"GET\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/tools",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tools"]
+            }
+          }
+        },
+        {
+          "name": "List Tools",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tools",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "tools"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Webhooks",
+      "item": [
+        {
+          "name": "Create Webhook Endpoint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://your-server.com/webhooks/trudy\",\n  \"events\": [\"call.completed\", \"campaign.completed\"],\n  \"description\": \"Production webhook\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webhooks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webhooks"]
+            }
+          }
+        },
+        {
+          "name": "List Webhook Endpoints",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "type": "text"
+              },
+              {
+                "key": "x-client-id",
+                "value": "{{client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webhooks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webhooks"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+
