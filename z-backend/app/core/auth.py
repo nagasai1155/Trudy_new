@@ -10,6 +10,7 @@ import httpx
 import logging
 from app.core.config import settings
 from app.core.exceptions import UnauthorizedError, ForbiddenError
+from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,9 @@ async def get_jwks() -> Dict[str, Any]:
         return _jwks_cache
     
     # Fetch from Auth0
-    jwks_url = f"{settings.JWT_ISSUER}/.well-known/jwks.json"
+    # Ensure we don't end up with a double slash when building the JWKS URL
+    issuer_base = settings.JWT_ISSUER.rstrip("/")
+    jwks_url = f"{issuer_base}/.well-known/jwks.json"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(jwks_url, timeout=5.0)
@@ -109,7 +112,20 @@ async def get_current_user(
     
     # Extract user info
     user_id = claims.get("sub")
-    client_id = claims.get("client_id")
+    client_claim = claims.get("client_id") or claims.get("https://trudy.ai/client_id")
+    
+    def _normalize_uuid(value: Optional[str]) -> Optional[str]:
+        if not value:
+            return None
+        try:
+            return str(UUID(str(value)))
+        except (ValueError, TypeError):
+            return None
+    
+    normalized_claim_client_id = _normalize_uuid(client_claim)
+    normalized_header_client_id = _normalize_uuid(x_client_id)
+    
+    client_id = normalized_claim_client_id or normalized_header_client_id
     role = claims.get("role", "client_user")
     email = claims.get("email")
     
@@ -118,17 +134,20 @@ async def get_current_user(
     
     # Validate client_id header matches JWT (unless agency_admin)
     if role != "agency_admin":
-        if not x_client_id:
+        if not normalized_header_client_id:
             raise UnauthorizedError("Missing x-client-id header")
-        if x_client_id != client_id:
+        if normalized_claim_client_id and normalized_claim_client_id != normalized_header_client_id:
             raise ForbiddenError("client_id mismatch")
+        client_id = normalized_header_client_id
+    else:
+        client_id = client_id or normalized_header_client_id
     
     # Note: request.state is set by middleware after authentication
     # The logging middleware will extract client_id/user_id from the request
     
     return {
         "user_id": user_id,
-        "client_id": client_id or x_client_id,
+        "client_id": client_id,
         "role": role,
         "email": email,
         "token": token,

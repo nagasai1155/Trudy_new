@@ -4,6 +4,7 @@ Supabase Database Client
 from supabase import create_client, Client
 from typing import Optional, Dict, Any, List
 import logging
+from jose import jwt as jose_jwt
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -14,13 +15,29 @@ _supabase_admin_client: Optional[Client] = None
 
 
 def get_supabase_client() -> Client:
-    """Get or create Supabase client with anon key (respects RLS)"""
+    """Get or create Supabase client.
+
+    Prefers the anon key (respects RLS). Falls back to the service role key
+    when the anon key isn't configured so local development doesn't fail with
+    confusing PostgREST errors (PGRST301).
+    """
     global _supabase_client
     
     if _supabase_client is None:
+        api_key = settings.SUPABASE_KEY or settings.SUPABASE_SERVICE_KEY
+        
+        if not api_key:
+            raise ValueError("SUPABASE_KEY or SUPABASE_SERVICE_KEY must be configured")
+        
+        if not settings.SUPABASE_KEY and settings.SUPABASE_SERVICE_KEY:
+            logger.warning(
+                "SUPABASE_KEY not set; falling back to SUPABASE_SERVICE_KEY (bypasses RLS). "
+                "Set SUPABASE_KEY to re-enable row-level security."
+            )
+        
         _supabase_client = create_client(
             settings.SUPABASE_URL,
-            settings.SUPABASE_KEY,  # Anon key - respects RLS
+            api_key,
         )
     
     return _supabase_client
@@ -59,11 +76,24 @@ class DatabaseService:
     def __init__(self, token: Optional[str] = None):
         self.client = get_supabase_client()
         if token:
-            set_auth_context(token)
+            self.set_auth(token)
     
-    def set_auth(self, token: str):
-        """Set authentication context"""
+    def set_auth(self, token: Optional[str]):
+        """Set authentication context if token is a Supabase-issued JWT"""
+        if not token or not self._is_supabase_token(token):
+            logger.debug("Skipping Supabase auth context: non-Supabase token provided")
+            return
         set_auth_context(token)
+    
+    @staticmethod
+    def _is_supabase_token(token: str) -> bool:
+        """Check whether the JWT was issued by Supabase"""
+        try:
+            claims = jose_jwt.get_unverified_claims(token)
+            issuer = claims.get("iss", "")
+            return issuer.startswith(settings.SUPABASE_URL)
+        except Exception:
+            return False
     
     # Generic CRUD operations
     def select(self, table: str, filters: Optional[Dict[str, Any]] = None, order_by: Optional[str] = None) -> List[Dict[str, Any]]:
