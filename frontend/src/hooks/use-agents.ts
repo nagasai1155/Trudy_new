@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient, endpoints } from '@/lib/api'
-import { Agent, CreateAgentData, UpdateAgentData, ApiResponse } from '@/types'
+import { Agent, CreateAgentData, UpdateAgentData } from '@/types'
 
 export function useAgents() {
   return useQuery({
     queryKey: ['agents'],
     queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<Agent[]>>(endpoints.agents.list)
+      const response = await apiClient.get<Agent[]>(endpoints.agents.list)
       return response.data
     },
   })
@@ -16,7 +16,7 @@ export function useAgent(id: string) {
   return useQuery({
     queryKey: ['agents', id],
     queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<Agent>>(endpoints.agents.get(id))
+      const response = await apiClient.get<Agent>(endpoints.agents.get(id))
       return response.data
     },
     enabled: !!id,
@@ -28,7 +28,7 @@ export function useCreateAgent() {
 
   return useMutation({
     mutationFn: async (data: CreateAgentData) => {
-      const response = await apiClient.post<ApiResponse<Agent>>(endpoints.agents.create, data)
+      const response = await apiClient.post<Agent>(endpoints.agents.create, data)
       return response.data
     },
     onSuccess: () => {
@@ -42,7 +42,7 @@ export function useUpdateAgent() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateAgentData }) => {
-      const response = await apiClient.put<ApiResponse<Agent>>(
+      const response = await apiClient.patch<Agent>(
         endpoints.agents.update(id),
         data
       )
@@ -64,14 +64,6 @@ export function useDeleteAgent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agents'] })
-    },
-  })
-}
-
-export function useTestAgent() {
-  return useMutation({
-    mutationFn: async ({ id, phoneNumber }: { id: string; phoneNumber: string }) => {
-      await apiClient.post(endpoints.agents.test(id), { phoneNumber })
     },
   })
 }

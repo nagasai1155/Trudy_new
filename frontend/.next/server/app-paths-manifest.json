@@ -1,4 +1,7 @@
 {
-  "/(dashboard)/phone-numbers/page": "app/(dashboard)/phone-numbers/page.js",
-  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js"
+  "/page": "app/page.js",
+  "/(auth)/signin/page": "app/(auth)/signin/page.js",
+  "/(dashboard)/campaigns/page": "app/(dashboard)/campaigns/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(dashboard)/tools/page": "app/(dashboard)/tools/page.js"
 }

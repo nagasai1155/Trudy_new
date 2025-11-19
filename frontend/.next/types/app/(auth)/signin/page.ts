@@ -1,8 +1,8 @@
-// File: C:\Users\HP\OneDrive\Desktop\Trudy Frontend\frontend\src\app\(dashboard)\phone-numbers\page.tsx
-import * as entry from '../../../../../src/app/(dashboard)/phone-numbers/page.js'
+// File: C:\Users\HP\OneDrive\Desktop\Trudy Frontend\frontend\src\app\(auth)\signin\page.tsx
+import * as entry from '../../../../../src/app/(auth)/signin/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../../src/app/(dashboard)/phone-numbers/page.js')
+type TEntry = typeof import('../../../../../src/app/(auth)/signin/page.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{

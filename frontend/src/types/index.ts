@@ -30,23 +30,29 @@ export interface WorkspaceSettings {
   customDomain?: string;
 }
 
-// Agent Types
+// Agent Types (matching backend schema)
 export interface Agent {
   id: string;
-  workspaceId: string;
+  client_id: string;
+  ultravox_agent_id?: string;
   name: string;
   description?: string;
-  prompt: string;
-  voice: Voice;
-  knowledgeBase: KnowledgeBase[];
-  tools: Tool[];
-  settings: AgentSettings;
+  voice_id: string;
+  system_prompt: string;
+  model: string;
+  tools: Array<{
+    tool_id: string;
+    ultravox_tool_id?: string;
+    enabled: boolean;
+    parameters?: Record<string, any>;
+  }>;
+  knowledge_bases: string[]; // Array of KB IDs
   status: AgentStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: string;
+  updated_at: string;
 }
 
-export type AgentStatus = 'draft' | 'active' | 'inactive' | 'testing';
+export type AgentStatus = 'creating' | 'active' | 'inactive' | 'failed';
 
 export interface AgentSettings {
   temperature: number;
@@ -60,20 +66,27 @@ export interface AgentSettings {
   recordCalls: boolean;
 }
 
-// Voice Types
+// Voice Types (matching backend schema)
 export interface Voice {
   id: string;
+  client_id: string;
   name: string;
-  provider: VoiceProvider;
-  voiceId: string;
+  provider: string; // 'elevenlabs', 'google', 'aws', 'azure', 'openai'
+  type: 'custom' | 'reference';
   language: string;
-  gender?: 'male' | 'female' | 'neutral';
-  isCustom: boolean;
-  sampleUrl?: string;
-  settings?: VoiceSettings;
+  status: VoiceStatus;
+  training_info?: {
+    progress?: number;
+    started_at?: string;
+    completed_at?: string;
+    estimated_completion?: string;
+  };
+  ultravox_voice_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export type VoiceProvider = 'elevenlabs' | 'ultravox' | 'custom';
+export type VoiceStatus = 'training' | 'active' | 'failed';
 
 export interface VoiceSettings {
   stability?: number;
@@ -82,18 +95,26 @@ export interface VoiceSettings {
   useSpeakerBoost?: boolean;
 }
 
-// Knowledge Base Types
+// Knowledge Base Types (matching backend schema)
 export interface KnowledgeBase {
   id: string;
+  client_id: string;
   name: string;
-  type: KnowledgeBaseType;
-  content: string;
-  fileUrl?: string;
-  metadata?: Record<string, any>;
-  createdAt: Date;
+  description?: string;
+  language: string;
+  ultravox_corpus_id?: string;
+  status: KnowledgeBaseStatus;
+  created_at: string;
+  updated_at: string;
+  document_counts?: {
+    total: number;
+    indexed: number;
+    processing: number;
+    failed: number;
+  };
 }
 
-export type KnowledgeBaseType = 'text' | 'file' | 'url' | 'api';
+export type KnowledgeBaseStatus = 'creating' | 'ready' | 'processing' | 'failed';
 
 // Tool Types
 export interface Tool {
@@ -118,23 +139,23 @@ export interface ToolConfig {
   };
 }
 
-// Campaign Types
+// Campaign Types (matching backend schema)
 export interface Campaign {
   id: string;
-  workspaceId: string;
-  agentId: string;
+  client_id: string;
+  agent_id: string;
   name: string;
-  description?: string;
+  schedule_type: 'immediate' | 'scheduled';
+  scheduled_at?: string;
+  timezone: string;
+  max_concurrent_calls: number;
   status: CampaignStatus;
-  contacts: Contact[];
-  schedule: CampaignSchedule;
-  settings: CampaignSettings;
-  stats: CampaignStats;
-  createdAt: Date;
-  updatedAt: Date;
+  stats?: CampaignStats;
+  created_at: string;
+  updated_at: string;
 }
 
-export type CampaignStatus = 'draft' | 'scheduled' | 'running' | 'paused' | 'completed' | 'cancelled';
+export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'completed' | 'failed' | 'cancelled';
 
 export interface Contact {
   id: string;
@@ -184,21 +205,20 @@ export interface CampaignStats {
   averageCost: number;
 }
 
-// Call Types
+// Call Types (matching backend schema)
 export interface Call {
   id: string;
-  campaignId: string;
-  contactId: string;
-  agentId: string;
-  phoneNumber: string;
+  client_id: string;
+  agent_id: string;
+  ultravox_call_id?: string;
+  phone_number: string;
+  direction: 'inbound' | 'outbound';
   status: CallStatus;
-  startedAt?: Date;
-  endedAt?: Date;
-  duration: number; // seconds
-  cost: number;
-  recording?: CallRecording;
-  transcript?: CallTranscript[];
-  metadata?: Record<string, any>;
+  started_at?: string;
+  ended_at?: string;
+  duration_seconds?: number;
+  cost_usd?: number;
+  created_at: string;
 }
 
 export type CallStatus = 'queued' | 'ringing' | 'in_progress' | 'completed' | 'failed' | 'no_answer' | 'busy' | 'voicemail';
@@ -304,11 +324,14 @@ export interface TimeRange {
   period: 'day' | 'week' | 'month' | 'year' | 'custom';
 }
 
-// API Response Types
+// API Response Types (matching backend format)
+// Note: Backend uses {data, meta} format - see lib/api.ts for BackendResponse
 export interface ApiResponse<T> {
   data: T;
-  message?: string;
-  success: boolean;
+  meta?: {
+    request_id?: string;
+    ts?: string;
+  };
 }
 
 export interface PaginatedResponse<T> {
@@ -321,30 +344,63 @@ export interface PaginatedResponse<T> {
   };
 }
 
-// Form Types
+// Form Types (matching backend schema)
 export interface CreateAgentData {
   name: string;
   description?: string;
-  prompt: string;
-  voiceId: string;
-  settings?: Partial<AgentSettings>;
+  voice_id: string;
+  system_prompt: string;
+  model?: string; // Default: 'fixie-ai/ultravox-v0_4-8k'
+  tools?: Array<{
+    tool_id: string;
+    enabled?: boolean;
+    parameters?: Record<string, any>;
+  }>;
+  knowledge_bases?: string[];
 }
 
-export interface UpdateAgentData extends Partial<CreateAgentData> {
-  status?: AgentStatus;
+export interface UpdateAgentData {
+  name?: string;
+  description?: string;
+  system_prompt?: string;
+  voice_id?: string;
+  tools?: Array<{
+    tool_id: string;
+    enabled?: boolean;
+    parameters?: Record<string, any>;
+  }>;
+  knowledge_bases?: string[];
 }
 
 export interface CreateCampaignData {
   name: string;
-  description?: string;
-  agentId: string;
-  contacts: Omit<Contact, 'id' | 'status' | 'callAttempts'>[];
-  schedule: CampaignSchedule;
-  settings: CampaignSettings;
+  agent_id: string;
+  schedule_type: 'immediate' | 'scheduled';
+  scheduled_at?: string;
+  timezone?: string; // Default: 'UTC'
+  max_concurrent_calls?: number; // Default: 10
 }
 
-export interface UpdateCampaignData extends Partial<CreateCampaignData> {
-  status?: CampaignStatus;
+export interface UpdateCampaignData {
+  name?: string;
+  agent_id?: string;
+  schedule_type?: 'immediate' | 'scheduled';
+  scheduled_at?: string;
+  timezone?: string;
+  max_concurrent_calls?: number;
+}
+
+export interface CampaignContact {
+  phone_number: string; // E.164 format: +12125550123
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  custom_fields?: Record<string, any>;
+}
+
+export interface CampaignContactsUpload {
+  s3_key?: string;
+  contacts?: CampaignContact[];
 }
 
 export interface CreateVoiceCloneData {

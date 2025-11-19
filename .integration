@@ -1,0 +1,48 @@
+# Trudy Backend & Frontend Integration Plan (Single-Agency, Client-Scoped)
+
+## Goals
+- Clean contracts between Next.js frontend and FastAPI backend.
+- Type-safe client, resilient uploads, realtime updates.
+
+## API contract
+- Single OpenAPI v3.1 spec (`docs/api/reference/openapi.yaml`).
+- Generate TS types; Pydantic models on backend.
+- Request correlation: `X-Request-Id`; tenancy scoping via `x-client-id` header (validated against JWT claim) and enforced by RLS in Supabase.
+
+## Auth & session
+- Auth0 for login (frontend). Backend validates JWT (RS256) and extracts `sub`, `role`, optional `client_id`.
+- Frontend includes bearer token + `x-client-id` for client-scoped operations.
+
+## Data fetching
+- React Query keys: ['agents', clientId], ['voices', clientId], ['kb', id], ['campaigns', id], ['calls', id].
+- Background revalidation; normalized errors.
+
+## Uploads
+- Flow: FE requests presign → uploads to S3 → FE posts ingest → BE validates → triggers Ultravox actions.
+- Multipart + resume for large files.
+
+## Realtime updates
+- SSE/WebSocket channel per client for events: voice.training.*, campaign.*, call.*
+- Fallback polling.
+
+## Local cache & drafts
+- IndexedDB for drafts and upload queue; namespaced by clientId.
+
+## Error handling
+- Unified error envelope; idempotent GET retries only.
+
+## Observability
+- Propagate `request_id` and `client_id` to Sentry on both FE/BE.
+
+## Milestones
+- Types from OpenAPI → TS types.
+- API client wrapper (auth, retries, correlation id, x-client-id).
+- Presigned upload flow (KB + voice samples).
+- Realtime events wired to UI components.
+
+## Acceptance criteria
+- FE builds against generated types.
+- Reliable uploads with resume and verified callbacks.
+- Live status updates without manual refresh for voice training and campaigns.
+
+

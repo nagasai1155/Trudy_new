@@ -1,0 +1,287 @@
+# Trudy Platform - Frontend Architecture
+
+## Overview
+Next.js 14 application deployed on Vercel with modern UI/UX for AI voice agent management.
+
+## Tech Stack
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui
+- **State Management**: Zustand
+- **Authentication**: Auth0 Next.js SDK
+- **API Client**: TanStack Query (React Query)
+- **Forms**: React Hook Form + Zod validation
+- **File Upload**: React Dropzone
+- **Charts**: Recharts
+- **Deployment**: Vercel
+
+## Project Structure
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Auth routes
+│   ├── (dashboard)/       # Main app routes
+│   ├── api/               # API routes
+│   └── globals.css
+├── components/            # Reusable components
+│   ├── ui/               # shadcn/ui components
+│   ├── forms/            # Form components
+│   ├── charts/           # Chart components
+│   └── layout/           # Layout components
+├── lib/                  # Utilities and configs
+│   ├── auth.ts          # Auth0 configuration
+│   ├── api.ts           # API client setup
+│   ├── utils.ts         # Utility functions
+│   └── validations.ts   # Zod schemas
+├── hooks/               # Custom React hooks
+├── stores/              # Zustand stores
+├── types/               # TypeScript types
+└── constants/           # App constants
+```
+
+## Key Features
+
+### 1. Authentication & Authorization
+- **Auth0 Integration**: Seamless login/logout
+- **Role-based Access**: Organization admin, workspace admin, member
+- **Multi-workspace Support**: Switch between client workspaces
+- **Session Management**: Secure token handling
+
+### 2. Dashboard & Navigation
+- **Sidebar Navigation**: Collapsible with workspace switching
+- **Breadcrumbs**: Clear navigation hierarchy
+- **Quick Actions**: Create agent, start campaign, etc.
+- **Real-time Updates**: Live data with WebSocket connections
+
+### 3. Agent Builder
+- **Visual Agent Editor**: Drag-and-drop interface
+- **Prompt Editor**: Rich text editor with variables
+- **Voice Selection**: Built-in + custom voice options
+- **Knowledge Base**: File upload and management
+- **Tools Integration**: API endpoints, webhooks
+- **Live Testing**: WebRTC sandbox for testing
+
+### 4. Campaign Management
+- **Campaign Builder**: Step-by-step campaign creation
+- **Contact Import**: CSV upload with validation
+- **Scheduling**: Time zone aware scheduling
+- **Progress Tracking**: Real-time campaign analytics
+- **Call Monitoring**: Live call status and recordings
+
+### 5. Voice Cloning
+- **Audio Upload**: Drag-and-drop audio samples
+- **Training Progress**: Real-time training status
+- **Voice Preview**: Test cloned voices
+- **Voice Library**: Manage all custom voices
+
+### 6. Analytics & Reporting
+- **Call Analytics**: Duration, success rates, costs
+- **Campaign Reports**: Performance metrics
+- **Credit Usage**: Real-time credit tracking
+- **Export Options**: PDF, CSV reports
+
+## Component Architecture
+
+### Core Components
+```typescript
+// Layout Components
+<AppLayout>
+  <Sidebar />
+  <MainContent>
+    <Header />
+    <PageContent />
+  </MainContent>
+</AppLayout>
+
+// Agent Builder
+<AgentBuilder>
+  <AgentForm />
+  <VoiceSelector />
+  <KnowledgeBaseManager />
+  <ToolsManager />
+  <TestSandbox />
+</AgentBuilder>
+
+// Campaign Manager
+<CampaignManager>
+  <CampaignList />
+  <CampaignBuilder />
+  <ContactImporter />
+  <Scheduler />
+  <Analytics />
+</CampaignManager>
+```
+
+### State Management
+```typescript
+// Zustand Stores
+interface AppStore {
+  user: User | null;
+  currentWorkspace: Workspace | null;
+  workspaces: Workspace[];
+  setCurrentWorkspace: (workspace: Workspace) => void;
+}
+
+interface AgentStore {
+  agents: Agent[];
+  selectedAgent: Agent | null;
+  createAgent: (data: CreateAgentData) => Promise<void>;
+  updateAgent: (id: string, data: UpdateAgentData) => Promise<void>;
+}
+```
+
+## API Integration
+
+### API Client Setup
+```typescript
+// lib/api.ts
+import { createTRPCNext } from '@trpc/next';
+
+export const api = createTRPCNext<AppRouter>({
+  config() {
+    return {
+      url: '/api/trpc',
+      headers: {
+        authorization: `Bearer ${getAccessToken()}`,
+      },
+    };
+  },
+});
+```
+
+### Data Fetching
+```typescript
+// hooks/useAgents.ts
+export function useAgents() {
+  return api.agents.list.useQuery();
+}
+
+export function useCreateAgent() {
+  const utils = api.useUtils();
+  return api.agents.create.useMutation({
+    onSuccess: () => {
+      utils.agents.list.invalidate();
+    },
+  });
+}
+```
+
+## UI/UX Design System
+
+### Design Tokens
+```css
+/* globals.css */
+:root {
+  --primary: 220 14% 96%;
+  --primary-foreground: 220 9% 46%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 9% 46%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 220 9% 46%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 220 9% 46%;
+  --radius: 0.5rem;
+}
+```
+
+### Component Library
+- **shadcn/ui**: Base component library
+- **Custom Components**: Agent builder, campaign manager
+- **Responsive Design**: Mobile-first approach
+- **Dark Mode**: System preference detection
+
+## Performance Optimization
+
+### Code Splitting
+```typescript
+// Lazy load heavy components
+const AgentBuilder = lazy(() => import('./AgentBuilder'));
+const CampaignManager = lazy(() => import('./CampaignManager'));
+```
+
+### Caching Strategy
+- **React Query**: Server state caching
+- **Zustand**: Client state persistence
+- **Vercel Edge**: Static asset caching
+
+### Bundle Optimization
+- **Dynamic Imports**: Route-based code splitting
+- **Tree Shaking**: Remove unused code
+- **Image Optimization**: Next.js Image component
+
+## Security Considerations
+
+### Authentication
+- **Auth0 Integration**: Secure token management
+- **Route Protection**: Middleware-based auth
+- **API Security**: Token validation
+
+### Data Protection
+- **Input Validation**: Zod schemas
+- **XSS Prevention**: Sanitized inputs
+- **CSRF Protection**: SameSite cookies
+
+## Development Workflow
+
+### Local Development
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Run type checking
+npm run type-check
+
+# Run linting
+npm run lint
+
+# Run tests
+npm run test
+```
+
+### Build & Deploy
+```bash
+# Build for production
+npm run build
+
+# Deploy to Vercel
+vercel --prod
+```
+
+## Testing Strategy
+
+### Unit Tests
+- **Jest**: Test runner
+- **React Testing Library**: Component testing
+- **MSW**: API mocking
+
+### E2E Tests
+- **Playwright**: End-to-end testing
+- **Test Scenarios**: User journeys
+
+## Monitoring & Analytics
+
+### Error Tracking
+- **Sentry**: Error monitoring
+- **Vercel Analytics**: Performance metrics
+
+### User Analytics
+- **PostHog**: User behavior tracking
+- **Custom Events**: Feature usage tracking
+
+## Future Enhancements
+
+### Phase 2 Features
+- **Real-time Collaboration**: Multi-user editing
+- **Advanced Analytics**: AI-powered insights
+- **Mobile App**: React Native companion
+
+### Phase 3 Features
+- **White-label**: Custom branding
+- **API Marketplace**: Third-party integrations
+- **Advanced AI**: Custom model training

@@ -11,13 +11,33 @@ export const queryClient = new QueryClient({
   },
 })
 
-// API Base URL
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
+// API Base URL - Backend uses /api/v1 prefix
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+
+// Backend Response Types
+export interface BackendResponse<T> {
+  data: T
+  meta?: {
+    request_id?: string
+    ts?: string
+  }
+}
+
+export interface BackendError {
+  error: {
+    code: string
+    message: string
+    details?: Record<string, any>
+    request_id?: string
+    ts?: string
+  }
+}
 
 // API Client
 class ApiClient {
   private baseUrl: string
   private token: string | null = null
+  private clientId: string | null = null
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl
@@ -27,21 +47,42 @@ class ApiClient {
     this.token = token
   }
 
+  setClientId(clientId: string) {
+    this.clientId = clientId
+  }
+
   clearToken() {
     this.token = null
+    this.clientId = null
+  }
+
+  private generateIdempotencyKey(): string {
+    return crypto.randomUUID()
   }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<T> {
+  ): Promise<BackendResponse<T>> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
     }
 
+    // Add Authorization header
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`
+    }
+
+    // Add x-client-id header (required by backend for non-agency-admin users)
+    if (this.clientId) {
+      headers['x-client-id'] = this.clientId
+    }
+
+    // Add idempotency key for POST/PATCH/PUT requests
+    if (['POST', 'PATCH', 'PUT'].includes(options.method || '')) {
+      const idempotencyKey = options.headers?.['X-Idempotency-Key'] as string || this.generateIdempotencyKey()
+      headers['X-Idempotency-Key'] = idempotencyKey
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -49,48 +90,61 @@ class ApiClient {
       headers,
     })
 
+    const responseData = await response.json().catch(() => ({})) as BackendResponse<T> | BackendError
+
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      throw new Error(error.message || 'An error occurred')
+      // Handle backend error format
+      if ('error' in responseData) {
+        const error = responseData.error
+        const errorMessage = error.message || 'An error occurred'
+        const errorDetails = error.details ? ` Details: ${JSON.stringify(error.details)}` : ''
+        throw new Error(`${errorMessage}${errorDetails}`)
+      }
+      throw new Error('An error occurred')
     }
 
-    return response.json()
+    // Backend returns {data, meta} format
+    return responseData as BackendResponse<T>
   }
 
-  async get<T>(endpoint: string): Promise<T> {
+  async get<T>(endpoint: string): Promise<BackendResponse<T>> {
     return this.request<T>(endpoint, { method: 'GET' })
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any): Promise<BackendResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     })
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: any): Promise<BackendResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     })
   }
 
-  async patch<T>(endpoint: string, data?: any): Promise<T> {
+  async patch<T>(endpoint: string, data?: any): Promise<BackendResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
     })
   }
 
-  async delete<T>(endpoint: string): Promise<T> {
+  async delete<T>(endpoint: string): Promise<BackendResponse<T>> {
     return this.request<T>(endpoint, { method: 'DELETE' })
   }
 
-  async upload<T>(endpoint: string, formData: FormData): Promise<T> {
+  async upload<T>(endpoint: string, formData: FormData): Promise<BackendResponse<T>> {
     const headers: Record<string, string> = {}
 
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`
+    }
+
+    if (this.clientId) {
+      headers['x-client-id'] = this.clientId
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -99,34 +153,40 @@ class ApiClient {
       body: formData,
     })
 
+    const responseData = await response.json().catch(() => ({})) as BackendResponse<T> | BackendError
+
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      throw new Error(error.message || 'Upload failed')
+      if ('error' in responseData) {
+        const error = responseData.error
+        throw new Error(error.message || 'Upload failed')
+      }
+      throw new Error('Upload failed')
     }
 
-    return response.json()
+    return responseData as BackendResponse<T>
   }
 }
 
 export const apiClient = new ApiClient(API_URL)
 
-// API Endpoints
+// API Endpoints - Updated to match backend structure
 export const endpoints = {
   // Auth
   auth: {
-    login: '/auth/login',
-    logout: '/auth/logout',
     me: '/auth/me',
-    signup: '/auth/signup',
+    clients: '/auth/clients',
+    apiKeys: '/api-keys',
+    providers: {
+      tts: '/providers/tts',
+    },
   },
   
-  // Workspaces
-  workspaces: {
-    list: '/workspaces',
-    get: (id: string) => `/workspaces/${id}`,
-    create: '/workspaces',
-    update: (id: string) => `/workspaces/${id}`,
-    delete: (id: string) => `/workspaces/${id}`,
+  // Voices
+  voices: {
+    list: '/voices',
+    get: (id: string) => `/voices/${id}`,
+    create: '/voices',
+    presign: '/voices/files/presign',
   },
   
   // Agents
@@ -136,7 +196,15 @@ export const endpoints = {
     create: '/agents',
     update: (id: string) => `/agents/${id}`,
     delete: (id: string) => `/agents/${id}`,
-    test: (id: string) => `/agents/${id}/test`,
+  },
+  
+  // Knowledge Bases
+  knowledge: {
+    list: '/kb',
+    get: (id: string) => `/kb/${id}`,
+    create: '/kb',
+    presign: (id: string) => `/kb/${id}/files/presign`,
+    ingest: (id: string) => `/kb/${id}/files/ingest`,
   },
   
   // Campaigns
@@ -146,49 +214,17 @@ export const endpoints = {
     create: '/campaigns',
     update: (id: string) => `/campaigns/${id}`,
     delete: (id: string) => `/campaigns/${id}`,
-    start: (id: string) => `/campaigns/${id}/start`,
-    pause: (id: string) => `/campaigns/${id}/pause`,
-    resume: (id: string) => `/campaigns/${id}/resume`,
-    cancel: (id: string) => `/campaigns/${id}/cancel`,
-    stats: (id: string) => `/campaigns/${id}/stats`,
+    contacts: (id: string) => `/campaigns/${id}/contacts`,
+    schedule: (id: string) => `/campaigns/${id}/schedule`,
   },
   
   // Calls
   calls: {
     list: '/calls',
     get: (id: string) => `/calls/${id}`,
+    create: '/calls',
     recording: (id: string) => `/calls/${id}/recording`,
     transcript: (id: string) => `/calls/${id}/transcript`,
-  },
-  
-  // Voices
-  voices: {
-    list: '/voices',
-    get: (id: string) => `/voices/${id}`,
-    create: '/voices',
-    delete: (id: string) => `/voices/${id}`,
-    preview: (id: string) => `/voices/${id}/preview`,
-  },
-  
-  // Voice Cloning
-  voiceClones: {
-    list: '/voice-clones',
-    get: (id: string) => `/voice-clones/${id}`,
-    create: '/voice-clones',
-    delete: (id: string) => `/voice-clones/${id}`,
-    upload: (id: string) => `/voice-clones/${id}/upload`,
-    train: (id: string) => `/voice-clones/${id}/train`,
-    status: (id: string) => `/voice-clones/${id}/status`,
-  },
-  
-  // Knowledge Base
-  knowledge: {
-    list: '/knowledge',
-    get: (id: string) => `/knowledge/${id}`,
-    create: '/knowledge',
-    update: (id: string) => `/knowledge/${id}`,
-    delete: (id: string) => `/knowledge/${id}`,
-    upload: '/knowledge/upload',
   },
   
   // Tools
@@ -198,36 +234,19 @@ export const endpoints = {
     create: '/tools',
     update: (id: string) => `/tools/${id}`,
     delete: (id: string) => `/tools/${id}`,
-    test: (id: string) => `/tools/${id}/test`,
   },
   
-  // Analytics
-  analytics: {
-    overview: '/analytics/overview',
-    calls: '/analytics/calls',
-    campaigns: '/analytics/campaigns',
-    agents: '/analytics/agents',
-    costs: '/analytics/costs',
-    export: '/analytics/export',
+  // Telephony
+  telephony: {
+    numbers: '/telephony/numbers',
+    purchase: '/telephony/numbers/purchase',
   },
   
-  // Contacts
-  contacts: {
-    list: '/contacts',
-    get: (id: string) => `/contacts/${id}`,
-    create: '/contacts',
-    update: (id: string) => `/contacts/${id}`,
-    delete: (id: string) => `/contacts/${id}`,
-    import: '/contacts/import',
-    export: '/contacts/export',
-  },
-  
-  // Notifications
-  notifications: {
-    list: '/notifications',
-    markRead: (id: string) => `/notifications/${id}/read`,
-    markAllRead: '/notifications/read-all',
-    delete: (id: string) => `/notifications/${id}`,
+  // Webhooks
+  webhooks: {
+    list: '/webhooks',
+    create: '/webhooks',
+    delete: (id: string) => `/webhooks/${id}`,
   },
 }
 

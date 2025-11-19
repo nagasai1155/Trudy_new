@@ -5,14 +5,13 @@ import {
   CreateCampaignData,
   UpdateCampaignData,
   CampaignStats,
-  ApiResponse,
 } from '@/types'
 
 export function useCampaigns() {
   return useQuery({
     queryKey: ['campaigns'],
     queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<Campaign[]>>(
+      const response = await apiClient.get<Campaign[]>(
         endpoints.campaigns.list
       )
       return response.data
@@ -24,7 +23,7 @@ export function useCampaign(id: string) {
   return useQuery({
     queryKey: ['campaigns', id],
     queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<Campaign>>(
+      const response = await apiClient.get<Campaign>(
         endpoints.campaigns.get(id)
       )
       return response.data
@@ -38,7 +37,7 @@ export function useCreateCampaign() {
 
   return useMutation({
     mutationFn: async (data: CreateCampaignData) => {
-      const response = await apiClient.post<ApiResponse<Campaign>>(
+      const response = await apiClient.post<Campaign>(
         endpoints.campaigns.create,
         data
       )
@@ -55,7 +54,7 @@ export function useUpdateCampaign() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateCampaignData }) => {
-      const response = await apiClient.put<ApiResponse<Campaign>>(
+      const response = await apiClient.patch<Campaign>(
         endpoints.campaigns.update(id),
         data
       )
@@ -78,88 +77,6 @@ export function useDeleteCampaign() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] })
     },
-  })
-}
-
-export function useStartCampaign() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiClient.post<ApiResponse<Campaign>>(
-        endpoints.campaigns.start(id)
-      )
-      return response.data
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
-      queryClient.invalidateQueries({ queryKey: ['campaigns', data.id] })
-    },
-  })
-}
-
-export function usePauseCampaign() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiClient.post<ApiResponse<Campaign>>(
-        endpoints.campaigns.pause(id)
-      )
-      return response.data
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
-      queryClient.invalidateQueries({ queryKey: ['campaigns', data.id] })
-    },
-  })
-}
-
-export function useResumeCampaign() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiClient.post<ApiResponse<Campaign>>(
-        endpoints.campaigns.resume(id)
-      )
-      return response.data
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
-      queryClient.invalidateQueries({ queryKey: ['campaigns', data.id] })
-    },
-  })
-}
-
-export function useCancelCampaign() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await apiClient.post<ApiResponse<Campaign>>(
-        endpoints.campaigns.cancel(id)
-      )
-      return response.data
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['campaigns'] })
-      queryClient.invalidateQueries({ queryKey: ['campaigns', data.id] })
-    },
-  })
-}
-
-export function useCampaignStats(id: string) {
-  return useQuery({
-    queryKey: ['campaigns', id, 'stats'],
-    queryFn: async () => {
-      const response = await apiClient.get<ApiResponse<CampaignStats>>(
-        endpoints.campaigns.stats(id)
-      )
-      return response.data
-    },
-    enabled: !!id,
-    refetchInterval: 5000, // Refresh every 5 seconds
   })
 }
 
