@@ -1,29 +1,27 @@
 'use client'
 
-import { useUser } from '@auth0/nextjs-auth0/client'
+import { useSession } from 'next-auth/react'
 import { useEffect } from 'react'
 import { apiClient } from './api'
 
 /**
- * Hook to initialize API client with Auth0 token and client_id
+ * Hook to initialize API client with NextAuth token and client_id
  * This should be called in a client component after authentication
  */
 export function useAuthClient() {
-  const { user, isLoading } = useUser()
+  const { data: session, status } = useSession()
+  const isLoading = status === 'loading'
 
   useEffect(() => {
-    if (!isLoading && user) {
-      // Get access token from Auth0
-      // Note: In production, you'll need to get the actual access token
-      // This is a placeholder - you may need to use getAccessToken() from Auth0 SDK
-      const token = (user as any).accessToken || ''
+    if (status === 'authenticated' && session) {
+      // Get access token from NextAuth session
+      const token = (session as any).accessToken || ''
       
-      // Extract client_id from user metadata or app_metadata
+      // Extract client_id from user metadata or session
       // Backend expects client_id in JWT claim or user metadata
       const clientId = 
-        (user as any).app_metadata?.client_id || 
-        (user as any).user_metadata?.client_id ||
-        (user as any)['https://trudy.ai/client_id'] ||
+        (session.user as any)?.client_id || 
+        (session.user as any)?.['https://trudy.ai/client_id'] ||
         ''
 
       if (token) {
@@ -33,33 +31,36 @@ export function useAuthClient() {
       if (clientId) {
         apiClient.setClientId(clientId)
       }
-    } else if (!isLoading && !user) {
+    } else if (status === 'unauthenticated') {
       // Clear token when user logs out
       apiClient.clearToken()
     }
-  }, [user, isLoading])
+  }, [session, status])
 
-  return { user, isLoading }
+  return { 
+    user: session?.user || null, 
+    isLoading,
+    session 
+  }
 }
 
 /**
- * Server-side function to get Auth0 session and configure API client
+ * Server-side function to get NextAuth session and configure API client
  * Use this in server components or API routes
  */
 export async function getServerAuthConfig() {
   try {
-    const { getSession } = await import('@auth0/nextjs-auth0')
-    const session = await getSession()
+    const { auth } = await import('@/lib/auth')
+    const session = await auth()
     
     if (!session) {
       return { token: null, clientId: null }
     }
 
-    const token = session.accessToken || ''
+    const token = (session as any).accessToken || ''
     const clientId = 
-      session.user?.app_metadata?.client_id ||
-      session.user?.user_metadata?.client_id ||
-      session.user?.['https://trudy.ai/client_id'] ||
+      (session.user as any)?.client_id ||
+      (session.user as any)?.['https://trudy.ai/client_id'] ||
       ''
 
     return { token, clientId }
@@ -68,4 +69,3 @@ export async function getServerAuthConfig() {
     return { token: null, clientId: null }
   }
 }
-

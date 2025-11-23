@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import {
   Dialog,
   DialogContent,
@@ -21,16 +22,23 @@ export function SignInModal({ open, onOpenChange }: SignInModalProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSkip = () => {
     onOpenChange(false)
     router.push('/dashboard')
   }
 
-  const handleGoogleSignIn = () => {
-    // Placeholder for future Google sign-in implementation
-    onOpenChange(false)
-    router.push('/dashboard')
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true)
+      onOpenChange(false)
+      await signIn('google', { callbackUrl: '/dashboard' })
+    } catch (error) {
+      console.error('Google sign-in error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleAppleSignIn = () => {
@@ -67,6 +75,7 @@ export function SignInModal({ open, onOpenChange }: SignInModalProps) {
               onClick={handleGoogleSignIn}
               size="lg"
               variant="outline"
+              disabled={isLoading}
               className="w-full gap-2 justify-start"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">

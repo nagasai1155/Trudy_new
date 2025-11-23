@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,14 +13,21 @@ export default function SignupPage() {
   const [email, setEmail] = useState('balam2@gmail.com')
   const [password, setPassword] = useState('password123')
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSkip = () => {
     router.push('/dashboard')
   }
 
-  const handleGoogleSignUp = () => {
-    // Placeholder for future Google sign-up implementation
-    router.push('/dashboard')
+  const handleGoogleSignUp = async () => {
+    try {
+      setIsLoading(true)
+      await signIn('google', { callbackUrl: '/dashboard' })
+    } catch (error) {
+      console.error('Google sign-up error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleEmailSignUp = (e: React.FormEvent) => {
@@ -42,6 +50,7 @@ export default function SignupPage() {
           onClick={handleGoogleSignUp}
           size="lg"
           variant="outline"
+          disabled={isLoading}
           className="w-full gap-2 justify-start bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,14 +13,21 @@ export default function SigninPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSkip = () => {
     router.push('/dashboard')
   }
 
-  const handleGoogleSignIn = () => {
-    // Placeholder for future Google sign-in implementation
-    router.push('/dashboard')
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true)
+      await signIn('google', { callbackUrl: '/dashboard' })
+    } catch (error) {
+      console.error('Google sign-in error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleAppleSignIn = () => {
@@ -52,6 +60,7 @@ export default function SigninPage() {
             onClick={handleGoogleSignIn}
             size="lg"
             variant="outline"
+            disabled={isLoading}
             className="w-full gap-3 justify-start bg-white dark:bg-black border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">

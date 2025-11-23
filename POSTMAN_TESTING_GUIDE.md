@@ -10,7 +10,8 @@ This guide will help you test all the Trudy Backend APIs with Postman, even if y
 3. [Setting Up Postman](#setting-up-postman)
 4. [All API Endpoints Reference](#all-api-endpoints-reference)
 5. [Step-by-Step Testing Guide](#step-by-step-testing-guide)
-6. [Common Issues & Solutions](#common-issues--solutions)
+6. [Testing Ultravox & Telnyx Integrations](#-9-testing-ultravox--telnyx-integrations)
+7. [Common Issues & Solutions](#common-issues--solutions)
 
 ---
 
@@ -267,8 +268,9 @@ All entities in Trudy use **UUIDs** (Universally Unique Identifiers):
   ```json
   {
     "name": "Pre-built Voice",
-    "strategy": "reference",
+    "strategy": "external",
     "source": {
+      "type": "external",
       "provider_voice_id": "elevenlabs-voice-id-123"
     }
   }
@@ -626,9 +628,729 @@ All entities in Trudy use **UUIDs** (Universally Unique Identifiers):
 
 ---
 
-### 🏥 9. HEALTH CHECK
+### 🔌 9. TESTING ULTRAVOX & TELNYX INTEGRATIONS
 
-#### 9.1 Health Check
+This section explains how to test endpoints that interact with **Ultravox** (voice AI platform) and **Telnyx** (telephony provider). These endpoints fetch data from or send data to external services.
+
+---
+
+#### 📋 Prerequisites for Testing
+
+Before testing Ultravox/Telnyx endpoints, ensure:
+
+1. **Ultravox API Key** is configured in your backend environment:
+   - Check `.env` file: `ULTRAVOX_API_KEY=your-key-here`
+   - Or verify in backend logs that Ultravox client is initialized
+
+2. **Telnyx API Key** (optional, for telephony features):
+   - Check `.env` file: `TELNYX_API_KEY=your-key-here`
+
+3. **Backend is running** and can reach external APIs
+
+---
+
+#### 🎯 9.1 Testing Ultravox Integration Endpoints
+
+Ultravox is integrated into several endpoints. Here's how to test each:
+
+##### **9.1.1 Get Telephony/SIP Configuration (Direct Ultravox Call)**
+
+This endpoint directly fetches SIP configuration from Ultravox.
+
+**Request:**
+```
+GET {{base_url}}/api/v1/telephony/config
+```
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+x-client-id: {{client_id}}
+Content-Type: application/json
+```
+
+**Expected Response:**
+```json
+{
+  "data": {
+    "sip_endpoint": "sip.ultravox.ai",
+    "username": "client_123",
+    "password": "...",
+    "domain": "ultravox.ai"
+  },
+  "meta": {
+    "request_id": "req_...",
+    "ts": "2025-10-19T10:00:00Z"
+  }
+}
+```
+
+**What to Verify:**
+- ✅ Response contains SIP configuration data
+- ✅ `sip_endpoint` is a valid Ultravox domain
+- ✅ If Ultravox API is down, endpoint returns default values gracefully
+
+**How to Test:**
+1. Make the request
+2. Check that `sip_endpoint` contains "ultravox.ai"
+3. Verify response structure matches expected format
+
+---
+
+##### **9.1.2 Create Voice (Creates in Ultravox)**
+
+When you create a voice, it's also created in Ultravox.
+
+**Request:**
+```
+POST {{base_url}}/api/v1/voices
+```
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+x-client-id: {{client_id}}
+Content-Type: application/json
+```
+
+**Body (for External/Reference Voice):**
+```json
+{
+  "name": "Test Voice",
+  "strategy": "external",
+  "source": {
+    "type": "external",
+    "provider_voice_id": "elevenlabs-default-voice"
+  }
+}
+```
+
+**Body (for Native Voice Cloning):**
+```json
+{
+  "name": "My Cloned Voice",
+  "strategy": "native",
+  "source": {
+    "type": "native",
+    "samples": [
+      {
+        "text": "Hello, this is my voice sample.",
+        "s3_key": "uploads/client_123/voices/voice_abc/sample1.wav",
+        "duration_seconds": 6.1
+      },
+      {
+        "text": "This is sample 2.",
+        "s3_key": "uploads/client_123/voices/voice_abc/sample2.wav",
+        "duration_seconds": 5.8
+      },
+      {
+        "text": "This is sample 3.",
+        "s3_key": "uploads/client_123/voices/voice_abc/sample3.wav",
+        "duration_seconds": 6.5
+      }
+    ]
+  },
+  "provider_overrides": {
+    "provider": "elevenlabs"
+  }
+}
+```
+
+**Body (for Auto Strategy):**
+```json
+{
+  "name": "Auto Voice",
+  "strategy": "auto",
+  "source": {
+    "type": "external",
+    "provider_voice_id": "elevenlabs-default-voice"
+  }
+}
+```
+
+**Important Notes:**
+- ✅ `strategy` must be one of: `"auto"`, `"native"`, or `"external"` (NOT "reference")
+- ✅ `source.type` is **required** and must be `"native"` or `"external"`
+- ✅ For `"external"` strategy: provide `provider_voice_id` in source
+- ✅ For `"native"` strategy: provide at least 3 samples with `s3_key`, `text`, and `duration_seconds` (3-10 seconds each, total ≥ 15 seconds)
+
+**Expected Response:**
+```json
+{
+  "data": {
+    "id": "voice_uuid",
+    "name": "Test Voice",
+    "ultravox_voice_id": "voice_ultravox_123",
+    "status": "active",
+    "strategy": "external",
+    "created_at": "2025-10-19T10:00:00Z"
+  },
+  "meta": {
+    "request_id": "req_...",
+    "ts": "2025-10-19T10:00:00Z"
+  }
+}
+```
+
+**What to Verify:**
+- ✅ Response includes `ultravox_voice_id` (proves Ultravox was called)
+- ✅ Status is "active" or "training"
+- ✅ Check backend logs for Ultravox API call
+
+**How to Verify Ultravox Integration:**
+1. Check response for `ultravox_voice_id` field
+2. Look at backend terminal logs - you should see:
+   ```
+   POST https://api.ultravox.ai/v1/voices
+   ```
+3. If Ultravox fails, you'll get a 502 error
+
+---
+
+##### **9.1.3 Create Agent (Creates in Ultravox)**
+
+Creating an agent also creates it in Ultravox.
+
+**Request:**
+```
+POST {{base_url}}/api/v1/agents
+```
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+x-client-id: {{client_id}}
+Content-Type: application/json
+X-Idempotency-Key: {{$guid}}
+```
+
+**Body:**
+```json
+{
+  "name": "Test Agent",
+  "description": "Agent for testing Ultravox",
+  "voice_id": "{{voice_id}}",
+  "system_prompt": "You are a helpful assistant.",
+  "model": "fixie-ai/ultravox-v0_4-8k",
+  "tools": [],
+  "knowledge_bases": []
+}
+```
+
+**Expected Response:**
+```json
+{
+  "data": {
+    "id": "agent_uuid",
+    "ultravox_agent_id": "agt_ultravox_abc123",
+    "name": "Test Agent",
+    "status": "active",
+    "voice_id": "voice_uuid",
+    "created_at": "2025-10-19T10:00:00Z"
+  },
+  "meta": {
+    "request_id": "req_...",
+    "ts": "2025-10-19T10:00:00Z"
+  }
+}
+```
+
+**What to Verify:**
+- ✅ Response includes `ultravox_agent_id` (proves Ultravox integration)
+- ✅ Status is "active"
+- ✅ Backend logs show Ultravox API call
+
+**Testing Steps:**
+1. Create agent with valid voice_id
+2. Check response for `ultravox_agent_id`
+3. Verify in backend logs: `POST https://api.ultravox.ai/v1/agents`
+
+---
+
+##### **9.1.4 Create Knowledge Base (Creates Corpus in Ultravox)**
+
+**Request:**
+```
+POST {{base_url}}/api/v1/kb
+```
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+x-client-id: {{client_id}}
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "name": "Test Knowledge Base",
+  "description": "Testing Ultravox corpus creation",
+  "language": "en-US"
+}
+```
+
+**Expected Response:**
+```json
+{
+  "data": {
+    "id": "kb_uuid",
+    "name": "Test Knowledge Base",
+    "ultravox_corpus_id": "corpus_ultravox_123",
+    "status": "ready",
+    "language": "en-US",
+    "created_at": "2025-10-19T10:00:00Z"
+  },
+  "meta": {
+    "request_id": "req_...",
+    "ts": "2025-10-19T10:00:00Z"
+  }
+}
+```
+
+**What to Verify:**
+- ✅ Response includes `ultravox_corpus_id`
+- ✅ Status is "ready"
+- ✅ Backend logs show: `POST https://api.ultravox.ai/v1/corpora`
+
+---
+
+##### **9.1.5 Create Call (Creates in Ultravox)**
+
+This creates a call that goes through Ultravox.
+
+**Request:**
+```
+POST {{base_url}}/api/v1/calls
+```
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+x-client-id: {{client_id}}
+Content-Type: application/json
+X-Idempotency-Key: {{$guid}}
+```
+
+**Body:**
+```json
+{
+  "agent_id": "{{agent_id}}",
+  "phone_number": "+12125550123",
+  "direction": "outbound",
+  "context": {
+    "customer_name": "John Doe",
+    "order_id": "12345"
+  },
+  "call_settings": {
+    "recording_enabled": true,
+    "max_duration": 300
+  }
+}
+```
+
+**Expected Response:**
+```json
+{
+  "data": {
+    "id": "call_uuid",
+    "ultravox_call_id": "call_ultravox_xyz789",
+    "agent_id": "agent_uuid",
+    "phone_number": "+12125550123",
+    "direction": "outbound",
+    "status": "queued",
+    "created_at": "2025-10-19T10:00:00Z"
+  },
+  "meta": {
+    "request_id": "req_...",
+    "ts": "2025-10-19T10:00:00Z"
+  }
+}
+```
+
+**What to Verify:**
+- ✅ Response includes `ultravox_call_id` (proves Ultravox was called)
+- ✅ Status is "queued" or "ringing"
+- ✅ Backend logs show: `POST https://api.ultravox.ai/v1/calls`
+
+**Important Notes:**
+- ⚠️ This will make an actual phone call if you use a real phone number
+- ⚠️ Make sure you have sufficient credits
+- ✅ Use test numbers for development
+
+---
+
+##### **9.1.6 Get Call Transcript (Fetches from Ultravox)**
+
+**Request:**
+```
+GET {{base_url}}/api/v1/calls/{{call_id}}/transcript
+```
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+x-client-id: {{client_id}}
+Content-Type: application/json
+```
+
+**Expected Response:**
+```json
+{
+  "data": {
+    "transcript": [
+      {
+        "speaker": "agent",
+        "text": "Hello, how can I help you?",
+        "timestamp": "2025-10-19T10:00:05Z"
+      },
+      {
+        "speaker": "user",
+        "text": "I need help with my order",
+        "timestamp": "2025-10-19T10:00:12Z"
+      }
+    ],
+    "status": "completed"
+  },
+  "meta": {
+    "request_id": "req_...",
+    "ts": "2025-10-19T10:00:00Z"
+  }
+}
+```
+
+**What to Verify:**
+- ✅ Transcript data is returned (fetched from Ultravox)
+- ✅ Backend logs show: `GET https://api.ultravox.ai/v1/calls/{id}/transcript`
+- ✅ If call is still in progress, transcript may be empty
+
+---
+
+##### **9.1.7 Get Call Recording (Fetches from Ultravox)**
+
+**Request:**
+```
+GET {{base_url}}/api/v1/calls/{{call_id}}/recording
+```
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+x-client-id: {{client_id}}
+Content-Type: application/json
+```
+
+**Expected Response:**
+```json
+{
+  "data": {
+    "url": "https://s3.amazonaws.com/recordings/call_xyz789.mp3",
+    "expires_at": "2025-10-20T10:00:00Z"
+  },
+  "meta": {
+    "request_id": "req_...",
+    "ts": "2025-10-19T10:00:00Z"
+  }
+}
+```
+
+**What to Verify:**
+- ✅ Recording URL is returned (presigned URL from S3 or Ultravox)
+- ✅ URL is accessible and contains audio file
+- ✅ Backend logs show Ultravox API call
+
+---
+
+##### **9.1.8 Schedule Campaign (Creates Batches in Ultravox)**
+
+This creates scheduled batches in Ultravox for campaign dialing.
+
+**Prerequisites:**
+- Campaign must be created
+- Contacts must be added to campaign
+- Campaign status must be "draft"
+
+**Request:**
+```
+POST {{base_url}}/api/v1/campaigns/{{campaign_id}}/schedule
+```
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+x-client-id: {{client_id}}
+Content-Type: application/json
+```
+
+**Expected Response:**
+```json
+{
+  "data": {
+    "id": "campaign_uuid",
+    "status": "scheduled",
+    "ultravox_batch_ids": ["batch_ultravox_123", "batch_ultravox_124"],
+    "scheduled_at": "2025-11-01T14:00:00Z",
+    "updated_at": "2025-10-19T10:00:00Z"
+  },
+  "meta": {
+    "request_id": "req_...",
+    "ts": "2025-10-19T10:00:00Z"
+  }
+}
+```
+
+**What to Verify:**
+- ✅ Response includes `ultravox_batch_ids` array (proves Ultravox was called)
+- ✅ Status changed to "scheduled"
+- ✅ Backend logs show: `POST https://api.ultravox.ai/v1/agents/{agent_id}/scheduled-batches`
+- ✅ Batches are created with Telnyx as medium: `"medium": {"telnyx": {}}`
+
+**Important:**
+- This endpoint uses **Telnyx** as the telephony medium
+- The request body sent to Ultravox includes: `"medium": {"telnyx": {}}`
+- This is how Telnyx integration is used in campaigns
+
+---
+
+##### **9.1.9 Create Tool (Creates in Ultravox)**
+
+**Request:**
+```
+POST {{base_url}}/api/v1/tools
+```
+
+**Headers:**
+```
+Authorization: Bearer {{jwt_token}}
+x-client-id: {{client_id}}
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "name": "Weather Tool",
+  "description": "Get weather information",
+  "endpoint": "https://api.weather.com/v1/current",
+  "method": "GET",
+  "authentication": {
+    "type": "api_key",
+    "header": "X-API-Key"
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "required": true
+    }
+  }
+}
+```
+
+**Expected Response:**
+```json
+{
+  "data": {
+    "id": "tool_uuid",
+    "ultravox_tool_id": "ultravox_tool_789",
+    "name": "Weather Tool",
+    "status": "active",
+    "created_at": "2025-10-19T10:00:00Z"
+  },
+  "meta": {
+    "request_id": "req_...",
+    "ts": "2025-10-19T10:00:00Z"
+  }
+}
+```
+
+**What to Verify:**
+- ✅ Response includes `ultravox_tool_id`
+- ✅ Status is "active"
+- ✅ Backend logs show: `POST https://api.ultravox.ai/v1/tools`
+
+---
+
+#### 📞 9.2 Testing Telnyx Integration
+
+Telnyx is primarily used as a **telephony medium** in campaigns and has a webhook endpoint.
+
+##### **9.2.1 Telnyx in Campaigns**
+
+Telnyx is automatically used when you schedule a campaign. The backend sends:
+```json
+{
+  "medium": {"telnyx": {}}
+}
+```
+to Ultravox when creating scheduled batches.
+
+**How to Test:**
+1. Create a campaign
+2. Add contacts
+3. Schedule the campaign (see section 9.1.8)
+4. Check backend logs - you should see `"medium": {"telnyx": {}}` in the Ultravox request
+
+**Note:** Telnyx API key must be configured in backend environment for this to work.
+
+---
+
+##### **9.2.2 Telnyx Webhook Endpoint**
+
+This endpoint receives webhooks **FROM Telnyx** (not something you call directly).
+
+**Endpoint:**
+```
+POST {{base_url}}/api/v1/webhooks/telnyx
+```
+
+**How Telnyx Sends Webhooks:**
+1. Configure webhook URL in Telnyx dashboard: `https://your-backend.com/api/v1/webhooks/telnyx`
+2. Telnyx will send POST requests when events occur (call events, number events, etc.)
+
+**Testing the Webhook Endpoint (Manual Test):**
+
+You can manually test if the endpoint is accessible:
+
+**Request:**
+```
+POST {{base_url}}/api/v1/webhooks/telnyx
+```
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Body (Example Telnyx webhook payload):**
+```json
+{
+  "data": {
+    "event_type": "call.initiated",
+    "payload": {
+      "call_control_id": "call_123",
+      "call_leg_id": "leg_456",
+      "phone_number": "+12125550123"
+    }
+  }
+}
+```
+
+**Expected Response:**
+```json
+{
+  "status": "ok"
+}
+```
+
+**What to Verify:**
+- ✅ Endpoint accepts POST requests
+- ✅ Returns 200 status
+- ✅ Backend logs show webhook received
+
+**Note:** In production, Telnyx will sign webhooks with HMAC. The current implementation is a placeholder and may need HMAC verification added.
+
+---
+
+#### 🔍 9.3 How to Verify Integrations Are Working
+
+##### **Check Backend Logs**
+
+When testing Ultravox endpoints, watch your backend terminal for:
+
+```
+INFO: Making request to Ultravox API
+POST https://api.ultravox.ai/v1/agents
+Response: 200 OK
+```
+
+If you see errors like:
+```
+ERROR: Ultravox API error: 401 Unauthorized
+```
+→ Check your `ULTRAVOX_API_KEY` in environment variables
+
+```
+ERROR: Ultravox API error: 502 Bad Gateway
+```
+→ Ultravox service may be down, or network issue
+
+---
+
+##### **Check Response Fields**
+
+All endpoints that interact with Ultravox will include:
+- `ultravox_*_id` fields (e.g., `ultravox_agent_id`, `ultravox_call_id`)
+- These prove the integration is working
+
+---
+
+##### **Test Error Scenarios**
+
+1. **Invalid Ultravox API Key:**
+   - Temporarily set wrong key in `.env`
+   - Try creating an agent
+   - Should get 502 error
+
+2. **Ultravox API Down:**
+   - Disconnect internet or block Ultravox domain
+   - Try creating a call
+   - Should get 502 error with retry logic
+
+3. **Missing Required Fields:**
+   - Try creating agent without `voice_id`
+   - Should get 422 validation error
+
+---
+
+#### 📝 9.4 Testing Checklist
+
+Use this checklist to verify Ultravox/Telnyx integrations:
+
+**Ultravox Integration:**
+- [ ] Create voice → Check for `ultravox_voice_id` in response
+- [ ] Create agent → Check for `ultravox_agent_id` in response
+- [ ] Create knowledge base → Check for `ultravox_corpus_id` in response
+- [ ] Create call → Check for `ultravox_call_id` in response
+- [ ] Get call transcript → Verify transcript data is returned
+- [ ] Get call recording → Verify recording URL is returned
+- [ ] Schedule campaign → Check for `ultravox_batch_ids` in response
+- [ ] Create tool → Check for `ultravox_tool_id` in response
+- [ ] Get telephony config → Verify SIP config is returned
+
+**Telnyx Integration:**
+- [ ] Schedule campaign → Check backend logs for `"medium": {"telnyx": {}}`
+- [ ] Test Telnyx webhook endpoint → Verify it accepts POST requests
+
+**Backend Logs:**
+- [ ] Verify Ultravox API calls appear in logs
+- [ ] Check for any 401/403 errors (authentication issues)
+- [ ] Check for any 502 errors (service unavailable)
+
+---
+
+#### 🚨 9.5 Common Issues & Solutions
+
+**Issue: "ultravox_*_id" is missing in response**
+- **Solution:** Check backend logs for Ultravox API errors
+- **Check:** Verify `ULTRAVOX_API_KEY` is set correctly
+
+**Issue: Getting 502 Bad Gateway errors**
+- **Solution:** Ultravox API may be down or unreachable
+- **Check:** Verify network connectivity and API key validity
+
+**Issue: Campaign scheduling fails**
+- **Solution:** Ensure Telnyx API key is configured
+- **Check:** Verify campaign has contacts and is in "draft" status
+
+**Issue: Telnyx webhook not receiving events**
+- **Solution:** Configure webhook URL in Telnyx dashboard
+- **Check:** Verify endpoint is publicly accessible (not localhost)
+
+---
+
+### 🏥 10. HEALTH CHECK
+
+#### 10.1 Health Check
 - **Endpoint**: `GET /health`
 - **Purpose**: Check if API is running
 - **Authentication**: None
@@ -717,8 +1439,9 @@ Content-Type: application/json
 ```json
 {
   "name": "Test Voice",
-  "strategy": "reference",
+  "strategy": "external",
   "source": {
+    "type": "external",
     "provider_voice_id": "elevenlabs-default-voice"
   }
 }
@@ -727,7 +1450,8 @@ Content-Type: application/json
 **Action:**
 - ✅ Copy the `id` from response
 - ✅ Save it as `{{voice_id}}` in Postman environment
-- ✅ Note: Status should be "active" for reference voices
+- ✅ Note: Status should be "active" for external voices
+- ⚠️ **Important**: `strategy` must be `"external"` (not "reference"), and `source.type` is required
 
 ---
 
