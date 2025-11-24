@@ -41,6 +41,7 @@ import {
   TrendingUp,
   Award,
   BarChart2,
+  CreditCard,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
@@ -58,6 +59,7 @@ const iconMap: Record<string, any> = {
   PhoneOutgoing,
   Users,
   Settings,
+  CreditCard,
 }
 
 export function Sidebar() {
@@ -354,9 +356,10 @@ export function Sidebar() {
               </div>
             </div>
 
-            {/* Settings */}
+            {/* Settings & Billing */}
             <div className="space-y-1">
               {[
+                { title: 'Billing', href: '/billing', icon: 'CreditCard' },
                 { title: 'Settings', href: '/settings', icon: 'Settings' },
               ].map((item) => {
                 const Icon = iconMap[item.icon] || Settings
