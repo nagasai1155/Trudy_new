@@ -51,12 +51,20 @@ class ApiClient {
     this.clientId = clientId
   }
 
+  getClientId(): string | null {
+    return this.clientId
+  }
+
   clearToken() {
     this.token = null
     this.clientId = null
   }
 
   private generateIdempotencyKey(): string {
+    return crypto.randomUUID()
+  }
+
+  private generateRequestId(): string {
     return crypto.randomUUID()
   }
 
@@ -68,6 +76,10 @@ class ApiClient {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
     }
+
+    // Add request correlation ID (per .integration file)
+    const requestId = options.headers?.['X-Request-Id'] as string || this.generateRequestId()
+    headers['X-Request-Id'] = requestId
 
     // Add Authorization header
     if (this.token) {
@@ -138,6 +150,9 @@ class ApiClient {
 
   async upload<T>(endpoint: string, formData: FormData): Promise<BackendResponse<T>> {
     const headers: Record<string, string> = {}
+
+    // Add request correlation ID
+    headers['X-Request-Id'] = this.generateRequestId()
 
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`

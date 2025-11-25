@@ -28,7 +28,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   fetchAgents: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.get<{ data: Agent[] }>(endpoints.agents.list)
+      const response = await apiClient.get<Agent[]>(endpoints.agents.list)
       set({ agents: response.data, isLoading: false })
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false })
@@ -39,7 +39,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   getAgent: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.get<{ data: Agent }>(endpoints.agents.get(id))
+      const response = await apiClient.get<Agent>(endpoints.agents.get(id))
       set({ selectedAgent: response.data, isLoading: false })
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false })
@@ -50,7 +50,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   createAgent: async (data: CreateAgentData) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.post<{ data: Agent }>(endpoints.agents.create, data)
+      const response = await apiClient.post<Agent>(endpoints.agents.create, data)
       set((state) => ({
         agents: [...state.agents, response.data],
         isLoading: false,
@@ -65,7 +65,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   updateAgent: async (id: string, data: UpdateAgentData) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.put<{ data: Agent }>(
+      const response = await apiClient.patch<Agent>(
         endpoints.agents.update(id),
         data
       )
@@ -128,7 +128,11 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   testAgent: async (id: string, phoneNumber: string) => {
     set({ isLoading: true, error: null })
     try {
-      await apiClient.post(endpoints.agents.test(id), { phoneNumber })
+      // Use calls endpoint to test agent
+      await apiClient.post(endpoints.calls.create, { 
+        agent_id: id,
+        phone_number: phoneNumber 
+      })
       set({ isLoading: false })
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false })

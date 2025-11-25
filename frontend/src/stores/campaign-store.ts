@@ -35,7 +35,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   fetchCampaigns: async () => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.get<{ data: Campaign[] }>(endpoints.campaigns.list)
+      const response = await apiClient.get<Campaign[]>(endpoints.campaigns.list)
       set({ campaigns: response.data, isLoading: false })
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false })
@@ -46,7 +46,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   getCampaign: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.get<{ data: Campaign }>(endpoints.campaigns.get(id))
+      const response = await apiClient.get<Campaign>(endpoints.campaigns.get(id))
       set({ selectedCampaign: response.data, isLoading: false })
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false })
@@ -57,7 +57,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   createCampaign: async (data: CreateCampaignData) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.post<{ data: Campaign }>(
+      const response = await apiClient.post<Campaign>(
         endpoints.campaigns.create,
         data
       )
@@ -75,7 +75,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   updateCampaign: async (id: string, data: UpdateCampaignData) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.put<{ data: Campaign }>(
+      const response = await apiClient.patch<Campaign>(
         endpoints.campaigns.update(id),
         data
       )
@@ -119,8 +119,8 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   startCampaign: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.post<{ data: Campaign }>(
-        endpoints.campaigns.start(id)
+      const response = await apiClient.post<Campaign>(
+        `${endpoints.campaigns.get(id)}/start`
       )
       set((state) => ({
         campaigns: state.campaigns.map((campaign) =>
@@ -141,8 +141,8 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   pauseCampaign: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.post<{ data: Campaign }>(
-        endpoints.campaigns.pause(id)
+      const response = await apiClient.post<Campaign>(
+        `${endpoints.campaigns.get(id)}/pause`
       )
       set((state) => ({
         campaigns: state.campaigns.map((campaign) =>
@@ -163,8 +163,8 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   resumeCampaign: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.post<{ data: Campaign }>(
-        endpoints.campaigns.resume(id)
+      const response = await apiClient.post<Campaign>(
+        `${endpoints.campaigns.get(id)}/resume`
       )
       set((state) => ({
         campaigns: state.campaigns.map((campaign) =>
@@ -185,8 +185,8 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   cancelCampaign: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.post<{ data: Campaign }>(
-        endpoints.campaigns.cancel(id)
+      const response = await apiClient.post<Campaign>(
+        `${endpoints.campaigns.get(id)}/cancel`
       )
       set((state) => ({
         campaigns: state.campaigns.map((campaign) =>
@@ -207,8 +207,8 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   getCampaignStats: async (id: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await apiClient.get<{ data: CampaignStats }>(
-        endpoints.campaigns.stats(id)
+      const response = await apiClient.get<CampaignStats>(
+        `${endpoints.campaigns.get(id)}/stats`
       )
       set({ isLoading: false })
       return response.data

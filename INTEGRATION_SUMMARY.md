@@ -74,50 +74,59 @@
   - Environment variable setup instructions
   - Security best practices
 
-## ⚠️ Still Required / Next Steps
+## ✅ Recently Completed (Latest Updates)
 
-### 1. Auth0 Integration (HIGH PRIORITY)
-**Status**: Partially implemented - needs completion
+### 1. Authentication Integration ✅
+**Status**: COMPLETED
 
 **What's Done**:
-- Created `frontend/src/lib/auth-client.ts` with `useAuthClient()` hook
-- Added server-side `getServerAuthConfig()` function
+- ✅ Created `frontend/src/lib/auth-client.ts` with `useAuthClient()` hook
+- ✅ Added server-side `getServerAuthConfig()` function
+- ✅ Created `AuthProvider` component to initialize API client with auth
+- ✅ Integrated `AuthProvider` into `providers.tsx` to auto-configure API client
+- ✅ Updated `middleware.ts` to use NextAuth for route protection
+- ✅ API client automatically fetches `client_id` from `/auth/me` if not in session
 
-**What's Needed**:
-1. **Enable Auth0 in frontend**:
-   - Uncomment Auth0 provider in `frontend/src/app/providers.tsx`
-   - Update `frontend/src/middleware.ts` to use Auth0 middleware
-   - Configure Auth0 environment variables in `.env.local`:
-     ```bash
-     AUTH0_SECRET=your-secret
-     AUTH0_BASE_URL=http://localhost:3000
-     AUTH0_ISSUER_BASE_URL=https://your-domain.auth0.com
-     AUTH0_CLIENT_ID=your-client-id
-     AUTH0_CLIENT_SECRET=your-client-secret
-     ```
+**Note**: Project uses NextAuth (not Auth0). Configure Google OAuth in `.env.local`:
+```bash
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=http://localhost:3000
+```
 
-2. **Get Access Token**:
-   - The `useAuthClient()` hook needs to get the actual access token from Auth0
-   - May need to use `getAccessToken()` from `@auth0/nextjs-auth0`
-   - Token should be passed to `apiClient.setToken()`
+### 2. Store Type Fixes ✅
+**Status**: COMPLETED
 
-3. **Extract Client ID**:
-   - Client ID should come from Auth0 JWT claims or user metadata
-   - Backend expects `client_id` in JWT claim: `client_id` or `https://trudy.ai/client_id`
-   - Or from user metadata: `app_metadata.client_id` or `user_metadata.client_id`
-   - Pass to `apiClient.setClientId()`
+- ✅ Fixed `agent-store.ts` - removed double data wrapping (`{ data: Agent[] }` → `Agent[]`)
+- ✅ Fixed `campaign-store.ts` - removed double data wrapping
+- ✅ Changed `PUT` to `PATCH` in agent-store (matches backend)
+- ✅ Fixed `testAgent` method to use `/calls` endpoint
+- ✅ Updated campaign control methods to use correct endpoint paths
 
-4. **Initialize in App Layout**:
-   - Call `useAuthClient()` in your main layout or app component
-   - This will automatically configure the API client with token and client_id
+### 3. Component Updates ✅
+**Status**: COMPLETED
 
-### 2. Backend Environment Variables
+- ✅ Updated `agents/page.tsx` to fetch real data from API using `useAgents` hook
+- ✅ Added fallback to store agents if API fails
+- ✅ Properly formatted agent data for display
+- ✅ Added loading states and error handling
+
+### 4. Environment Configuration ✅
+**Status**: COMPLETED
+
+- ✅ Created `frontend/env.local.example` with all required variables
+- ✅ Documented NextAuth and API URL configuration
+
+## ⚠️ Still Required / Next Steps
+
+### 1. Backend Environment Variables
 **Status**: Documentation created - needs configuration
 
 **Required** (see `API_KEYS_REQUIRED.md`):
 1. ✅ **Ultravox API Key** - CRITICAL, platform won't work without it
 2. ✅ **Supabase** - Database connection
-3. ✅ **Auth0** - JWT configuration
+3. ✅ **NextAuth/JWT** - JWT configuration (configured in backend)
 4. ✅ **AWS S3** - File uploads
 
 **Recommended**:
@@ -128,25 +137,27 @@
 7. ⚪ **Telnyx** - Additional telephony
 8. ⚪ **TTS Providers** - ElevenLabs, Google, AWS, Azure, OpenAI (configured per-client)
 
-### 3. Component Updates
-**Status**: Types updated - components may need updates
+### 2. Component Updates (Remaining)
+**Status**: Partially complete - some components may need updates
 
-Some components may still reference old field names. You may need to update:
-- Agent forms/components using `workspaceId` → `client_id`
-- Agent forms using `prompt` → `system_prompt`
-- Campaign forms using old structure
-- Voice components using old structure
+Some components may still reference old field names. Check and update:
+- ⚠️ Agent forms/components using `workspaceId` → `client_id`
+- ⚠️ Agent forms using `prompt` → `system_prompt`
+- ⚠️ Campaign forms using old structure
+- ⚠️ Voice components using old structure
+- ⚠️ Other pages (campaigns, calls, etc.) to use real API data
 
-### 4. Testing
-**Status**: Not started
+### 3. Testing
+**Status**: Ready for testing
 
 **Recommended Testing**:
-1. Test API client with backend (ensure CORS is configured)
-2. Test authentication flow
-3. Test agent creation/update
-4. Test campaign creation
-5. Test voice cloning flow
-6. Test knowledge base upload flow
+1. ✅ API client configured - test with backend (ensure CORS is configured)
+2. ✅ Authentication flow - test NextAuth login
+3. ⚠️ Test agent creation/update via API
+4. ⚠️ Test campaign creation via API
+5. ⚠️ Test voice cloning flow
+6. ⚠️ Test knowledge base upload flow
+7. ⚠️ Verify `client_id` is properly extracted and sent in headers
 
 ## 🔧 Configuration Checklist
 

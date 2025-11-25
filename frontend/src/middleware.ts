@@ -1,13 +1,17 @@
-// Auth0 middleware temporarily disabled
-// import { withMiddlewareAuthRequired } from '@auth0/nextjs-auth0/edge'
-
-// export default withMiddlewareAuthRequired()
-
-// Temporary: Allow all routes without authentication
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { auth } from '@/lib/auth'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const session = await auth()
+  
+  // Protect dashboard routes - require authentication
+  if (!session) {
+    const signInUrl = new URL('/signin', request.url)
+    signInUrl.searchParams.set('callbackUrl', request.url)
+    return NextResponse.redirect(signInUrl)
+  }
+  
   return NextResponse.next()
 }
 
@@ -21,5 +25,10 @@ export const config = {
     '/analytics/:path*',
     '/contacts/:path*',
     '/settings/:path*',
+    '/billing/:path*',
+    '/rag/:path*',
+    '/tools/:path*',
+    '/phone-numbers/:path*',
+    '/conversations/:path*',
   ],
 }
