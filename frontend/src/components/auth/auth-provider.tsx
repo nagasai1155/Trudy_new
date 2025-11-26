@@ -9,6 +9,7 @@ import { useEffect } from 'react'
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { isLoading } = useAuthClient()
+  
 
   // Show loading state while checking authentication
   if (isLoading) {
