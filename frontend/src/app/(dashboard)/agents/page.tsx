@@ -16,28 +16,10 @@ import { useAgentStore } from '@/stores/agent-store'
 import { useAgents, useDeleteAgent } from '@/hooks/use-agents'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
-import { Headphones, Wind, TrendingUp, Wand2, Check, Mic2, Search, Plus, MoreHorizontal, ExternalLink, Copy, Trash2, AlertCircle } from 'lucide-react'
+import { Headphones, Wind, TrendingUp, Wand2, Check, Mic2, Search, Plus, MoreHorizontal, ExternalLink, Copy, Trash2, AlertCircle, Loader2 } from 'lucide-react'
 import { Agent } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
-
-// Default dummy agents to show when no agents are available
-const dummyAgents: Agent[] = [
-  {
-    id: 'dummy-1',
-    client_id: 'client-1',
-    name: 'Customer Support Agent',
-    description: 'Handles customer inquiries and support tickets',
-    voice_id: 'voice-1',
-    system_prompt: 'You are a helpful customer support agent.',
-    model: 'fixie-ai/ultravox-v0_4-8k',
-    tools: [],
-    knowledge_bases: [],
-    status: 'active',
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
 
 export default function AgentsPage() {
   const router = useRouter()
@@ -64,8 +46,8 @@ export default function AgentsPage() {
     }
   }, [apiAgents, queryClient])
   
-  // Use API agents if available, otherwise fall back to dummy agents
-  const allAgents = apiAgents.length > 0 ? apiAgents : dummyAgents
+  // Use only real agents from API
+  const allAgents = apiAgents
   const isLoading = apiLoading
   
   // Handle delete agent
@@ -231,8 +213,9 @@ export default function AgentsPage() {
               {/* Table Rows */}
               <div className="bg-white dark:bg-black divide-y divide-gray-200 dark:divide-gray-900">
                 {isLoading ? (
-                  <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                    Loading agents...
+                  <div className="px-6 py-12 text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Loading agents...</p>
                   </div>
                 ) : filteredAgents.length === 0 ? (
                   <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
@@ -335,8 +318,9 @@ export default function AgentsPage() {
             {/* Mobile Card View */}
             <div className="md:hidden space-y-3">
               {isLoading ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  Loading agents...
+                <div className="p-12 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Loading agents...</p>
                 </div>
               ) : filteredAgents.length === 0 ? (
                 <div className="p-8 text-center text-gray-500 dark:text-gray-400">

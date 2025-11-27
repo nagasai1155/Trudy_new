@@ -47,7 +47,8 @@ import {
   Shuffle,
   Smile,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react'
 import { useVoices, useDeleteVoice, useCreateVoice } from '@/hooks/use-voices'
 import { useQueryClient } from '@tanstack/react-query'
@@ -573,7 +574,8 @@ export default function VoiceCloningPage() {
 
             {authLoading || voicesLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <div className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</div>
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</p>
               </div>
             ) : !clientId ? (
               <div className="flex flex-col items-center justify-center py-20">
