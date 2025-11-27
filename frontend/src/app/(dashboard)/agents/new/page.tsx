@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,19 +12,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useRouter } from 'next/navigation'
-import { ChevronRight, Link2, MoreHorizontal, Mic2, Video, Copy, ChevronDown, ChevronUp, Phone, Link, Upload } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ChevronRight, Link2, MoreHorizontal, Mic2, Video, Copy, ChevronDown, ChevronUp, Phone, Link, Upload, Save } from 'lucide-react'
 import { useAgentStore } from '@/stores/agent-store'
+import { useAgent, useUpdateAgent } from '@/hooks/use-agents'
+import { useVoices } from '@/hooks/use-voices'
+import { useToast } from '@/hooks/use-toast'
+import { UpdateAgentData } from '@/types'
 
 export default function NewAgentPage() {
   const router = useRouter()
-  const { selectedAgent } = useAgentStore()
-  const agentName = selectedAgent?.name || 'Support agent'
+  const searchParams = useSearchParams()
+  const { toast } = useToast()
+  const { selectedAgent, setSelectedAgent } = useAgentStore()
+  const isDuplicate = searchParams.get('duplicate') === 'true'
+  const agentId = selectedAgent?.id
+  
+  // Fetch agent data if editing existing agent
+  const { data: agentData, isLoading: agentLoading } = useAgent(agentId || '')
+  
+  // Use agentData if available, otherwise use selectedAgent from store
+  const currentAgent = agentData || selectedAgent
+  const agentName = currentAgent?.name || 'New Agent'
+  
+  const updateAgentMutation = useUpdateAgent()
+  const { data: voices = [] } = useVoices()
+  const [isSaving, setIsSaving] = useState(false)
   const [selectedTab, setSelectedTab] = useState('agent')
   const [agentLanguage, setAgentLanguage] = useState('english')
   const [firstMessage, setFirstMessage] = useState("Hey there, I'm Alexis from ElevenLabs support. How can I help you today?")
   const [disableInterruptions, setDisableInterruptions] = useState(false)
-  const [systemPrompt, setSystemPrompt] = useState(`# Personality
+  
+  // Initialize form fields from agent data
+  const [systemPrompt, setSystemPrompt] = useState(currentAgent?.system_prompt || `# Personality
 
 You are Alexis. A friendly, proactive, and highly intelligent female with a world-class engineering background.
 
@@ -63,8 +83,57 @@ Your responses should be thoughtful, concise, and conversational—typically thr
   const [playKeypadTone, setPlayKeypadTone] = useState(false)
   const [voicemailDetection, setVoicemailDetection] = useState(false)
   
+  // Initialize form when agent data loads
+  useEffect(() => {
+    if (currentAgent && !isDuplicate) {
+      setSystemPrompt(currentAgent.system_prompt || systemPrompt)
+      setSelectedVoice(currentAgent.voice_id || '')
+      // Initialize other fields from agent data as needed
+    }
+  }, [currentAgent, isDuplicate])
+  
+  // Handle save agent
+  const handleSaveAgent = async () => {
+    if (!currentAgent?.id) {
+      toast({
+        title: 'No agent selected',
+        description: 'Please create an agent first.',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    setIsSaving(true)
+    try {
+      const updateData: UpdateAgentData = {
+        name: agentName,
+        system_prompt: systemPrompt,
+        voice_id: selectedVoice || currentAgent.voice_id,
+        // Add other fields as needed
+      }
+      
+      await updateAgentMutation.mutateAsync({
+        id: currentAgent.id,
+        data: updateData,
+      })
+      
+      toast({
+        title: 'Agent saved',
+        description: 'Your changes have been saved successfully.',
+      })
+    } catch (error) {
+      toast({
+        title: 'Error saving agent',
+        description: error instanceof Error ? error.message : 'Failed to save agent. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+  
   // Voice settings
-  const [selectedVoice, setSelectedVoice] = useState('eric')
+  const [selectedVoice, setSelectedVoice] = useState(currentAgent?.voice_id || '')
   const [useFlash, setUseFlash] = useState(false)
   const [ttsFormat, setTtsFormat] = useState('pcm-16000')
   const [streamingLatency, setStreamingLatency] = useState(0.35)
@@ -220,14 +289,24 @@ Your responses should be thoughtful, concise, and conversational—typically thr
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
+              {currentAgent?.id && (
+                <Button 
+                  onClick={handleSaveAgent}
+                  disabled={isSaving}
+                  className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              )}
               <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2">
                 <Mic2 className="h-4 w-4" />
                 Test AI agent
-                  </Button>
+              </Button>
               <Button variant="outline" className="gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all">
                 <Link2 className="h-4 w-4" />
                 Copy link
-                  </Button>
+              </Button>
               <Button variant="ghost" size="icon">
                 <MoreHorizontal className="h-5 w-5" />
               </Button>

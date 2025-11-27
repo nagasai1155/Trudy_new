@@ -5,6 +5,7 @@ from fastapi import APIRouter, Header, Depends
 from typing import Optional
 from datetime import datetime
 import uuid
+import logging
 
 from app.core.auth import get_current_user
 from app.core.database import DatabaseService
@@ -19,6 +20,7 @@ from app.models.schemas import (
     ResponseMeta,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -27,10 +29,47 @@ async def get_me(
     current_user: dict = Depends(get_current_user),
     x_client_id: Optional[str] = Header(None),
 ):
-    """Get current user information"""
+    """Get current user information, auto-create user/client if doesn't exist"""
+    # Use service key for admin operations (creating users/clients)
+    from app.core.database import get_supabase_admin_client
+    admin_db = get_supabase_admin_client()
+    
+    # Try to find existing user
+    user = admin_db.table("users").select("*").eq("auth0_sub", current_user["user_id"]).execute()
+    user_data = user.data[0] if user.data else None
+    
+    if not user_data:
+        # First-time login: Create client and user
+        # Create client first
+        client_id = str(uuid.uuid4())
+        client_data = {
+            "id": client_id,
+            "name": current_user.get("name", current_user.get("email", "New Client")),
+            "email": current_user["email"],
+            "subscription_status": "active",
+            "credits_balance": 0,
+            "credits_ceiling": 10000,
+        }
+        admin_db.table("clients").insert(client_data).execute()
+        
+        # Create user linked to client
+        user_id = str(uuid.uuid4())
+        user_data = {
+            "id": user_id,
+            "auth0_sub": current_user["user_id"],
+            "client_id": client_id,
+            "email": current_user["email"],
+            "role": "client_admin",  # First user is admin
+        }
+        admin_db.table("users").insert(user_data).execute()
+        
+        logger.info(f"Created new user and client: {user_id}, {client_id}")
+    
+    # Now use regular database service with user's context
     db = DatabaseService(current_user["token"])
     db.set_auth(current_user["token"])
     
+    # Refresh user data
     user = db.get_user_by_auth0_sub(current_user["user_id"])
     if not user:
         raise NotFoundError("user")

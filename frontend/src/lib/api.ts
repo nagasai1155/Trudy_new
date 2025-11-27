@@ -201,6 +201,7 @@ export const endpoints = {
     list: '/voices',
     get: (id: string) => `/voices/${id}`,
     create: '/voices',
+    delete: (id: string) => `/voices/${id}`,
     presign: '/voices/files/presign',
   },
   

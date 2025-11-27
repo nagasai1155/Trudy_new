@@ -29,10 +29,11 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
     SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "")
     
-    # Auth0
-    JWT_AUDIENCE: str = os.getenv("JWT_AUDIENCE", "")
-    JWT_ISSUER: str = os.getenv("JWT_ISSUER", "")
-    JWT_ALGORITHM: str = "RS256"
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_ISSUER: str = "https://accounts.google.com"
+    # For Google OAuth, we'll verify tokens using Google's public keys
     
     # AWS
     AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
@@ -79,6 +80,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra environment variables (like old JWT_ISSUER, JWT_AUDIENCE)
 
 
 settings = Settings()

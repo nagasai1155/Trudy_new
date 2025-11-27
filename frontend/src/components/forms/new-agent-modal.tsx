@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/app-store'
 import { useAgentStore } from '@/stores/agent-store'
+import { useCreateAgent } from '@/hooks/use-agents'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
+import { useVoices } from '@/hooks/use-voices'
+import { CreateAgentData } from '@/types'
+import { useQueryClient } from '@tanstack/react-query'
+import { useSession } from 'next-auth/react'
 
 interface NewAgentModalProps {
   isOpen: boolean
@@ -15,12 +22,19 @@ interface NewAgentModalProps {
 }
 
 export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalProps) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
   const [step, setStep] = useState<'select' | 'complete'>('select')
   const [selectedTemplate, setSelectedTemplate] = useState<'blank' | 'personal' | 'business' | null>(null)
   const [agentName, setAgentName] = useState('')
   const [chatOnly, setChatOnly] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
   const { sidebarCollapsed, setModalOpen } = useAppStore()
-  const { addAgent } = useAgentStore()
+  const { setSelectedAgent } = useAgentStore()
+  const createAgentMutation = useCreateAgent()
+  const { data: voices = [], isLoading: voicesLoading } = useVoices()
+  const { data: session, status: sessionStatus } = useSession()
 
   // Sync modal open state with app store
   useEffect(() => {
@@ -45,27 +59,133 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
     setStep('select')
   }
 
-  const handleCreateAgent = () => {
+  const handleCreateAgent = async () => {
     if (selectedTemplate && agentName.trim()) {
-      // Add agent to store
-      addAgent({
-        name: agentName,
-        type: selectedTemplate,
-        chatOnly: chatOnly,
-      })
+      setIsCreating(true)
       
-      // Call the onSelectType callback if provided (for navigation)
-      if (onSelectType) {
-        onSelectType(selectedTemplate)
+      try {
+        // Check authentication
+        if (sessionStatus !== 'authenticated' || !session) {
+          toast({
+            title: 'Authentication required',
+            description: 'Please sign in to create an agent.',
+            variant: 'destructive',
+          })
+          setIsCreating(false)
+          return
+        }
+        
+        // Wait for voices to load if still loading
+        if (voicesLoading) {
+          toast({
+            title: 'Loading voices',
+            description: 'Please wait while we check available voices...',
+          })
+          setIsCreating(false)
+          return
+        }
+        
+        // Get first active voice
+        const activeVoice = voices.find(v => v.status === 'active')
+        
+        // If no active voice exists, show error with navigation option
+        if (!activeVoice) {
+          if (voices.length === 0) {
+            // No voices at all
+            toast({
+              title: 'No voice found',
+              description: 'Please create a voice first before creating an agent.',
+              variant: 'destructive',
+              action: (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    router.push('/voice-cloning')
+                    handleClose()
+                  }}
+                >
+                  Go to Voice Cloning
+                </Button>
+              ),
+            })
+          } else {
+            // Voices exist but none are active (still training)
+            toast({
+              title: 'No active voice available',
+              description: 'Please wait for a voice to finish training, or create a new voice.',
+              variant: 'destructive',
+              action: (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    router.push('/voice-cloning')
+                    handleClose()
+                  }}
+                >
+                  Create Voice
+                </Button>
+              ),
+            })
+          }
+          setIsCreating(false)
+          return
+        }
+        
+        // Create default system prompts based on template
+        const systemPrompts = {
+          blank: 'You are a helpful AI assistant.',
+          personal: 'You are a friendly personal assistant. Help users manage their tasks, answer questions, and provide support in a warm and approachable manner.',
+          business: 'You are a professional business assistant. Help users with business inquiries, provide information about products and services, and assist with customer support in a professional and efficient manner.',
+        }
+        
+        // Create agent data
+        const agentData: CreateAgentData = {
+          name: agentName,
+          description: `AI agent created from ${selectedTemplate} template`,
+          voice_id: activeVoice.id,
+          system_prompt: systemPrompts[selectedTemplate],
+          model: 'fixie-ai/ultravox-v0_4-8k', // Default model
+          tools: [],
+          knowledge_bases: [],
+        }
+        
+        // Create agent via API
+        const newAgent = await createAgentMutation.mutateAsync(agentData)
+        
+        // Set selected agent and navigate
+        setSelectedAgent(newAgent)
+        
+        toast({
+          title: 'Agent created',
+          description: `"${agentName}" has been created successfully.`,
+        })
+        
+        // Call the onSelectType callback if provided
+        if (onSelectType) {
+          onSelectType(selectedTemplate)
+        }
+        
+        // Navigate to agent editor
+        router.push('/agents/new')
+        
+        // Reset state and close
+        setStep('select')
+        setSelectedTemplate(null)
+        setAgentName('')
+        setChatOnly(false)
+        setModalOpen(false)
+        onClose()
+      } catch (error) {
+        toast({
+          title: 'Error creating agent',
+          description: error instanceof Error ? error.message : 'Failed to create agent. Please try again.',
+          variant: 'destructive',
+        })
+      } finally {
+        setIsCreating(false)
       }
-      
-      // Reset state and close
-      setStep('select')
-      setSelectedTemplate(null)
-      setAgentName('')
-      setChatOnly(false)
-      setModalOpen(false)
-      onClose()
     }
   }
 
@@ -170,10 +290,10 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
             </Button>
             <Button
               onClick={handleCreateAgent}
-              disabled={!agentName.trim()}
+              disabled={!agentName.trim() || isCreating}
               className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed px-8"
             >
-              Create Agent
+              {isCreating ? 'Creating...' : 'Create Agent'}
             </Button>
           </div>
         </div>

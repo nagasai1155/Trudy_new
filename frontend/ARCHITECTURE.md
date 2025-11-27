@@ -423,7 +423,6 @@ src/
 
 ## Monitoring & Analytics (Future)
 
-- **Error Tracking**: Sentry
 - **Performance**: Vercel Analytics
 - **User Analytics**: PostHog
 - **Logging**: Custom implementation

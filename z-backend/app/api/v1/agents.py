@@ -61,6 +61,8 @@ async def create_agent(
         raise NotFoundError("voice", agent_data.voice_id)
     if voice.get("status") != "active":
         raise ValidationError("Voice must be active", {"voice_id": agent_data.voice_id, "voice_status": voice.get("status")})
+    if not voice.get("ultravox_voice_id"):
+        raise ValidationError("Voice must have ultravox_voice_id. Voice may not be synced with Ultravox.", {"voice_id": agent_data.voice_id})
     
     # Validate knowledge bases
     if agent_data.knowledge_bases:

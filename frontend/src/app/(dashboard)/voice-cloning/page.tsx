@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -44,11 +45,18 @@ import {
   Wand2,
   Lock,
   Shuffle,
-  Smile
+  Smile,
+  Trash2,
+  AlertCircle
 } from 'lucide-react'
+import { useVoices, useDeleteVoice } from '@/hooks/use-voices'
+import { useQueryClient } from '@tanstack/react-query'
+import { useToast } from '@/hooks/use-toast'
+import { Voice } from '@/types'
+import { useAuthClient } from '@/lib/auth-client'
 
 
-// Mock data for voices
+// Mock data for explore tab (community voices library)
 const mockVoices = [
   {
     id: '1',
@@ -164,20 +172,12 @@ const mockVoices = [
   },
 ]
 
-interface MyVoice {
-  id: string
-  name: string
-  description: string
-  language: string
-  languageCode: string
-  accent: string
-  category: string
-  createdAt: Date
-  source: 'voice-clone' | 'community-voices'
-  provider?: string
-}
-
 export default function VoiceCloningPage() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  const { isLoading: authLoading, clientId } = useAuthClient() // Initialize auth
+  const { data: apiVoices = [], isLoading: voicesLoading, error } = useVoices()
+  const deleteVoiceMutation = useDeleteVoice()
   const [activeTab, setActiveTab] = useState('explore')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Conversational')
@@ -186,7 +186,7 @@ export default function VoiceCloningPage() {
   const [filtersDialogOpen, setFiltersDialogOpen] = useState(false)
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false)
   const [feedbackText, setFeedbackText] = useState('')
-  const [myVoices, setMyVoices] = useState<MyVoice[]>([])
+  const [deletingVoiceId, setDeletingVoiceId] = useState<string | null>(null)
   
   // Filter states
   const [selectedLanguage, setSelectedLanguage] = useState('')
@@ -199,36 +199,80 @@ export default function VoiceCloningPage() {
   const [customRates, setCustomRates] = useState('Include')
   const [liveModerationEnabled, setLiveModerationEnabled] = useState('Include')
 
+  // Real-time polling for voices with "training" status
+  useEffect(() => {
+    const hasTrainingVoices = apiVoices.some(voice => voice.status === 'training')
+    
+    if (hasTrainingVoices) {
+      // Poll every 3 seconds if there are voices being trained
+      const interval = setInterval(() => {
+        queryClient.invalidateQueries({ queryKey: ['voices'] })
+      }, 3000)
+      
+      return () => clearInterval(interval)
+    }
+  }, [apiVoices, queryClient])
+
   const filteredVoices = mockVoices.filter(voice =>
     voice.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     voice.description.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const filteredMyVoices = myVoices.filter(voice =>
-    voice.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    voice.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMyVoices = apiVoices.filter(voice =>
+    voice.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleAddVoice = (voiceData: { name: string; source: 'voice-clone' | 'community-voices'; provider?: string }) => {
-    console.log('Adding voice:', voiceData)
-    const newVoice: MyVoice = {
-      id: `my-voice-${Date.now()}`,
-      name: voiceData.name,
-      description: `${voiceData.source === 'voice-clone' ? 'Cloned voice' : `Voice from ${voiceData.provider || 'Community'}`}`,
-      language: 'English',
-      languageCode: 'en-US',
-      accent: 'Standard',
-      category: 'Conversational',
-      createdAt: new Date(),
-      source: voiceData.source,
-      provider: voiceData.provider,
+  // Handle delete voice
+  const handleDeleteVoice = useCallback(async (voiceId: string, voiceName: string) => {
+    if (!confirm(`Are you sure you want to delete "${voiceName}"? This action cannot be undone.`)) {
+      return
     }
-    console.log('New voice created:', newVoice)
-    setMyVoices(prev => {
-      const updated = [...prev, newVoice]
-      console.log('Updated voices list:', updated)
-      return updated
-    })
+    
+    setDeletingVoiceId(voiceId)
+    try {
+      await deleteVoiceMutation.mutateAsync(voiceId)
+      toast({
+        title: 'Voice deleted',
+        description: `"${voiceName}" has been deleted successfully.`,
+      })
+    } catch (error) {
+      toast({
+        title: 'Error deleting voice',
+        description: error instanceof Error ? error.message : 'Failed to delete voice. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setDeletingVoiceId(null)
+    }
+  }, [deleteVoiceMutation, toast])
+
+  // Get status badge color
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+      case 'training':
+        return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+      case 'failed':
+        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+      default:
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+    }
+  }
+
+  // Convert string ID to number for AgentIcon component
+  const getNumericId = (id: string): number => {
+    let hash = 0
+    for (let i = 0; i < id.length; i++) {
+      const char = id.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32-bit integer
+    }
+    return Math.abs(hash)
+  }
+
+  const handleAddVoice = () => {
+    // Voice creation is handled by the modal component
     setCreateVoiceDialogOpen(false)
     // Switch to My Voices tab to show the newly added voice
     setActiveTab('my-voices')
@@ -478,7 +522,38 @@ export default function VoiceCloningPage() {
           <>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">My Voices</h2>
             
-            {filteredMyVoices.length === 0 ? (
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800 dark:text-red-300">Error loading voices</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    {error instanceof Error ? error.message : 'Failed to load voices'}
+                  </p>
+                  <p className="text-xs text-red-500 dark:text-red-500 mt-1">
+                    {!clientId && 'Client ID not available. Please ensure you are signed in.'}
+                    {clientId && 'Check backend connection and authentication.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {authLoading || voicesLoading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</div>
+              </div>
+            ) : !clientId ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <AlertCircle className="h-12 w-12 text-yellow-500 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Authentication required
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
+                  Please sign in to view your voices.
+                </p>
+              </div>
+            ) : filteredMyVoices.length === 0 ? (
               /* Empty State */
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="relative mb-6">
@@ -508,9 +583,15 @@ export default function VoiceCloningPage() {
             ) : (
               /* Voices List */
               <div className="space-y-3">
-                {filteredMyVoices.map((voice, index) => {
-                  // Generate a numeric ID for the icon based on the voice's position
-                  const iconId = index + 1000
+                {filteredMyVoices.map((voice) => {
+                  const createdDate = voice.created_at 
+                    ? new Date(voice.created_at).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric'
+                      })
+                    : 'Unknown'
+                  
                   return (
                   <div
                     key={voice.id}
@@ -519,21 +600,29 @@ export default function VoiceCloningPage() {
                     {/* Top Row - Mobile */}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       {/* Voice Icon - using AgentIcon with unique gradient */}
-                      <AgentIcon agentId={iconId} size={40} />
+                      <AgentIcon agentId={getNumericId(voice.id)} size={40} />
 
                       {/* Voice Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                          {voice.name}
-                        </h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {voice.name}
+                          </h3>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(voice.status)}`}>
+                            {voice.status === 'training' && (
+                              <span className="mr-1 h-1 w-1 animate-pulse rounded-full bg-current" />
+                            )}
+                            {voice.status}
+                          </span>
+                        </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                          {voice.description}
+                          {voice.type === 'custom' ? 'Custom voice' : 'Reference voice'} • {voice.provider}
                         </p>
-                        {/* Mobile: Show language inline */}
+                        {/* Mobile: Show language and status inline */}
                         <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mt-1 sm:hidden">
                           <span>{voice.language}</span>
                           <span>•</span>
-                          <span>{voice.accent}</span>
+                          <span>{createdDate}</span>
                         </div>
                       </div>
 
@@ -550,8 +639,14 @@ export default function VoiceCloningPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
                             <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Add to Agent</DropdownMenuItem>
-                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Edit Voice</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">Delete</DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
+                              onClick={() => handleDeleteVoice(voice.id, voice.name)}
+                              disabled={deletingVoiceId === voice.id}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {deletingVoiceId === voice.id ? 'Deleting...' : 'Delete'}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -559,28 +654,40 @@ export default function VoiceCloningPage() {
 
                     {/* Desktop/Tablet Additional Info */}
                     <div className="hidden sm:flex items-center gap-4 flex-shrink-0">
+                      {/* Status */}
+                      <div className="min-w-[100px]">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(voice.status)}`}>
+                          {voice.status === 'training' && (
+                            <span className="mr-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+                          )}
+                          {voice.status}
+                        </span>
+                      </div>
+
                       {/* Language */}
                       <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 min-w-[140px]">
                         <div>
                           <div className="font-medium">{voice.language}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-500">{voice.accent}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-500">{voice.type === 'custom' ? 'Custom' : 'Reference'}</div>
                         </div>
                       </div>
 
-                      {/* Category - Hidden on tablet */}
+                      {/* Provider */}
                       <div className="hidden lg:block text-sm text-gray-700 dark:text-gray-300 min-w-[120px]">
-                        {voice.category}
+                        {voice.provider}
                       </div>
 
                       {/* Created Date */}
                       <div className="hidden lg:block text-sm text-gray-600 dark:text-gray-400 min-w-[120px]">
-                        {voice.createdAt.toLocaleDateString()}
+                        {createdDate}
                       </div>
 
-                      {/* Source */}
-                      <div className="text-sm font-medium text-gray-900 dark:text-white min-w-[100px] text-right">
-                        {voice.source === 'voice-clone' ? 'Cloned' : voice.provider || 'Community'}
-                      </div>
+                      {/* Training Progress (if training) */}
+                      {voice.status === 'training' && voice.training_info?.progress !== undefined && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 min-w-[80px]">
+                          {voice.training_info.progress}%
+                        </div>
+                      )}
 
                       {/* Actions */}
                       <div className="flex items-center gap-2">
@@ -595,8 +702,15 @@ export default function VoiceCloningPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-white dark:bg-black border-gray-200 dark:border-gray-900">
                             <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Add to Agent</DropdownMenuItem>
-                            <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-primary/5">Edit Voice</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">Delete</DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-gray-200 dark:border-gray-900" />
+                            <DropdownMenuItem 
+                              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
+                              onClick={() => handleDeleteVoice(voice.id, voice.name)}
+                              disabled={deletingVoiceId === voice.id}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {deletingVoiceId === voice.id ? 'Deleting...' : 'Delete'}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -613,7 +727,11 @@ export default function VoiceCloningPage() {
         {/* Add Custom Voice Modal */}
         <AddCustomVoiceModal
           isOpen={createVoiceDialogOpen}
-          onClose={() => setCreateVoiceDialogOpen(false)}
+          onClose={() => {
+            setCreateVoiceDialogOpen(false)
+            // Refresh voices when modal closes (in case a voice was created)
+            queryClient.invalidateQueries({ queryKey: ['voices'] })
+          }}
           onSave={handleAddVoice}
         />
 

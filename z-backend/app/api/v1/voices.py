@@ -7,6 +7,7 @@ from typing import Optional
 from datetime import datetime
 import uuid
 import json
+import logging
 
 from app.core.auth import get_current_user
 from app.core.database import DatabaseService
@@ -24,6 +25,7 @@ from app.models.schemas import (
 )
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -231,13 +233,59 @@ async def list_voices(
     current_user: dict = Depends(get_current_user),
     x_client_id: Optional[str] = Header(None),
 ):
-    """List voices"""
+    """List voices - syncs status from Ultravox for training voices"""
     db = DatabaseService(current_user["token"])
     db.set_auth(current_user["token"])
     
+    # Get voices from database
     voices = db.select("voices", {"client_id": current_user["client_id"]}, "created_at")
     
-    # TODO: Optionally poll Ultravox for training status
+    # Poll Ultravox for training voices to update their status
+    for voice in voices:
+        if voice.get("status") == "training" and voice.get("ultravox_voice_id"):
+            try:
+                ultravox_voice = await ultravox_client.get_voice(voice["ultravox_voice_id"])
+                
+                # Map Ultravox status to our status
+                ultravox_status = ultravox_voice.get("status", "").lower()
+                new_status = voice.get("status")  # Default to current status
+                
+                if ultravox_status in ["active", "ready", "completed"]:
+                    new_status = "active"
+                    # Update training_info
+                    training_info = {
+                        "progress": 100,
+                        "completed_at": datetime.utcnow().isoformat(),
+                    }
+                elif ultravox_status in ["failed", "error"]:
+                    new_status = "failed"
+                    training_info = voice.get("training_info", {})
+                    training_info["error_message"] = ultravox_voice.get("error", "Training failed")
+                elif ultravox_status == "training":
+                    # Update progress if available
+                    training_info = voice.get("training_info", {})
+                    training_info["progress"] = ultravox_voice.get("progress", training_info.get("progress", 0))
+                    new_status = "training"
+                else:
+                    training_info = voice.get("training_info", {})
+                
+                # Update database if status changed
+                if new_status != voice.get("status") or (ultravox_status == "training" and training_info.get("progress") != voice.get("training_info", {}).get("progress")):
+                    update_data = {"status": new_status}
+                    if "training_info" in locals():
+                        update_data["training_info"] = training_info
+                    if new_status == "active":
+                        update_data["updated_at"] = datetime.utcnow().isoformat()
+                    
+                    db.update("voices", {"id": voice["id"]}, update_data)
+                    # Update local voice object for response
+                    voice["status"] = new_status
+                    if "training_info" in locals():
+                        voice["training_info"] = training_info
+                    
+            except Exception as e:
+                # Log error but don't fail the request
+                logger.warning(f"Failed to sync voice {voice['id']} from Ultravox: {e}")
     
     return {
         "data": [VoiceResponse(**voice) for voice in voices],

@@ -15,12 +15,12 @@ export function useAuthClient() {
 
   useEffect(() => {
     if (status === 'authenticated' && session) {
-      // Get access token from NextAuth session
-      // NextAuth stores it in session.accessToken (from JWT callback)
-      const token = (session as any).accessToken || ''
+      // For Google OAuth, use idToken (JWT) instead of accessToken
+      // idToken is a JWT that can be verified by our backend
+      const token = (session as any).idToken || (session as any).accessToken || ''
       
       // Extract client_id from user metadata or session
-      // Backend expects client_id in JWT claim or user metadata
+      // Backend will look it up from database
       const extractedClientId = 
         (session.user as any)?.client_id || 
         (session.user as any)?.['https://trudy.ai/client_id'] ||
@@ -36,15 +36,21 @@ export function useAuthClient() {
         setClientId(extractedClientId)
       } else if (token) {
         // If we have a token but no client_id, try to fetch it from /auth/me
+        // This will auto-create user/client if first login
         apiClient.get('/auth/me')
           .then((response) => {
             const userData = response.data as any
             if (userData?.client_id) {
               apiClient.setClientId(userData.client_id)
               setClientId(userData.client_id)
+              // Store in session for future use
+              if (session.user) {
+                (session.user as any).client_id = userData.client_id
+              }
             }
           })
-          .catch(() => {
+          .catch((error) => {
+            console.error('Failed to get user info:', error)
             // Silently fail - client_id might not be available yet
           })
       }
@@ -70,7 +76,8 @@ export function useClientId(): string | null {
 
   useEffect(() => {
     if (status === 'authenticated' && session) {
-      const token = (session as any).accessToken || ''
+      // For Google OAuth, use idToken (JWT) instead of accessToken
+      const token = (session as any).idToken || (session as any).accessToken || ''
       const extractedClientId = 
         (session.user as any)?.client_id || 
         (session.user as any)?.['https://trudy.ai/client_id'] ||
@@ -81,6 +88,7 @@ export function useClientId(): string | null {
         setClientId(extractedClientId)
       } else if (token) {
         // Fetch from backend if not in session
+        // This will auto-create user/client if first login
         apiClient.get('/auth/me')
           .then((response) => {
             const userData = response.data as any
@@ -113,7 +121,8 @@ export async function getServerAuthConfig() {
       return { token: null, clientId: null }
     }
 
-    const token = (session as any).accessToken || ''
+    // For Google OAuth, use idToken (JWT) instead of accessToken
+    const token = (session as any).idToken || (session as any).accessToken || ''
     const clientId = 
       (session.user as any)?.client_id ||
       (session.user as any)?.['https://trudy.ai/client_id'] ||

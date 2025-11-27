@@ -55,6 +55,11 @@ class UltravoxClient:
             )
     
     # Voices
+    async def list_voices(self) -> List[Dict[str, Any]]:
+        """List all voices from Ultravox"""
+        response = await self._request("GET", "/voices")
+        return response.get("data", [])
+    
     async def create_voice(self, voice_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create voice in Ultravox"""
         response = await self._request("POST", "/voices", data=voice_data)

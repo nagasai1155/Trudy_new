@@ -1,11 +1,9 @@
 """
-JWT Authentication and Authorization
+JWT Authentication and Authorization - Google OAuth
 """
-import jwt
+import jwt  # PyJWT library
 from typing import Optional, Dict, Any
 from fastapi import Header, HTTPException
-from jose import jwt as jose_jwt, JWTError
-from jose.utils import base64url_decode
 import httpx
 import logging
 from app.core.config import settings
@@ -14,13 +12,13 @@ from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
-# Cache for JWKs
+# Cache for Google JWKs
 _jwks_cache: Optional[Dict[str, Any]] = None
 _jwks_cache_expiry: Optional[float] = None
 
 
 async def get_jwks() -> Dict[str, Any]:
-    """Fetch JWKs from Auth0"""
+    """Fetch JWKs from Google"""
     global _jwks_cache, _jwks_cache_expiry
     import time
     
@@ -28,10 +26,8 @@ async def get_jwks() -> Dict[str, Any]:
     if _jwks_cache and _jwks_cache_expiry and time.time() < _jwks_cache_expiry:
         return _jwks_cache
     
-    # Fetch from Auth0
-    # Ensure we don't end up with a double slash when building the JWKS URL
-    issuer_base = settings.JWT_ISSUER.rstrip("/")
-    jwks_url = f"{issuer_base}/.well-known/jwks.json"
+    # Fetch from Google
+    jwks_url = "https://www.googleapis.com/oauth2/v3/certs"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(jwks_url, timeout=5.0)
@@ -40,7 +36,7 @@ async def get_jwks() -> Dict[str, Any]:
             _jwks_cache_expiry = time.time() + 3600  # Cache for 1 hour
             return _jwks_cache
     except Exception as e:
-        logger.error(f"Failed to fetch JWKs: {e}")
+        logger.error(f"Failed to fetch Google JWKs: {e}")
         if _jwks_cache:
             return _jwks_cache  # Use stale cache as fallback
         raise UnauthorizedError("Failed to fetch authentication keys")
@@ -58,42 +54,58 @@ def get_jwt_header(authorization: Optional[str] = Header(None)) -> str:
 
 
 async def verify_jwt(token: str) -> Dict[str, Any]:
-    """Verify JWT token and return claims"""
+    """Verify Google OAuth JWT token and return claims"""
     try:
-        # Get JWKs
+        # Get Google JWKs
         jwks = await get_jwks()
         
-        # Decode header
+        # Decode header to find key ID
         unverified_header = jwt.get_unverified_header(token)
         
         # Find matching key
-        rsa_key = {}
+        matching_key = None
         for key in jwks.get("keys", []):
             if key["kid"] == unverified_header["kid"]:
-                rsa_key = {
-                    "kty": key["kty"],
-                    "kid": key["kid"],
-                    "use": key["use"],
-                    "n": key["n"],
-                    "e": key["e"],
-                }
+                matching_key = key
                 break
         
-        if not rsa_key:
+        if not matching_key:
             raise UnauthorizedError("Unable to find appropriate key")
         
-        # Verify token
-        claims = jose_jwt.decode(
+        # Convert JWK to RSA public key for PyJWT
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        import base64
+        
+        def base64url_decode(value: str) -> bytes:
+            """Decode base64url encoded string"""
+            padding = 4 - len(value) % 4
+            if padding != 4:
+                value += "=" * padding
+            return base64.urlsafe_b64decode(value)
+        
+        # Decode JWK values
+        n_bytes = base64url_decode(matching_key["n"])
+        e_bytes = base64url_decode(matching_key["e"])
+        n_int = int.from_bytes(n_bytes, "big")
+        e_int = int.from_bytes(e_bytes, "big")
+        
+        # Create RSA public key
+        public_numbers = rsa.RSAPublicNumbers(e_int, n_int)
+        public_key = public_numbers.public_key()
+        
+        # Decode and verify token with PyJWT
+        # PyJWT doesn't verify at_hash unless access_token is provided
+        claims = jwt.decode(
             token,
-            rsa_key,
-            algorithms=[settings.JWT_ALGORITHM],
-            audience=settings.JWT_AUDIENCE,
-            issuer=settings.JWT_ISSUER,
+            public_key,
+            algorithms=["RS256"],
+            audience=settings.GOOGLE_CLIENT_ID,
+            issuer=settings.GOOGLE_ISSUER,
         )
         
         return claims
         
-    except JWTError as e:
+    except jwt.InvalidTokenError as e:
         logger.warning(f"JWT verification failed: {e}")
         raise UnauthorizedError("Invalid or expired token")
     except Exception as e:
@@ -105,14 +117,16 @@ async def get_current_user(
     authorization: Optional[str] = Header(None),
     x_client_id: Optional[str] = Header(None),
 ) -> Dict[str, Any]:
-    """Get current user from JWT token"""
+    """Get current user from Google OAuth token"""
     # Extract and verify token
     token = get_jwt_header(authorization)
     claims = await verify_jwt(token)
     
-    # Extract user info
-    user_id = claims.get("sub")
-    client_claim = claims.get("client_id") or claims.get("https://trudy.ai/client_id")
+    # Extract user info from Google OAuth token
+    user_id = claims.get("sub")  # Google user ID
+    email = claims.get("email")
+    name = claims.get("name", "")
+    picture = claims.get("picture", "")
     
     def _normalize_uuid(value: Optional[str]) -> Optional[str]:
         if not value:
@@ -122,34 +136,44 @@ async def get_current_user(
         except (ValueError, TypeError):
             return None
     
-    normalized_claim_client_id = _normalize_uuid(client_claim)
     normalized_header_client_id = _normalize_uuid(x_client_id)
-    
-    client_id = normalized_claim_client_id or normalized_header_client_id
-    role = claims.get("role", "client_user")
-    email = claims.get("email")
     
     if not user_id:
         raise UnauthorizedError("Invalid token: missing user ID")
     
-    # Validate client_id header matches JWT (unless agency_admin)
-    if role != "agency_admin":
-        if not normalized_header_client_id:
-            raise UnauthorizedError("Missing x-client-id header")
-        if normalized_claim_client_id and normalized_claim_client_id != normalized_header_client_id:
+    # Try to get user from database to get client_id and role
+    # Use admin client to bypass RLS for this lookup
+    from app.core.database import get_supabase_admin_client
+    admin_db = get_supabase_admin_client()
+    
+    user_record = admin_db.table("users").select("*").eq("auth0_sub", user_id).execute()
+    user_data = user_record.data[0] if user_record.data else None
+    
+    client_id = None
+    role = "client_user"
+    
+    if user_data:
+        # User exists, get client_id and role from database
+        client_id = user_data.get("client_id")
+        role = user_data.get("role", "client_user")
+    elif normalized_header_client_id:
+        # User doesn't exist yet, but client_id provided in header
+        # This will be handled in /auth/me endpoint
+        client_id = normalized_header_client_id
+    
+    # If header client_id provided, validate it matches database (unless agency_admin)
+    if normalized_header_client_id and client_id:
+        if role != "agency_admin" and normalized_header_client_id != client_id:
             raise ForbiddenError("client_id mismatch")
         client_id = normalized_header_client_id
-    else:
-        client_id = client_id or normalized_header_client_id
-    
-    # Note: request.state is set by middleware after authentication
-    # The logging middleware will extract client_id/user_id from the request
     
     return {
         "user_id": user_id,
-        "client_id": client_id,
-        "role": role,
+        "client_id": client_id,  # From database or header
+        "role": role,  # From database
         "email": email,
+        "name": name,
+        "picture": picture,
         "token": token,
         "claims": claims,
     }
