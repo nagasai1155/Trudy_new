@@ -302,11 +302,11 @@ Your responses should be thoughtful, concise, and conversational—typically thr
               <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2">
                 <Mic2 className="h-4 w-4" />
                 Test AI agent
-              </Button>
+                  </Button>
               <Button variant="outline" className="gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all">
                 <Link2 className="h-4 w-4" />
                 Copy link
-              </Button>
+                  </Button>
               <Button variant="ghost" size="icon">
                 <MoreHorizontal className="h-5 w-5" />
               </Button>

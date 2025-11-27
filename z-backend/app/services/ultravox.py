@@ -17,8 +17,10 @@ class UltravoxClient:
     def __init__(self):
         self.base_url = settings.ULTRAVOX_BASE_URL
         self.api_key = settings.ULTRAVOX_API_KEY
+        if not self.api_key:
+            logger.warning("ULTRAVOX_API_KEY is not set. Ultravox features will be disabled.")
         self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
             "Content-Type": "application/json",
         }
     
@@ -30,6 +32,13 @@ class UltravoxClient:
         params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Make HTTP request with retry logic"""
+        if not self.api_key:
+            raise ProviderError(
+                provider="ultravox",
+                message="Ultravox API key is not configured",
+                http_status=500,
+            )
+        
         url = f"{self.base_url}{endpoint}"
         
         async def _make_request():
@@ -52,6 +61,12 @@ class UltravoxClient:
                 message=f"Ultravox API error: {e.response.status_code}",
                 http_status=e.response.status_code,
                 retry_after=int(e.response.headers.get("Retry-After", 0)) if e.response.status_code == 429 else None,
+            )
+        except httpx.RequestError as e:
+            raise ProviderError(
+                provider="ultravox",
+                message=f"Failed to connect to Ultravox: {str(e)}",
+                http_status=502,
             )
     
     # Voices

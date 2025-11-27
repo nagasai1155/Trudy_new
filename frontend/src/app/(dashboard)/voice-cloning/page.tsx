@@ -49,7 +49,7 @@ import {
   Trash2,
   AlertCircle
 } from 'lucide-react'
-import { useVoices, useDeleteVoice } from '@/hooks/use-voices'
+import { useVoices, useDeleteVoice, useCreateVoice } from '@/hooks/use-voices'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
 import { Voice } from '@/types'
@@ -178,6 +178,7 @@ export default function VoiceCloningPage() {
   const { isLoading: authLoading, clientId } = useAuthClient() // Initialize auth
   const { data: apiVoices = [], isLoading: voicesLoading, error } = useVoices()
   const deleteVoiceMutation = useDeleteVoice()
+  const createVoiceMutation = useCreateVoice()
   const [activeTab, setActiveTab] = useState('explore')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Conversational')
@@ -271,13 +272,44 @@ export default function VoiceCloningPage() {
     return Math.abs(hash)
   }
 
-  const handleAddVoice = () => {
-    // Voice creation is handled by the modal component
-    setCreateVoiceDialogOpen(false)
-    // Switch to My Voices tab to show the newly added voice
-    setActiveTab('my-voices')
-    // Clear search to show all voices
-    setSearchQuery('')
+  const handleAddVoice = async (voiceData: { name: string; source: 'voice-clone' | 'community-voices'; provider?: string }) => {
+    try {
+      // Voice clone is handled inside the modal, but community voices need to be created here
+      if (voiceData.source === 'community-voices') {
+        await createVoiceMutation.mutateAsync({
+          name: voiceData.name,
+          strategy: 'external',
+          source: {
+            type: 'external',
+            provider_voice_id: undefined, // Can be set later
+          },
+          provider_overrides: {
+            provider: voiceData.provider || 'elevenlabs',
+          },
+        })
+
+        toast({
+          title: 'Voice created',
+          description: `"${voiceData.name}" has been created successfully.`,
+        })
+      }
+      // Voice clone is already created in the modal
+
+      // Close modal and refresh
+      setCreateVoiceDialogOpen(false)
+      // Switch to My Voices tab to show the newly added voice
+      setActiveTab('my-voices')
+      // Clear search to show all voices
+      setSearchQuery('')
+      // Refresh voices list
+      queryClient.invalidateQueries({ queryKey: ['voices'] })
+    } catch (error) {
+      toast({
+        title: 'Error creating voice',
+        description: error instanceof Error ? error.message : 'Failed to create voice. Please try again.',
+        variant: 'destructive',
+      })
+    }
   }
 
   return (
@@ -605,9 +637,9 @@ export default function VoiceCloningPage() {
                       {/* Voice Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                            {voice.name}
-                          </h3>
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {voice.name}
+                        </h3>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(voice.status)}`}>
                             {voice.status === 'training' && (
                               <span className="mr-1 h-1 w-1 animate-pulse rounded-full bg-current" />
@@ -686,7 +718,7 @@ export default function VoiceCloningPage() {
                       {voice.status === 'training' && voice.training_info?.progress !== undefined && (
                         <div className="text-sm text-gray-600 dark:text-gray-400 min-w-[80px]">
                           {voice.training_info.progress}%
-                        </div>
+                      </div>
                       )}
 
                       {/* Actions */}

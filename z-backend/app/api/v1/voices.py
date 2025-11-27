@@ -55,6 +55,7 @@ async def presign_voice_files(
         
         uploads.append({
             "doc_id": doc_id,
+            "s3_key": s3_key,
             "url": url,
             "headers": {"Content-Type": file.content_type},
         })
@@ -100,6 +101,7 @@ async def create_voice(
     db.set_auth(current_user["token"])
     
     # Credit check for native training
+    client = None
     if voice_data.strategy == "native":
         client = db.get_client(current_user["client_id"])
         if not client or client.get("credits_balance", 0) < 50:
@@ -110,7 +112,10 @@ async def create_voice(
     
     # Create voice record
     voice_id = str(uuid.uuid4())
-    voice_record = {
+    now = datetime.utcnow()
+    
+    # Prepare voice record for database (use ISO strings for storage)
+    voice_db_record = {
         "id": voice_id,
         "client_id": current_user["client_id"],
         "name": voice_data.name,
@@ -120,11 +125,18 @@ async def create_voice(
         "status": "training" if voice_data.strategy == "native" else "active",
         "training_info": {
             "progress": 0,
-            "started_at": datetime.utcnow().isoformat(),
+            "started_at": now.isoformat(),
         } if voice_data.strategy == "native" else {},
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
     }
     
-    db.insert("voices", voice_record)
+    db.insert("voices", voice_db_record)
+    
+    # Prepare voice record for response (use datetime objects for Pydantic)
+    voice_record = voice_db_record.copy()
+    voice_record["created_at"] = now
+    voice_record["updated_at"] = now
     
     # Generate presigned URLs for Ultravox
     training_samples = []
@@ -148,9 +160,11 @@ async def create_voice(
                 "duration_seconds": sample.duration_seconds,
             })
     
-    # Call Ultravox API
-    try:
-        if voice_data.strategy == "native":
+    # Call Ultravox API (optional for external voices, required for native)
+    ultravox_voice_id = None
+    if voice_data.strategy == "native":
+        # Native voices MUST be created in Ultravox
+        try:
             ultravox_data = {
                 "name": voice_data.name,
                 "provider": voice_record["provider"],
@@ -159,34 +173,58 @@ async def create_voice(
                 "training_samples": training_samples,
             }
             ultravox_response = await ultravox_client.create_voice(ultravox_data)
-        else:
-            ultravox_data = {
-                "name": voice_data.name,
-                "provider": voice_record["provider"],
-                "type": "reference",
-                "provider_voice_id": voice_data.source.provider_voice_id,
-            }
-            ultravox_response = await ultravox_client.create_voice(ultravox_data)
-        
-        # Update with Ultravox ID
+            if ultravox_response and ultravox_response.get("id"):
+                ultravox_voice_id = ultravox_response.get("id")
+            else:
+                raise ValueError("Ultravox response missing voice ID")
+        except Exception as e:
+            logger.error(f"Failed to create native voice in Ultravox: {e}", exc_info=True)
+            db.update(
+                "voices",
+                {"id": voice_id},
+                {"status": "failed", "training_info": {"error_message": str(e)}},
+            )
+            from app.core.exceptions import ProviderError, ValidationError
+            if isinstance(e, ProviderError):
+                raise
+            error_msg = str(e)
+            if not settings.ULTRAVOX_API_KEY:
+                raise ValidationError("Ultravox API key is not configured. Native voice cloning requires Ultravox.")
+            raise ProviderError(
+                provider="ultravox",
+                message=f"Failed to create voice in Ultravox: {error_msg}",
+                http_status=500,
+            )
+    else:
+        # External voices can be created without Ultravox (optional)
+        if settings.ULTRAVOX_API_KEY:
+            try:
+                ultravox_data = {
+                    "name": voice_data.name,
+                    "provider": voice_record["provider"],
+                    "type": "reference",
+                }
+                if voice_data.source.provider_voice_id:
+                    ultravox_data["provider_voice_id"] = voice_data.source.provider_voice_id
+                ultravox_response = await ultravox_client.create_voice(ultravox_data)
+                if ultravox_response and ultravox_response.get("id"):
+                    ultravox_voice_id = ultravox_response.get("id")
+            except Exception as e:
+                # For external voices, Ultravox failure is not critical
+                logger.warning(f"Failed to create external voice in Ultravox (non-critical): {e}")
+                # Continue without Ultravox ID - voice will still be created in database
+    
+    # Update with Ultravox ID if available
+    if ultravox_voice_id:
         db.update(
             "voices",
             {"id": voice_id},
-            {"ultravox_voice_id": ultravox_response.get("id")},
+            {"ultravox_voice_id": ultravox_voice_id},
         )
-        voice_record["ultravox_voice_id"] = ultravox_response.get("id")
-        
-    except Exception as e:
-        # Mark as failed
-        db.update(
-            "voices",
-            {"id": voice_id},
-            {"status": "failed", "training_info": {"error_message": str(e)}},
-        )
-        raise
+        voice_record["ultravox_voice_id"] = ultravox_voice_id
     
     # Debit credits if native
-    if voice_data.strategy == "native":
+    if voice_data.strategy == "native" and client:
         db.insert(
             "credit_transactions",
             {

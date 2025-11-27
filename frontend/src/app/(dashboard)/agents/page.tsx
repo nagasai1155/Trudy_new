@@ -253,7 +253,7 @@ export default function AgentsPage() {
                     <div className="flex items-center gap-3">
                       <AgentIcon agentId={getNumericId(agent.id)} size={40} />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{agent.name}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{agent.name}</span>
                         {agent.description && (
                           <span className="text-xs text-gray-500 dark:text-gray-500 truncate max-w-xs">{agent.description}</span>
                         )}
@@ -359,7 +359,7 @@ export default function AgentsPage() {
                       <div className="flex items-center gap-3">
                         <AgentIcon agentId={getNumericId(agent.id)} size={36} />
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">{agent.name}</h3>
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">{agent.name}</h3>
                           {agent.description && (
                             <p className="text-xs text-gray-500 dark:text-gray-500 truncate mt-0.5">{agent.description}</p>
                           )}

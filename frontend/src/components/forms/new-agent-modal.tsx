@@ -142,7 +142,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
         
         // Create agent data
         const agentData: CreateAgentData = {
-          name: agentName,
+        name: agentName,
           description: `AI agent created from ${selectedTemplate} template`,
           voice_id: activeVoice.id,
           system_prompt: systemPrompts[selectedTemplate],
@@ -160,23 +160,23 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
         toast({
           title: 'Agent created',
           description: `"${agentName}" has been created successfully.`,
-        })
-        
+      })
+      
         // Call the onSelectType callback if provided
-        if (onSelectType) {
-          onSelectType(selectedTemplate)
-        }
+      if (onSelectType) {
+        onSelectType(selectedTemplate)
+      }
         
         // Navigate to agent editor
         router.push('/agents/new')
-        
-        // Reset state and close
-        setStep('select')
-        setSelectedTemplate(null)
-        setAgentName('')
-        setChatOnly(false)
-        setModalOpen(false)
-        onClose()
+      
+      // Reset state and close
+      setStep('select')
+      setSelectedTemplate(null)
+      setAgentName('')
+      setChatOnly(false)
+      setModalOpen(false)
+      onClose()
       } catch (error) {
         toast({
           title: 'Error creating agent',

@@ -168,6 +168,7 @@ class PresignFileRequest(BaseModel):
 
 class PresignResponse(BaseModel):
     doc_id: str
+    s3_key: str
     url: str
     headers: Dict[str, str]
 
