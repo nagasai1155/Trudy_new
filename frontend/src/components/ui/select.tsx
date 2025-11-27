@@ -105,7 +105,7 @@ const SelectContent = React.forwardRef<
         }}
         onAnimationEnd={(e) => e.stopPropagation()}
         className={cn(
-          "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-900 bg-white dark:bg-black text-gray-900 dark:text-white shadow-lg",
+          "relative z-[100] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-900 bg-white dark:bg-black text-gray-900 dark:text-white shadow-lg",
           "![animation:none] ![transition:none]",
           className
         )}

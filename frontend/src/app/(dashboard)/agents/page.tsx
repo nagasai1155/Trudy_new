@@ -14,23 +14,29 @@ import { NewAgentModal } from '@/components/forms/new-agent-modal'
 import { AgentIcon } from '@/components/agent-icon'
 import { useAgentStore } from '@/stores/agent-store'
 import { useAgents, useDeleteAgent } from '@/hooks/use-agents'
+import { CreateCallModal } from '@/components/calls/create-call-modal'
+import { useCreateCall } from '@/hooks/use-calls'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
-import { Headphones, Wind, TrendingUp, Wand2, Check, Mic2, Search, Plus, MoreHorizontal, ExternalLink, Copy, Trash2, AlertCircle, Loader2 } from 'lucide-react'
+import { Headphones, Wind, TrendingUp, Wand2, Check, Mic2, Search, Plus, MoreHorizontal, ExternalLink, Copy, Trash2, AlertCircle, Loader2, Phone } from 'lucide-react'
 import { Agent } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
+import { useAuthClient } from '@/lib/auth-client'
 
 export default function AgentsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { setSelectedAgent } = useAgentStore()
+  const { isLoading: authLoading, clientId } = useAuthClient() // Check auth status
   const { data: apiAgents = [], isLoading: apiLoading, error, refetch } = useAgents()
   const deleteAgentMutation = useDeleteAgent()
+  const createCallMutation = useCreateCall()
   const [searchQuery, setSearchQuery] = useState('')
   const [showNewAgentModal, setShowNewAgentModal] = useState(false)
   const [deletingAgentId, setDeletingAgentId] = useState<string | null>(null)
+  const [callAgentId, setCallAgentId] = useState<string | null>(null)
   
   // Real-time polling for agents with "creating" status
   useEffect(() => {
@@ -48,7 +54,8 @@ export default function AgentsPage() {
   
   // Use only real agents from API
   const allAgents = apiAgents
-  const isLoading = apiLoading
+  // Show loading if auth is loading OR if we're waiting for clientId OR if query is loading
+  const isLoading = authLoading || (!clientId && !error) || apiLoading
   
   // Handle delete agent
   const handleDeleteAgent = useCallback(async (agentId: string, agentName: string) => {
@@ -80,6 +87,29 @@ export default function AgentsPage() {
     setSelectedAgent(agent)
     router.push('/agents/new?duplicate=true')
   }, [setSelectedAgent, router])
+
+  // Handle make call
+  const handleMakeCall = useCallback((agentId: string) => {
+    setCallAgentId(agentId)
+  }, [])
+
+  const handleCreateCall = useCallback(async (data: { agent_id: string; phone_number: string; direction: 'inbound' | 'outbound' }) => {
+    try {
+      await createCallMutation.mutateAsync(data)
+      toast({
+        title: 'Call initiated',
+        description: 'The call has been queued and will start shortly.',
+      })
+      setCallAgentId(null)
+      router.push('/calls')
+    } catch (error) {
+      toast({
+        title: 'Error creating call',
+        description: error instanceof Error ? error.message : 'Failed to create call. Please try again.',
+        variant: 'destructive',
+      })
+    }
+  }, [createCallMutation, toast, router])
   
   // Format agent for display (convert backend format to display format)
   const formatAgentForDisplay = (agent: Agent) => {
@@ -280,6 +310,18 @@ export default function AgentsPage() {
                             <ExternalLink className="mr-2 h-4 w-4 text-primary" />
                             Edit agent
                           </DropdownMenuItem>
+                          {agent.status === 'active' && (
+                            <DropdownMenuItem 
+                              className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-primary/5"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleMakeCall(agent.id)
+                              }}
+                            >
+                              <Phone className="mr-2 h-4 w-4 text-primary" />
+                              Make call
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-900" />
                           <DropdownMenuItem 
                             className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900"
@@ -386,6 +428,18 @@ export default function AgentsPage() {
                           <ExternalLink className="mr-2 h-4 w-4 text-primary" />
                           Edit agent
                         </DropdownMenuItem>
+                        {agent.status === 'active' && (
+                          <DropdownMenuItem 
+                            className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-primary/5"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleMakeCall(agent.id)
+                            }}
+                          >
+                            <Phone className="mr-2 h-4 w-4 text-primary" />
+                            Make call
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-900" />
                         <DropdownMenuItem 
                           className="cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900"
@@ -423,6 +477,17 @@ export default function AgentsPage() {
               )}
             </div>
           </div>
+
+          {/* Create Call Modal */}
+          {callAgentId && (
+            <CreateCallModal
+              isOpen={!!callAgentId}
+              onClose={() => setCallAgentId(null)}
+              onCreateCall={handleCreateCall}
+              agents={apiAgents.filter(a => a.id === callAgentId && a.status === 'active')}
+              isLoading={createCallMutation.isPending}
+            />
+          )}
         </div>
       </AppLayout>
   )

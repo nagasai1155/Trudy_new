@@ -725,15 +725,28 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                       <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd"/>
                     </svg>
-                    <SelectValue />
+                    <SelectValue placeholder="Select a voice" />
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="eric">Eric</SelectItem>
-                  <SelectItem value="sarah">Sarah</SelectItem>
-                  <SelectItem value="john">John</SelectItem>
+                  {voices.length === 0 ? (
+                    <SelectItem value="" disabled>No voices available. Create a voice first.</SelectItem>
+                  ) : (
+                    voices
+                      .filter(voice => voice.status === 'active')
+                      .map(voice => (
+                        <SelectItem key={voice.id} value={voice.id}>
+                          {voice.name} {voice.provider && `(${voice.provider})`}
+                        </SelectItem>
+                      ))
+                  )}
                 </SelectContent>
               </Select>
+              {voices.length > 0 && voices.filter(v => v.status === 'active').length === 0 && (
+                <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
+                  No active voices available. Please create and activate a voice first.
+                </p>
+              )}
             </div>
 
             {/* Multi-voice support */}

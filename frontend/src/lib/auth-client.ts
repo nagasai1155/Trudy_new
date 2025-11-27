@@ -17,6 +17,7 @@ export function useAuthClient() {
     if (status === 'authenticated' && session) {
       // For Google OAuth, use idToken (JWT) instead of accessToken
       // idToken is a JWT that can be verified by our backend
+      // NextAuth should refresh tokens automatically, but we need to get the latest session
       const token = (session as any).idToken || (session as any).accessToken || ''
       
       // Extract client_id from user metadata or session
@@ -29,6 +30,9 @@ export function useAuthClient() {
 
       if (token) {
         apiClient.setToken(token)
+      } else {
+        // If no token, try to refresh session
+        console.warn('No token found in session, session might need refresh')
       }
       
       if (extractedClientId) {
@@ -51,7 +55,10 @@ export function useAuthClient() {
           })
           .catch((error) => {
             console.error('Failed to get user info:', error)
-            // Silently fail - client_id might not be available yet
+            // If token is expired, we might need to refresh the session
+            if (error?.message?.includes('expired') || error?.message?.includes('Invalid or expired token')) {
+              console.warn('Token appears to be expired, session may need refresh')
+            }
           })
       }
     } else if (status === 'unauthenticated') {

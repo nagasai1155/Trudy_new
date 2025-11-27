@@ -13,26 +13,19 @@ import {
   Info,
   Clock,
   CreditCard,
-  User
+  User,
+  Loader2
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
-
-interface CallDetails {
-  id: string
-  contact: string
-  phoneNumber: string
-  agent: string
-  status: string
-  duration: number
-  cost: number
-  timestamp: Date
-  conversationId?: string
-}
+import { Call, useCall, useCallTranscript, useCallRecording } from '@/hooks/use-calls'
+import { useAgents } from '@/hooks/use-agents'
+import { formatDate, formatDuration, formatPhoneNumber } from '@/lib/utils'
+import { CALL_STATUSES } from '@/constants'
 
 interface CallDetailsPanelProps {
   isOpen: boolean
   onClose: () => void
-  call: CallDetails | null
+  call: Call | null
 }
 
 export function CallDetailsPanel({ isOpen, onClose, call }: CallDetailsPanelProps) {
@@ -40,6 +33,18 @@ export function CallDetailsPanel({ isOpen, onClose, call }: CallDetailsPanelProp
   const [isPlaying, setIsPlaying] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState('1.0x')
   const [mounted, setMounted] = useState(false)
+  
+  // Fetch call details with refresh for active calls
+  const { data: callData, isLoading: callLoading } = useCall(
+    call?.id || '', 
+    call?.status && ['queued', 'ringing', 'in_progress'].includes(call.status)
+  )
+  const { data: transcriptData, isLoading: transcriptLoading } = useCallTranscript(call?.id || '')
+  const { data: recordingData, isLoading: recordingLoading } = useCallRecording(call?.id || '')
+  const { data: agents = [] } = useAgents()
+  
+  const currentCall = callData || call
+  const agent = agents.find(a => a.id === currentCall?.agent_id)
 
   useEffect(() => {
     setMounted(true)
@@ -57,33 +62,22 @@ export function CallDetailsPanel({ isOpen, onClose, call }: CallDetailsPanelProp
     }
   }, [isOpen])
 
-  if (!call || !mounted) return null
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    }).format(date)
-  }
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
+  if (!currentCall || !mounted) return null
 
   const getStatusBadge = (status: string) => {
+    const statusConfig = CALL_STATUSES.find(s => s.value === status)
     let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'secondary'
     
     if (status === 'completed') variant = 'default'
     if (status === 'failed') variant = 'destructive'
+    if (status === 'in_progress' || status === 'ringing') variant = 'default'
 
     return (
       <Badge variant={variant} className="capitalize">
-        {status}
+        {status === 'in_progress' && (
+          <span className="mr-1 h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+        )}
+        {statusConfig?.label || status}
       </Badge>
     )
   }
@@ -110,10 +104,10 @@ export function CallDetailsPanel({ isOpen, onClose, call }: CallDetailsPanelProp
           <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-900 flex-shrink-0">
             <div className="min-w-0 flex-1 pr-4">
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
-                Conversation with {call.agent}
+                Call with {agent?.name || 'Unknown Agent'}
               </h2>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1 truncate">
-                {call.conversationId || 'LVFQEd8kGl5boXeJWFEw'}
+                {formatPhoneNumber(currentCall.phone_number)} • {currentCall.direction}
               </p>
             </div>
             <Button
@@ -172,7 +166,9 @@ export function CallDetailsPanel({ isOpen, onClose, call }: CallDetailsPanelProp
 
                   <div className="flex items-center space-x-2 sm:space-x-4">
                     <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{playbackSpeed}</span>
-                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">0:00 / {formatDuration(call.duration)}</span>
+                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      0:00 / {currentCall.duration_seconds ? formatDuration(currentCall.duration_seconds) : '--:--'}
+                    </span>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
@@ -221,39 +217,105 @@ export function CallDetailsPanel({ isOpen, onClose, call }: CallDetailsPanelProp
                   {/* Summary */}
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Summary</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Summary couldn&apos;t be generated for this call.
-                    </p>
+                    {transcriptData?.summary ? (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {transcriptData.summary}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {currentCall.status === 'completed' 
+                          ? 'Summary will be available after call processing.'
+                          : 'Summary will be available after the call completes.'}
+                      </p>
+                    )}
                   </div>
 
                   {/* Call Status */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Call status</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Call Status</h3>
                     <div className="flex items-center space-x-2">
-                      {getStatusBadge(call.status)}
-                      <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                        {call.status === 'completed' ? 'Unknown' : call.status}
-                      </span>
+                      {getStatusBadge(currentCall.status)}
                     </div>
                   </div>
 
-                  {/* User ID */}
+                  {/* Agent */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">User ID</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">No user ID</p>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Agent</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{agent?.name || 'Unknown'}</p>
+                  </div>
+
+                  {/* Phone Number */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Phone Number</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{formatPhoneNumber(currentCall.phone_number)}</p>
+                  </div>
+
+                  {/* Direction */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Direction</h3>
+                    <Badge variant="outline" className="capitalize">
+                      {currentCall.direction}
+                    </Badge>
                   </div>
                 </>
               )}
 
               {activeTab === 'transcription' && (
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Transcription content would go here...</p>
+                  {transcriptLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : transcriptData?.transcript && transcriptData.transcript.length > 0 ? (
+                    <div className="space-y-4">
+                      {transcriptData.transcript.map((entry: any, index: number) => (
+                        <div key={index} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium text-gray-900 dark:text-white capitalize">
+                              {entry.speaker || 'unknown'}
+                            </span>
+                            {entry.timestamp && (
+                              <span className="text-xs text-gray-500 dark:text-gray-500">
+                                {formatDuration(Math.floor(entry.timestamp))}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">{entry.text}</p>
+                          {entry.confidence !== undefined && (
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                              Confidence: {(entry.confidence * 100).toFixed(1)}%
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {currentCall.status === 'completed' 
+                        ? 'Transcript will be available after call processing.'
+                        : 'Transcript will be available after the call completes.'}
+                    </p>
+                  )}
                 </div>
               )}
 
               {activeTab === 'client-data' && (
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Client data would go here...</p>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Context Data</h3>
+                  {currentCall.context && Object.keys(currentCall.context).length > 0 ? (
+                    <div className="space-y-2">
+                      {Object.entries(currentCall.context).map(([key, value]) => (
+                        <div key={key} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                          <span className="text-xs font-medium text-gray-900 dark:text-white">{key}:</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">
+                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">No context data available.</p>
+                  )}
                 </div>
               )}
             </div>
@@ -267,24 +329,61 @@ export function CallDetailsPanel({ isOpen, onClose, call }: CallDetailsPanelProp
                   <Clock className="h-4 w-4 text-primary flex-shrink-0" />
                   <span className="text-gray-600 dark:text-gray-400">Date:</span>
                 </div>
-                <span className="text-gray-900 dark:text-white font-medium">{formatDate(call.timestamp)}</span>
+                <span className="text-gray-900 dark:text-white font-medium">
+                  {formatDate(new Date(currentCall.created_at), 'long')}
+                </span>
               </div>
+              
+              {currentCall.started_at && (
+                <div className="flex items-center justify-between text-xs sm:text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+                    <span className="text-gray-600 dark:text-gray-400">Started:</span>
+                  </div>
+                  <span className="text-gray-900 dark:text-white font-medium">
+                    {formatDate(new Date(currentCall.started_at))}
+                  </span>
+                </div>
+              )}
               
               <div className="flex items-center justify-between text-xs sm:text-sm">
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-gray-600 dark:text-gray-400">Connection duration:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Duration:</span>
                 </div>
-                <span className="text-gray-900 dark:text-white font-medium">{formatDuration(call.duration)}</span>
+                <span className="text-gray-900 dark:text-white font-medium">
+                  {currentCall.duration_seconds ? formatDuration(currentCall.duration_seconds) : '-'}
+                </span>
               </div>
               
-              <div className="flex items-center justify-between text-xs sm:text-sm">
-                <div className="flex items-center space-x-2">
-                  <CreditCard className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-gray-600 dark:text-gray-400">Credits (call):</span>
+              {currentCall.cost_usd !== undefined && (
+                <div className="flex items-center justify-between text-xs sm:text-sm">
+                  <div className="flex items-center space-x-2">
+                    <CreditCard className="h-4 w-4 text-primary flex-shrink-0" />
+                    <span className="text-gray-600 dark:text-gray-400">Cost:</span>
+                  </div>
+                  <span className="text-gray-900 dark:text-white font-medium">
+                    ${currentCall.cost_usd.toFixed(2)}
+                  </span>
                 </div>
-                <span className="text-gray-900 dark:text-white font-medium">{Math.round(call.cost * 100)}</span>
-              </div>
+              )}
+              
+              {recordingData?.recording_url && (
+                <div className="flex items-center justify-between text-xs sm:text-sm pt-2 border-t border-gray-200 dark:border-gray-800">
+                  <div className="flex items-center space-x-2">
+                    <Play className="h-4 w-4 text-primary flex-shrink-0" />
+                    <span className="text-gray-600 dark:text-gray-400">Recording:</span>
+                  </div>
+                  <a
+                    href={recordingData.recording_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Download
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>

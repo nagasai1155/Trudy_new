@@ -40,6 +40,9 @@ class UltravoxClient:
             )
         
         url = f"{self.base_url}{endpoint}"
+        logger.info(f"Ultravox API Request: {method} {url}")
+        if data:
+            logger.debug(f"Ultravox Request Data: {data}")
         
         async def _make_request():
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -50,15 +53,27 @@ class UltravoxClient:
                     params=params,
                     headers=self.headers,
                 )
+                logger.debug(f"Ultravox API Response: {response.status_code} for {url}")
+                if response.status_code >= 400:
+                    logger.error(f"Ultravox API Error Response: Status {response.status_code}, URL: {url}, Headers: {dict(response.headers)}")
                 response.raise_for_status()
                 return response.json()
         
         try:
             return await retry_with_backoff(_make_request)
         except httpx.HTTPStatusError as e:
+            # Get error details from response if available
+            error_detail = "Unknown error"
+            try:
+                error_body = e.response.json()
+                error_detail = error_body.get("error", {}).get("message", str(e)) if isinstance(error_body, dict) else str(e)
+            except:
+                error_detail = e.response.text or str(e)
+            
+            logger.error(f"Ultravox API error {e.response.status_code} for {method} {endpoint}: {error_detail}")
             raise ProviderError(
                 provider="ultravox",
-                message=f"Ultravox API error: {e.response.status_code}",
+                message=f"Ultravox API error: {e.response.status_code} - {error_detail}",
                 http_status=e.response.status_code,
                 retry_after=int(e.response.headers.get("Retry-After", 0)) if e.response.status_code == 429 else None,
             )

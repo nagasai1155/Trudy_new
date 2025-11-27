@@ -131,6 +131,10 @@ async def create_voice(
         "updated_at": now.isoformat(),
     }
     
+    # Store provider_voice_id for external voices (ElevenLabs voice ID)
+    if voice_data.strategy != "native" and voice_data.source.provider_voice_id:
+        voice_db_record["provider_voice_id"] = voice_data.source.provider_voice_id
+    
     db.insert("voices", voice_db_record)
     
     # Prepare voice record for response (use datetime objects for Pydantic)
@@ -357,4 +361,90 @@ async def get_voice(
             ts=datetime.utcnow(),
         ),
     }
+
+
+@router.post("/{voice_id}/sync")
+async def sync_voice_with_ultravox(
+    voice_id: str,
+    current_user: dict = Depends(get_current_user),
+    x_client_id: Optional[str] = Header(None),
+):
+    """Sync voice with Ultravox - creates voice in Ultravox if not already created"""
+    if current_user["role"] not in ["client_admin", "agency_admin"]:
+        raise ForbiddenError("Insufficient permissions")
+    
+    db = DatabaseService(current_user["token"])
+    db.set_auth(current_user["token"])
+    
+    voice = db.get_voice(voice_id, current_user["client_id"])
+    if not voice:
+        raise NotFoundError("voice", voice_id)
+    
+    if voice.get("status") != "active":
+        raise ValidationError("Voice must be active", {"voice_id": voice_id, "voice_status": voice.get("status")})
+    
+    # If voice already has ultravox_voice_id, return success
+    if voice.get("ultravox_voice_id"):
+        return {
+            "data": VoiceResponse(**voice),
+            "meta": ResponseMeta(
+                request_id=str(uuid.uuid4()),
+                ts=datetime.utcnow(),
+            ),
+            "message": "Voice already synced with Ultravox",
+        }
+    
+    # Check if Ultravox is configured
+    if not settings.ULTRAVOX_API_KEY:
+        raise ValidationError("Ultravox API key not configured. Please set ULTRAVOX_API_KEY environment variable.")
+    
+    # Create voice in Ultravox
+    try:
+        if voice.get("strategy") == "native":
+            # Native voices need training samples - can't sync without them
+            raise ValidationError(
+                "Native voices cannot be synced without training samples. Please recreate the voice with training samples.",
+                {"voice_strategy": "native"}
+            )
+        else:
+            # External/reference voices
+            ultravox_voice_data = {
+                "name": voice.get("name"),
+                "provider": voice.get("provider", "elevenlabs"),
+                "type": "reference",
+            }
+            if voice.get("provider_voice_id"):
+                ultravox_voice_data["provider_voice_id"] = voice.get("provider_voice_id")
+            
+            logger.info(f"Attempting to create voice in Ultravox: {ultravox_voice_data}")
+            ultravox_response = await ultravox_client.create_voice(ultravox_voice_data)
+            
+            if ultravox_response and ultravox_response.get("id"):
+                ultravox_voice_id = ultravox_response.get("id")
+                # Update voice with Ultravox ID
+                db.update(
+                    "voices",
+                    {"id": voice_id},
+                    {"ultravox_voice_id": ultravox_voice_id},
+                )
+                voice["ultravox_voice_id"] = ultravox_voice_id
+                
+                return {
+                    "data": VoiceResponse(**voice),
+                    "meta": ResponseMeta(
+                        request_id=str(uuid.uuid4()),
+                        ts=datetime.utcnow(),
+                    ),
+                    "message": "Voice successfully synced with Ultravox",
+                }
+            else:
+                raise ValidationError("Failed to create voice in Ultravox - response missing ID")
+    except Exception as e:
+        logger.error(f"Failed to sync voice {voice_id} with Ultravox: {e}", exc_info=True)
+        error_msg = str(e)
+        if "404" in error_msg:
+            error_msg = "Ultravox API endpoint not found. Please check ULTRAVOX_BASE_URL and ULTRAVOX_API_KEY configuration."
+        elif "401" in error_msg or "403" in error_msg:
+            error_msg = "Ultravox API authentication failed. Please check your ULTRAVOX_API_KEY."
+        raise ValidationError(f"Failed to sync voice with Ultravox: {error_msg}", {"error": str(e)})
 

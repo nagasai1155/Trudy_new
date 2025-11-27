@@ -203,6 +203,7 @@ export const endpoints = {
     create: '/voices',
     delete: (id: string) => `/voices/${id}`,
     presign: '/voices/files/presign',
+    sync: (id: string) => `/voices/${id}/sync`,
   },
   
   // Agents
@@ -212,6 +213,7 @@ export const endpoints = {
     create: '/agents',
     update: (id: string) => `/agents/${id}`,
     delete: (id: string) => `/agents/${id}`,
+    sync: (id: string) => `/agents/${id}/sync`,
   },
   
   // Knowledge Bases

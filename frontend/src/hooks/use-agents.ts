@@ -77,3 +77,18 @@ export function useDeleteAgent() {
   })
 }
 
+export function useSyncAgentWithUltravox() {
+  const queryClient = useQueryClient()
+  const clientId = useClientId()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.post<Agent>(endpoints.agents.sync(id), {})
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents', clientId] })
+    },
+  })
+}
+

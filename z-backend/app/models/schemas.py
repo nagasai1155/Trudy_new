@@ -155,6 +155,7 @@ class VoiceResponse(BaseModel):
     language: str
     status: str
     training_info: Optional[Dict[str, Any]] = None
+    provider_voice_id: Optional[str] = None
     ultravox_voice_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime

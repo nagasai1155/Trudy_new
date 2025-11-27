@@ -32,6 +32,7 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
   const [voiceName, setVoiceName] = useState('')
   const [hasAgreed, setHasAgreed] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState('')
+  const [providerVoiceId, setProviderVoiceId] = useState('')
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
@@ -317,7 +318,7 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
       return
     }
 
-    // For community voices (external), just call onSave
+    // For community voices (external), create voice directly with provider_voice_id
     if (activeTab === 'community-voices') {
       if (!selectedProvider) {
         toast({
@@ -328,14 +329,53 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
         return
       }
 
-      if (onSave) {
-        onSave({
-          name: voiceName,
-          source: 'community-voices',
-          provider: selectedProvider,
+      // For ElevenLabs, provider_voice_id is required
+      if (selectedProvider === 'elevenlabs' && !providerVoiceId.trim()) {
+        toast({
+          title: 'Voice ID required',
+          description: 'Please enter the ElevenLabs voice ID (e.g., pNInz6obpgDQGcFmaJgB)',
+          variant: 'destructive',
         })
+        return
       }
-      resetForm()
+
+      setIsCreating(true)
+      try {
+        await createVoiceMutation.mutateAsync({
+          name: voiceName,
+          strategy: 'external',
+          source: {
+            type: 'external',
+            provider_voice_id: providerVoiceId.trim() || undefined,
+          },
+          provider_overrides: {
+            provider: selectedProvider,
+          },
+        })
+
+        toast({
+          title: 'Voice created',
+          description: `"${voiceName}" has been created successfully.`,
+        })
+
+        if (onSave) {
+          onSave({
+            name: voiceName,
+            source: 'community-voices',
+            provider: selectedProvider,
+          })
+        }
+
+        resetForm()
+      } catch (error) {
+        toast({
+          title: 'Error creating voice',
+          description: error instanceof Error ? error.message : 'Failed to create voice',
+          variant: 'destructive',
+        })
+      } finally {
+        setIsCreating(false)
+      }
       return
     }
 
@@ -397,6 +437,7 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
     setVoiceName('')
     setHasAgreed(false)
     setSelectedProvider('')
+    setProviderVoiceId('')
     setUploadedFiles([])
     onClose()
   }
@@ -586,6 +627,24 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
                   </div>
                 </button>
               </div>
+              
+              {/* Provider Voice ID Input (for ElevenLabs) */}
+              {selectedProvider === 'elevenlabs' && (
+                <div className="space-y-1.5 sm:space-y-2 mt-3">
+                  <label className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                    ElevenLabs Voice ID <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    value={providerVoiceId}
+                    onChange={(e) => setProviderVoiceId(e.target.value)}
+                    placeholder="e.g., pNInz6obpgDQGcFmaJgB or Adam"
+                    className="w-full text-sm"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                    Enter the ElevenLabs voice ID. You can find this in your ElevenLabs dashboard.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -619,7 +678,7 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
                 !hasAgreed || 
                 isUploading || 
                 isCreating ||
-                (activeTab === 'community-voices' && !selectedProvider) ||
+                (activeTab === 'community-voices' && (!selectedProvider || (selectedProvider === 'elevenlabs' && !providerVoiceId.trim()))) ||
                 (activeTab === 'voice-clone' && uploadedFiles.length === 0)
               }
               className="w-full sm:w-auto bg-gray-600 dark:bg-gray-300 hover:bg-gray-700 dark:hover:bg-gray-400 text-white dark:text-black disabled:opacity-50 disabled:cursor-not-allowed text-sm"

@@ -275,27 +275,9 @@ export default function VoiceCloningPage() {
 
   const handleAddVoice = async (voiceData: { name: string; source: 'voice-clone' | 'community-voices'; provider?: string }) => {
     try {
-      // Voice clone is handled inside the modal, but community voices need to be created here
-      if (voiceData.source === 'community-voices') {
-        await createVoiceMutation.mutateAsync({
-          name: voiceData.name,
-          strategy: 'external',
-          source: {
-            type: 'external',
-            provider_voice_id: undefined, // Can be set later
-          },
-          provider_overrides: {
-            provider: voiceData.provider || 'elevenlabs',
-          },
-        })
-
-        toast({
-          title: 'Voice created',
-          description: `"${voiceData.name}" has been created successfully.`,
-        })
-      }
-      // Voice clone is already created in the modal
-
+      // Voice clone and community voices are now both handled inside the modal
+      // This callback is just for closing and refreshing
+      
       // Close modal and refresh
       setCreateVoiceDialogOpen(false)
       // Switch to My Voices tab to show the newly added voice
@@ -306,8 +288,8 @@ export default function VoiceCloningPage() {
       queryClient.invalidateQueries({ queryKey: ['voices'] })
     } catch (error) {
       toast({
-        title: 'Error creating voice',
-        description: error instanceof Error ? error.message : 'Failed to create voice. Please try again.',
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An error occurred',
         variant: 'destructive',
       })
     }
@@ -572,7 +554,7 @@ export default function VoiceCloningPage() {
               </div>
             )}
 
-            {authLoading || voicesLoading ? (
+            {authLoading || (!clientId && !error) || voicesLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
                 <p className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</p>

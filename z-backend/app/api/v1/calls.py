@@ -85,41 +85,60 @@ async def create_call(
     db.insert("calls", call_record)
     
     # Call Ultravox API
-    try:
-        ultravox_data = {
-            "agent_id": agent.get("ultravox_agent_id"),
-            "phone_number": call_data.phone_number,
-            "direction": call_data.direction.value,
-            "call_settings": call_data.call_settings.dict() if call_data.call_settings else {},
-            "context": call_data.context or {},
-        }
-        ultravox_response = await ultravox_client.create_call(ultravox_data)
-        
-        # Update with Ultravox ID
-        db.update(
-            "calls",
-            {"id": call_id},
-            {"ultravox_call_id": ultravox_response.get("id")},
-        )
-        call_record["ultravox_call_id"] = ultravox_response.get("id")
-        
-    except Exception as e:
+    ultravox_agent_id = agent.get("ultravox_agent_id")
+    if ultravox_agent_id:
+        try:
+            ultravox_data = {
+                "agent_id": ultravox_agent_id,
+                "phone_number": call_data.phone_number,
+                "direction": call_data.direction.value,
+                "call_settings": call_data.call_settings.dict() if call_data.call_settings else {},
+                "context": call_data.context or {},
+            }
+            ultravox_response = await ultravox_client.create_call(ultravox_data)
+            
+            # Update with Ultravox ID
+            db.update(
+                "calls",
+                {"id": call_id},
+                {"ultravox_call_id": ultravox_response.get("id")},
+            )
+            call_record["ultravox_call_id"] = ultravox_response.get("id")
+            
+        except Exception as e:
+            # Log error but don't fail the request - call is created in DB
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to create call in Ultravox: {e}")
+            # Update call status to failed
+            db.update(
+                "calls",
+                {"id": call_id},
+                {"status": "failed"},
+            )
+            call_record["status"] = "failed"
+    else:
+        # Agent doesn't have ultravox_agent_id - call created but marked as failed
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Agent {call_data.agent_id} does not have ultravox_agent_id - call created without Ultravox integration")
         db.update(
             "calls",
             {"id": call_id},
             {"status": "failed"},
         )
-        raise
+        call_record["status"] = "failed"
     
-    # Emit EventBridge event
-    await emit_call_created(
-        call_id=call_id,
-        client_id=current_user["client_id"],
-        agent_id=call_data.agent_id,
-        ultravox_call_id=call_record["ultravox_call_id"],
-        phone_number=call_data.phone_number,
-        direction=call_data.direction.value,
-    )
+    # Emit EventBridge event (only if call was successfully created in Ultravox)
+    if call_record.get("ultravox_call_id"):
+        await emit_call_created(
+            call_id=call_id,
+            client_id=current_user["client_id"],
+            agent_id=call_data.agent_id,
+            ultravox_call_id=call_record["ultravox_call_id"],
+            phone_number=call_data.phone_number,
+            direction=call_data.direction.value,
+        )
     
     response_data = {
         "data": CallResponse(**call_record),

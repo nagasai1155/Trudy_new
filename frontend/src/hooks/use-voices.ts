@@ -73,3 +73,18 @@ export function useDeleteVoice() {
   })
 }
 
+export function useSyncVoiceWithUltravox() {
+  const queryClient = useQueryClient()
+  const clientId = useClientId()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.post<Voice>(endpoints.voices.sync(id), {})
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['voices', clientId] })
+    },
+  })
+}
+
