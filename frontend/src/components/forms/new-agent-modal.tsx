@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Bot, Headphones, Wind, Check, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,6 +31,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
   const [agentName, setAgentName] = useState('')
   const [chatOnly, setChatOnly] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const isCreatingRef = useRef(false) // Use ref to prevent race conditions
   const { sidebarCollapsed, setModalOpen } = useAppStore()
   const { setSelectedAgent } = useAgentStore()
   const createAgentMutation = useCreateAgent()
@@ -53,6 +54,8 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
     setSelectedVoiceId('')
     setAgentName('')
     setChatOnly(false)
+    isCreatingRef.current = false
+    setIsCreating(false)
     setModalOpen(false)
     onClose()
   }
@@ -97,90 +100,107 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
   }
 
   const handleCreateAgent = async () => {
-    if (selectedTemplate && agentName.trim()) {
-      setIsCreating(true)
-      
-      try {
-        // Check authentication
-        if (sessionStatus !== 'authenticated' || !session) {
-          toast({
-            title: 'Authentication required',
-            description: 'Please sign in to create an agent.',
-            variant: 'destructive',
-          })
-          setIsCreating(false)
-          return
-        }
-        
-        // Wait for voices to load if still loading
-        if (voicesLoading) {
-          toast({
-            title: 'Loading voices',
-            description: 'Please wait while we check available voices...',
-          })
-          setIsCreating(false)
-          return
-        }
-        
-        // Validate voice selection
-        if (!selectedVoiceId) {
-          toast({
-            title: 'Voice required',
-            description: 'Please select a voice for the agent.',
-            variant: 'destructive',
-          })
-          setIsCreating(false)
-          return
-        }
-
-        const selectedVoice = voices.find(v => v.id === selectedVoiceId && v.status === 'active')
-        if (!selectedVoice) {
-          toast({
-            title: 'Invalid voice',
-            description: 'The selected voice is not available. Please select another voice.',
-            variant: 'destructive',
-          })
-          setIsCreating(false)
-          return
-        }
-        
-        // Create default system prompts based on template
-        const systemPrompts = {
-          blank: 'You are a helpful AI assistant.',
-          personal: 'You are a friendly personal assistant. Help users manage their tasks, answer questions, and provide support in a warm and approachable manner.',
-          business: 'You are a professional business assistant. Help users with business inquiries, provide information about products and services, and assist with customer support in a professional and efficient manner.',
-        }
-        
-        // Create agent data
-        const agentData: CreateAgentData = {
-        name: agentName,
-          description: `AI agent created from ${selectedTemplate} template`,
-          voice_id: selectedVoiceId,
-          system_prompt: systemPrompts[selectedTemplate],
-          model: 'fixie-ai/ultravox-v0_4-8k', // Default model
-          tools: [],
-          knowledge_bases: [],
-        }
-        
-        // Create agent via API
-        const newAgent = await createAgentMutation.mutateAsync(agentData)
-        
-        // Set selected agent and navigate
-        setSelectedAgent(newAgent)
-        
+    // Prevent double submission
+    if (isCreatingRef.current || isCreating) {
+      console.log('Agent creation already in progress, ignoring duplicate call')
+      return
+    }
+    
+    if (!selectedTemplate || !agentName.trim()) {
+      return
+    }
+    
+    // Set both state and ref to prevent race conditions
+    isCreatingRef.current = true
+    setIsCreating(true)
+    
+    try {
+      // Check authentication
+      if (sessionStatus !== 'authenticated' || !session) {
         toast({
-          title: 'Agent created',
-          description: `"${agentName}" has been created successfully.`,
+          title: 'Authentication required',
+          description: 'Please sign in to create an agent.',
+          variant: 'destructive',
+        })
+        isCreatingRef.current = false
+        setIsCreating(false)
+        return
+      }
+      
+      // Wait for voices to load if still loading
+      if (voicesLoading) {
+        toast({
+          title: 'Loading voices',
+          description: 'Please wait while we check available voices...',
+        })
+        isCreatingRef.current = false
+        setIsCreating(false)
+        return
+      }
+      
+      // Validate voice selection
+      if (!selectedVoiceId) {
+        toast({
+          title: 'Voice required',
+          description: 'Please select a voice for the agent.',
+          variant: 'destructive',
+        })
+        isCreatingRef.current = false
+        setIsCreating(false)
+        return
+      }
+
+      const selectedVoice = voices.find(v => v.id === selectedVoiceId && v.status === 'active')
+      if (!selectedVoice) {
+        toast({
+          title: 'Invalid voice',
+          description: 'The selected voice is not available. Please select another voice.',
+          variant: 'destructive',
+        })
+        isCreatingRef.current = false
+        setIsCreating(false)
+        return
+      }
+      
+      // Create default system prompts based on template
+      const systemPrompts = {
+        blank: 'You are a helpful AI assistant.',
+        personal: 'You are a friendly personal assistant. Help users manage their tasks, answer questions, and provide support in a warm and approachable manner.',
+        business: 'You are a professional business assistant. Help users with business inquiries, provide information about products and services, and assist with customer support in a professional and efficient manner.',
+      }
+      
+      // Create agent data
+      const agentData: CreateAgentData = {
+        name: agentName,
+        description: `AI agent created from ${selectedTemplate} template`,
+        voice_id: selectedVoiceId,
+        system_prompt: systemPrompts[selectedTemplate],
+        model: 'fixie-ai/ultravox-v0_4-8k', // Default model
+        tools: [],
+        knowledge_bases: [],
+      }
+      
+      // Create agent via API
+      // Note: The ref guard (isCreatingRef) prevents duplicate submissions
+      // The backend also uses idempotency keys to prevent duplicates
+      const newAgent = await createAgentMutation.mutateAsync(agentData)
+      
+      // Set selected agent and navigate
+      setSelectedAgent(newAgent)
+      
+      toast({
+        title: 'Agent created',
+        description: `"${agentName}" has been created successfully.`,
       })
       
-        // Call the onSelectType callback if provided
+      // Call the onSelectType callback if provided
       if (onSelectType) {
         onSelectType(selectedTemplate)
       }
-        
-        // Navigate to agent editor
-        router.push('/agents/new')
       
+      // Navigate to agent editor
+      router.push('/agents/new')
+    
       // Reset state and close
       setStep('select')
       setSelectedTemplate(null)
@@ -188,15 +208,15 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
       setChatOnly(false)
       setModalOpen(false)
       onClose()
-      } catch (error) {
-        toast({
-          title: 'Error creating agent',
-          description: error instanceof Error ? error.message : 'Failed to create agent. Please try again.',
-          variant: 'destructive',
-        })
-      } finally {
-        setIsCreating(false)
-      }
+    } catch (error) {
+      toast({
+        title: 'Error creating agent',
+        description: error instanceof Error ? error.message : 'Failed to create agent. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      isCreatingRef.current = false
+      setIsCreating(false)
     }
   }
 
@@ -210,104 +230,91 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
       <div 
         className={cn(
           "fixed inset-0 z-50 bg-white dark:bg-black flex flex-col transition-all duration-300",
+          "w-full h-full overflow-hidden",
           'left-0'
         )}
       >
-        {/* Header */}
-        <div className="flex-shrink-0 p-4 sm:p-5">
+        {/* Simple Header */}
+        <div className="flex-shrink-0 flex items-center justify-between p-4 sm:p-5 border-b border-gray-200 dark:border-gray-900">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+            Select a voice
+          </h2>
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 flex items-center justify-center">
-          <div className="w-full max-w-xl mx-auto">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
-              Select a voice
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Choose the voice your agent will use
-            </p>
-
-            {/* Voice Selection */}
-            <div className="space-y-3 mb-5">
-              {voicesLoading ? (
-                <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">Loading voices...</p>
-                </div>
-              ) : activeVoices.length === 0 ? (
-                <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    No active voices available
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      router.push('/voice-cloning')
-                      handleClose()
-                    }}
+        {/* Content - Scrollable Voice List */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 sm:p-6">
+            {voicesLoading ? (
+              <div className="text-center py-12">
+                <p className="text-sm text-gray-500">Loading voices...</p>
+              </div>
+            ) : activeVoices.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  No active voices available
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    router.push('/voice-cloning')
+                    handleClose()
+                  }}
+                >
+                  Create Voice
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2 max-w-2xl mx-auto">
+                {activeVoices.map(voice => (
+                  <button
+                    key={voice.id}
+                    onClick={() => setSelectedVoiceId(voice.id)}
+                    className={cn(
+                      "w-full p-4 border-2 rounded-lg text-left transition-all",
+                      "hover:shadow-sm active:scale-[0.99]",
+                      selectedVoiceId === voice.id
+                        ? "border-primary bg-primary/5 dark:bg-primary/10"
+                        : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 bg-white dark:bg-gray-900"
+                    )}
                   >
-                    Create Voice
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {activeVoices.map(voice => (
-                    <button
-                      key={voice.id}
-                      onClick={() => setSelectedVoiceId(voice.id)}
-                      className={cn(
-                        "w-full p-4 border-2 rounded-lg text-left transition-all",
-                        selectedVoiceId === voice.id
-                          ? "border-primary bg-primary/10 dark:bg-primary/20"
-                          : "border-gray-200 dark:border-gray-800 hover:border-primary/50"
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">
-                            {voice.name}
-                          </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {voice.provider} • {voice.type}
-                          </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 dark:text-white mb-1">
+                          {voice.name}
                         </div>
-                        {selectedVoiceId === voice.id && (
-                          <Check className="h-5 w-5 text-primary" />
-                        )}
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {voice.provider} • {voice.type}
+                        </div>
                       </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="flex justify-center space-x-2 mt-8">
-              <button
-                onClick={() => setStep('select')}
-                className="h-2 w-2 rounded-full bg-primary transition-all duration-200"
-              />
-              <div className="h-2 w-6 rounded-full bg-primary transition-all duration-200" />
-              <button
-                onClick={() => setStep('complete')}
-                className="h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-700 transition-all duration-200"
-              />
-            </div>
+                      {selectedVoiceId === voice.id && (
+                        <div className="ml-4 flex-shrink-0">
+                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Simple Footer */}
         <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-900 p-4 sm:p-5 bg-white dark:bg-black">
-          <div className="max-w-xl mx-auto flex items-center justify-between">
+          <div className="max-w-2xl mx-auto flex items-center justify-between">
             <Button
               onClick={handleBack}
               variant="ghost"
-              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white gap-2"
+              className="gap-2"
             >
               <ChevronLeft className="h-4 w-4" />
               Back
@@ -315,7 +322,7 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
             <Button
               onClick={() => setStep('complete')}
               disabled={!selectedVoiceId || activeVoices.length === 0}
-              className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed px-8"
+              className="bg-primary hover:bg-primary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed px-6"
             >
               Next
             </Button>
@@ -427,9 +434,14 @@ export function NewAgentModal({ isOpen, onClose, onSelectType }: NewAgentModalPr
               Back
             </Button>
             <Button
-              onClick={handleCreateAgent}
-              disabled={!agentName.trim() || isCreating}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleCreateAgent()
+              }}
+              disabled={!agentName.trim() || isCreating || isCreatingRef.current}
               className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed px-8"
+              type="button"
             >
               {isCreating ? 'Creating...' : 'Create Agent'}
             </Button>

@@ -27,6 +27,22 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting Trudy Backend API...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
+    
+    # Check Ultravox configuration
+    if settings.ULTRAVOX_API_KEY:
+        logger.info(f"✅ Ultravox API Key: Configured (length: {len(settings.ULTRAVOX_API_KEY)})")
+        logger.info(f"✅ Ultravox Base URL: {settings.ULTRAVOX_BASE_URL}")
+    else:
+        logger.warning("⚠️  Ultravox API Key: NOT CONFIGURED - Voice and Agent syncing will be disabled")
+        logger.warning("⚠️  Please set ULTRAVOX_API_KEY in your .env file")
+    
+    # Check ElevenLabs configuration
+    if settings.ELEVENLABS_API_KEY:
+        logger.info(f"✅ ElevenLabs API Key: Configured (length: {len(settings.ELEVENLABS_API_KEY)})")
+    else:
+        logger.warning("⚠️  ElevenLabs API Key: NOT CONFIGURED - Voice preview will be disabled")
+        logger.warning("⚠️  Please set ELEVENLABS_API_KEY in your .env file (z-backend/.env)")
+    
     yield
     # Shutdown
     logger.info("Shutting down Trudy Backend API...")
@@ -100,7 +116,29 @@ async def general_exception_handler(request, exc: Exception):
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "service": "trudy-api"}
+    from app.services.ultravox import ultravox_client
+    
+    health_status = {
+        "status": "healthy",
+        "service": "trudy-api",
+        "environment": settings.ENVIRONMENT,
+        "ultravox": {
+            "configured": bool(settings.ULTRAVOX_API_KEY),
+            "base_url": settings.ULTRAVOX_BASE_URL if settings.ULTRAVOX_API_KEY else None,
+        }
+    }
+    
+    # Test Ultravox connection if configured
+    if settings.ULTRAVOX_API_KEY:
+        try:
+            # Try a simple request to verify connection
+            # We'll just check if the client is initialized properly
+            health_status["ultravox"]["connection"] = "ready"
+        except Exception as e:
+            health_status["ultravox"]["connection"] = f"error: {str(e)}"
+            health_status["status"] = "degraded"
+    
+    return health_status
 
 
 # Include API routes

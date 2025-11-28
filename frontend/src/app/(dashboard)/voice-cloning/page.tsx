@@ -55,6 +55,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
 import { Voice } from '@/types'
 import { useAuthClient } from '@/lib/auth-client'
+import { apiClient, endpoints } from '@/lib/api'
 
 
 // Mock data for explore tab (community voices library)
@@ -189,6 +190,8 @@ export default function VoiceCloningPage() {
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false)
   const [feedbackText, setFeedbackText] = useState('')
   const [deletingVoiceId, setDeletingVoiceId] = useState<string | null>(null)
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null)
   
   // Filter states
   const [selectedLanguage, setSelectedLanguage] = useState('')
@@ -247,6 +250,150 @@ export default function VoiceCloningPage() {
       setDeletingVoiceId(null)
     }
   }, [deleteVoiceMutation, toast])
+
+  // Handle play voice preview
+  const handlePlayVoice = useCallback(async (voice: Voice) => {
+    // Stop any currently playing audio
+    if (audioElement) {
+      audioElement.pause()
+      audioElement.currentTime = 0
+      setAudioElement(null)
+    }
+
+    // If clicking the same voice, just stop it
+    if (playingVoiceId === voice.id) {
+      setPlayingVoiceId(null)
+      return
+    }
+
+    // Check if voice is active and has provider_voice_id
+    if (voice.status !== 'active') {
+      toast({
+        title: 'Voice not ready',
+        description: 'Voice must be active to preview. Please wait for training to complete.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (voice.provider !== 'elevenlabs') {
+      toast({
+        title: 'Preview not supported',
+        description: `Voice preview is currently only supported for ElevenLabs voices.`,
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!voice.provider_voice_id) {
+      toast({
+        title: 'Voice ID missing',
+        description: 'This voice does not have a provider voice ID. Cannot generate preview.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setPlayingVoiceId(voice.id)
+    
+    try {
+      // Generate preview text
+      const previewText = "Hello, this is a preview of this voice. How does it sound?"
+      
+      console.log('Playing voice:', {
+        voiceId: voice.id,
+        voiceName: voice.name,
+        provider: voice.provider,
+        providerVoiceId: voice.provider_voice_id,
+        status: voice.status
+      })
+      
+      // Fetch audio from backend
+      const previewUrl = endpoints.voices.preview(voice.id, previewText)
+      console.log('Fetching audio from:', previewUrl)
+      
+      const audioBlob = await apiClient.getAudioBlob(previewUrl)
+      
+      if (!audioBlob || audioBlob.size === 0) {
+        throw new Error('Received empty audio response from server')
+      }
+      
+      console.log('Audio blob received:', { size: audioBlob.size, type: audioBlob.type })
+      
+      // Create audio element and play
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+      
+      audio.onended = () => {
+        console.log('Audio playback ended')
+        setPlayingVoiceId(null)
+        setAudioElement(null)
+        URL.revokeObjectURL(audioUrl)
+      }
+      
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e)
+        setPlayingVoiceId(null)
+        setAudioElement(null)
+        URL.revokeObjectURL(audioUrl)
+        toast({
+          title: 'Playback error',
+          description: 'Failed to play voice preview. The audio file may be corrupted.',
+          variant: 'destructive',
+        })
+      }
+      
+      audio.onloadstart = () => console.log('Audio loading started')
+      audio.oncanplay = () => console.log('Audio can play')
+      audio.oncanplaythrough = () => console.log('Audio can play through')
+      
+      setAudioElement(audio)
+      
+      try {
+        await audio.play()
+        console.log('Audio playback started successfully')
+      } catch (playError) {
+        console.error('Error playing audio:', playError)
+        throw new Error('Failed to start audio playback. Please check your browser audio settings.')
+      }
+    } catch (error) {
+      console.error('Error in handlePlayVoice:', error)
+      setPlayingVoiceId(null)
+      
+      let errorMessage = 'Failed to generate voice preview.'
+      let errorTitle = 'Preview failed'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+        console.error('Error details:', errorMessage)
+        
+        // Check for specific error types
+        if (errorMessage.includes('API key') || errorMessage.includes('not found') || errorMessage.includes('missing_api_key')) {
+          errorTitle = 'ElevenLabs API Key Required'
+          errorMessage = 'Please configure your ElevenLabs API key. Set ELEVENLABS_API_KEY in your backend .env file (z-backend/.env) and restart the server.'
+        } else if (errorMessage.includes('provider_voice_id')) {
+          errorTitle = 'Voice ID Missing'
+          errorMessage = 'This voice does not have a provider voice ID. Please recreate the voice with a valid ElevenLabs voice ID.'
+        } else if (errorMessage.includes('401') || errorMessage.includes('Invalid')) {
+          errorTitle = 'Invalid API Key'
+          errorMessage = 'The ElevenLabs API key is invalid. Please check your API key configuration.'
+        } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+          errorTitle = 'Voice Not Found'
+          errorMessage = 'The voice ID was not found in ElevenLabs. Please verify the voice ID is correct.'
+        } else if (errorMessage.includes('Failed to fetch')) {
+          errorTitle = 'Network Error'
+          errorMessage = 'Failed to connect to the server. Please check your internet connection and try again.'
+        }
+      }
+      
+      toast({
+        title: errorTitle,
+        description: errorMessage,
+        variant: 'destructive',
+        duration: 8000,
+      })
+    }
+  }, [playingVoiceId, audioElement, toast])
 
   // Get status badge color
   const getStatusBadge = (status: string) => {
@@ -459,12 +606,20 @@ export default function VoiceCloningPage() {
                       </div>
                     </div>
 
-                    {/* Actions - Mobile */}
-                    <div className="flex items-center gap-1 sm:hidden flex-shrink-0">
-                      <button className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
-                        <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-                      </button>
-                      <DropdownMenu>
+                      {/* Actions - Mobile */}
+                      <div className="flex items-center gap-1 sm:hidden flex-shrink-0">
+                        <button 
+                          onClick={() => handlePlayVoice(voice)}
+                          disabled={playingVoiceId === voice.id && audioElement !== null}
+                          className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {playingVoiceId === voice.id ? (
+                            <Loader2 className="h-4 w-4 text-gray-700 dark:text-gray-300 animate-spin" />
+                          ) : (
+                            <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                          )}
+                        </button>
+                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-900">
                             <MoreVertical className="h-4 w-4 text-gray-700 dark:text-gray-300" />
@@ -644,8 +799,16 @@ export default function VoiceCloningPage() {
 
                       {/* Actions - Mobile */}
                       <div className="flex items-center gap-1 sm:hidden flex-shrink-0">
-                        <button className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
-                          <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                        <button 
+                          onClick={() => handlePlayVoice(voice)}
+                          disabled={playingVoiceId === voice.id && audioElement !== null}
+                          className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {playingVoiceId === voice.id ? (
+                            <Loader2 className="h-4 w-4 text-gray-700 dark:text-gray-300 animate-spin" />
+                          ) : (
+                            <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                          )}
                         </button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -707,8 +870,16 @@ export default function VoiceCloningPage() {
 
                       {/* Actions */}
                       <div className="flex items-center gap-2">
-                        <button className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
-                          <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                        <button 
+                          onClick={() => handlePlayVoice(voice)}
+                          disabled={playingVoiceId === voice.id && audioElement !== null}
+                          className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {playingVoiceId === voice.id ? (
+                            <Loader2 className="h-4 w-4 text-gray-700 dark:text-gray-300 animate-spin" />
+                          ) : (
+                            <Play className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                          )}
                         </button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

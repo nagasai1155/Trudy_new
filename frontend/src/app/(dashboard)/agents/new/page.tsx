@@ -19,6 +19,8 @@ import { useAgent, useUpdateAgent } from '@/hooks/use-agents'
 import { useVoices } from '@/hooks/use-voices'
 import { useToast } from '@/hooks/use-toast'
 import { UpdateAgentData } from '@/types'
+import { CreateCallModal } from '@/components/calls/create-call-modal'
+import { useCreateCall } from '@/hooks/use-calls'
 
 export default function NewAgentPage() {
   const router = useRouter()
@@ -37,8 +39,10 @@ export default function NewAgentPage() {
   
   const updateAgentMutation = useUpdateAgent()
   const { data: voices = [] } = useVoices()
+  const createCallMutation = useCreateCall()
   const [isSaving, setIsSaving] = useState(false)
   const [selectedTab, setSelectedTab] = useState('agent')
+  const [showTestModal, setShowTestModal] = useState(false)
   const [agentLanguage, setAgentLanguage] = useState('english')
   const [firstMessage, setFirstMessage] = useState("Hey there, I'm Alexis from ElevenLabs support. How can I help you today?")
   const [disableInterruptions, setDisableInterruptions] = useState(false)
@@ -129,6 +133,51 @@ Your responses should be thoughtful, concise, and conversational—typically thr
       })
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  // Handle test agent (create call)
+  const handleTestAgent = () => {
+    if (!currentAgent?.id) {
+      toast({
+        title: 'No agent selected',
+        description: 'Please create an agent first.',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    if (currentAgent.status !== 'active') {
+      toast({
+        title: 'Agent not active',
+        description: 'Please wait for the agent to be activated before testing.',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    setShowTestModal(true)
+  }
+
+  const handleCreateTestCall = async (data: { agent_id: string; phone_number: string; direction: 'inbound' | 'outbound' }) => {
+    try {
+      await createCallMutation.mutateAsync({
+        ...data,
+        call_settings: {},
+        context: {},
+      })
+      toast({
+        title: 'Test call initiated',
+        description: 'The call has been queued and will start shortly. You can view it in the Calls page.',
+      })
+      setShowTestModal(false)
+      router.push('/calls')
+    } catch (error) {
+      toast({
+        title: 'Error creating test call',
+        description: error instanceof Error ? error.message : 'Failed to create test call. Please try again.',
+        variant: 'destructive',
+      })
     }
   }
   
@@ -299,10 +348,15 @@ Your responses should be thoughtful, concise, and conversational—typically thr
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
               )}
-              <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2">
-                <Mic2 className="h-4 w-4" />
-                Test AI agent
-                  </Button>
+              {currentAgent?.id && currentAgent?.status === 'active' && (
+                <Button 
+                  onClick={handleTestAgent}
+                  className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2"
+                >
+                  <Phone className="h-4 w-4" />
+                  Test Agent
+                </Button>
+              )}
               <Button variant="outline" className="gap-2 hover:bg-primary/5 hover:border-primary/40 transition-all">
                 <Link2 className="h-4 w-4" />
                 Copy link
@@ -324,9 +378,44 @@ Your responses should be thoughtful, concise, and conversational—typically thr
             <span className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded">
               Public
             </span>
+            {currentAgent?.status && (
+              <span className={`px-2 py-1 text-xs font-medium rounded ${
+                currentAgent.status === 'active' 
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  : currentAgent.status === 'creating'
+                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+              }`}>
+                {currentAgent.status}
+              </span>
+            )}
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-500 dark:text-gray-500 mt-1">agent_0901k87kr394ewbbs7n9ksn99zp7</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 dark:text-gray-500 mt-1">{currentAgent?.id || 'agent_0901k87kr394ewbbs7n9ksn99zp7'}</p>
           </div>
+
+        {/* Test Agent Section - Only show for active agents */}
+        {currentAgent?.id && currentAgent?.status === 'active' && (
+          <div className="px-6 py-4 bg-primary/5 border-b border-primary/20">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-primary" />
+                  Test Your Agent
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Make a test call to verify your agent is working correctly. Enter a phone number and the agent will call you.
+                </p>
+              </div>
+              <Button 
+                onClick={handleTestAgent}
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2 ml-4"
+              >
+                <Phone className="h-4 w-4" />
+                Test Now
+              </Button>
+            </div>
+          </div>
+        )}
 
           {/* Tabs */}
         <div className="border-b border-gray-200 dark:border-gray-900 bg-white dark:bg-black px-6">
@@ -1823,6 +1912,17 @@ Your responses should be thoughtful, concise, and conversational—typically thr
         )}
                 </div>
       </div>
+
+      {/* Test Agent Modal */}
+      {currentAgent?.id && currentAgent?.status === 'active' && (
+        <CreateCallModal
+          isOpen={showTestModal}
+          onClose={() => setShowTestModal(false)}
+          onCreateCall={handleCreateTestCall}
+          agents={[currentAgent]}
+          isLoading={createCallMutation.isPending}
+        />
+      )}
     </AppLayout>
   )
 }

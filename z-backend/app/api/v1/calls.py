@@ -140,8 +140,13 @@ async def create_call(
             direction=call_data.direction.value,
         )
     
+    # Fetch the call from database to get all fields including created_at
+    call = db.get_call(call_id, current_user["client_id"])
+    if not call:
+        raise NotFoundError("call", call_id)
+    
     response_data = {
-        "data": CallResponse(**call_record),
+        "data": CallResponse(**call),
         "meta": ResponseMeta(
             request_id=str(uuid.uuid4()),
             ts=datetime.utcnow(),

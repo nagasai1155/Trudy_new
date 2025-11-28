@@ -148,6 +148,69 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'DELETE' })
   }
 
+  async getAudioBlob(endpoint: string): Promise<Blob> {
+    const headers: Record<string, string> = {}
+
+    // Add request correlation ID
+    headers['X-Request-Id'] = this.generateRequestId()
+
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`
+    }
+
+    if (this.clientId) {
+      headers['x-client-id'] = this.clientId
+    }
+
+    const url = `${this.baseUrl}${endpoint}`
+    console.log('Fetching audio blob from:', url)
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    })
+
+    console.log('Audio response status:', response.status, response.statusText)
+    console.log('Audio response headers:', Object.fromEntries(response.headers.entries()))
+
+    if (!response.ok) {
+      // Try to get error message from response
+      let errorMessage = `Failed to fetch audio (${response.status})`
+      
+      try {
+        const contentType = response.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json() as BackendError
+          if ('error' in errorData) {
+            const error = errorData.error
+            errorMessage = error.message || errorMessage
+            console.error('Backend error:', error)
+          }
+        } else {
+          // Try to read as text if not JSON
+          const text = await response.text()
+          if (text) {
+            console.error('Error response text:', text)
+            errorMessage = text.substring(0, 200) // Limit error message length
+          }
+        }
+      } catch (parseError) {
+        console.error('Error parsing error response:', parseError)
+      }
+      
+      throw new Error(errorMessage)
+    }
+
+    const blob = await response.blob()
+    console.log('Audio blob created:', { size: blob.size, type: blob.type })
+    
+    if (blob.size === 0) {
+      throw new Error('Received empty audio response from server')
+    }
+    
+    return blob
+  }
+
   async upload<T>(endpoint: string, formData: FormData): Promise<BackendResponse<T>> {
     const headers: Record<string, string> = {}
 
@@ -204,6 +267,7 @@ export const endpoints = {
     delete: (id: string) => `/voices/${id}`,
     presign: '/voices/files/presign',
     sync: (id: string) => `/voices/${id}/sync`,
+    preview: (id: string, text?: string) => `/voices/${id}/preview${text ? `?text=${encodeURIComponent(text)}` : ''}`,
   },
   
   // Agents

@@ -81,6 +81,7 @@ export interface Voice {
     completed_at?: string;
     estimated_completion?: string;
   };
+  provider_voice_id?: string; // ElevenLabs voice ID for external voices
   ultravox_voice_id?: string;
   created_at: string;
   updated_at: string;

@@ -18,7 +18,10 @@ class UltravoxClient:
         self.base_url = settings.ULTRAVOX_BASE_URL
         self.api_key = settings.ULTRAVOX_API_KEY
         if not self.api_key:
-            logger.warning("ULTRAVOX_API_KEY is not set. Ultravox features will be disabled.")
+            logger.warning("⚠️  ULTRAVOX_API_KEY is not set. Ultravox features will be disabled.")
+            logger.warning("⚠️  Please set ULTRAVOX_API_KEY in your .env file to enable voice and agent syncing.")
+        else:
+            logger.info(f"✅ Ultravox client initialized with base URL: {self.base_url}")
         self.headers = {
             "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
             "Content-Type": "application/json",

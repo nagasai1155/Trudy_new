@@ -151,6 +151,7 @@ async def create_agent(
                 
                 ultravox_data = {
                     "name": agent_data.name,
+                    "system_prompt": agent_data.system_prompt,
                     "voice": {
                         "provider": voice.get("provider", "elevenlabs"),
                         "voice_id": voice.get("ultravox_voice_id"),
@@ -176,10 +177,13 @@ async def create_agent(
                     "tools": [tool.dict() for tool in agent_data.tools] if agent_data.tools else [],
                 }
                 
+                logger.info(f"Creating agent in Ultravox for agent {agent_id} with data: {ultravox_data}")
                 ultravox_response = await ultravox_client.create_agent(ultravox_data)
+                logger.info(f"Ultravox response for agent {agent_id}: {ultravox_response}")
                 
                 if ultravox_response and ultravox_response.get("id"):
                     ultravox_agent_id = ultravox_response.get("id")
+                    logger.info(f"Successfully created agent in Ultravox. Agent ID: {agent_id}, Ultravox Agent ID: {ultravox_agent_id}")
                     # Update with Ultravox ID
                     db.update(
                         "agents",
@@ -192,7 +196,7 @@ async def create_agent(
                     agent_record["ultravox_agent_id"] = ultravox_agent_id
                     agent_record["status"] = "active"
                 else:
-                    logger.warning(f"Ultravox response missing agent ID for agent {agent_id}")
+                    logger.warning(f"Ultravox response missing agent ID for agent {agent_id}. Response: {ultravox_response}")
                     # Update database to active status
                     db.update(
                         "agents",
@@ -211,7 +215,8 @@ async def create_agent(
                 agent_record["status"] = "active"
         except Exception as e:
             # Log error but don't fail agent creation - allow agent to exist without Ultravox
-            logger.error(f"Failed to create agent in Ultravox (non-critical): {e}", exc_info=True)
+            logger.error(f"Failed to create agent {agent_id} in Ultravox (non-critical): {e}", exc_info=True)
+            logger.error(f"Agent data that failed: {ultravox_data if 'ultravox_data' in locals() else 'N/A'}")
             # Update database to active status
             db.update(
                 "agents",
@@ -442,6 +447,7 @@ async def list_agents(
                                 
                                 ultravox_data = {
                                     "name": agent["name"],
+                                    "system_prompt": agent.get("system_prompt", ""),
                                     "voice": {
                                         "provider": voice.get("provider", "elevenlabs"),
                                         "voice_id": voice.get("ultravox_voice_id"),
@@ -581,6 +587,7 @@ async def sync_agent_with_ultravox(
         
         ultravox_data = {
             "name": agent["name"],
+            "system_prompt": agent.get("system_prompt", ""),
             "voice": {
                 "provider": voice.get("provider", "elevenlabs"),
                 "voice_id": voice.get("ultravox_voice_id"),

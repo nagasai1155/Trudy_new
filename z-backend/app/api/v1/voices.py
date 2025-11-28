@@ -1,13 +1,16 @@
 """
 Voice Endpoints
 """
-from fastapi import APIRouter, Header, Depends
+from fastapi import APIRouter, Header, Depends, Query
+from fastapi.responses import StreamingResponse
 from starlette.requests import Request
 from typing import Optional
 from datetime import datetime
 import uuid
 import json
 import logging
+import httpx
+import os
 
 from app.core.auth import get_current_user
 from app.core.database import DatabaseService
@@ -15,6 +18,7 @@ from app.core.s3 import generate_presigned_url, check_object_exists
 from app.core.exceptions import NotFoundError, ValidationError, PaymentRequiredError, ForbiddenError
 from app.core.idempotency import check_idempotency_key, store_idempotency_response
 from app.core.events import emit_voice_training_started, emit_voice_created
+from app.core.encryption import decrypt_api_key
 from app.services.ultravox import ultravox_client
 from app.models.schemas import (
     VoiceCreate,
@@ -134,6 +138,9 @@ async def create_voice(
     # Store provider_voice_id for external voices (ElevenLabs voice ID)
     if voice_data.strategy != "native" and voice_data.source.provider_voice_id:
         voice_db_record["provider_voice_id"] = voice_data.source.provider_voice_id
+        logger.info(f"Storing provider_voice_id: {voice_data.source.provider_voice_id} for voice {voice_id}")
+    else:
+        logger.info(f"Voice {voice_id} - strategy: {voice_data.strategy}, provider_voice_id: {voice_data.source.provider_voice_id}")
     
     db.insert("voices", voice_db_record)
     
@@ -328,6 +335,41 @@ async def list_voices(
             except Exception as e:
                 # Log error but don't fail the request
                 logger.warning(f"Failed to sync voice {voice['id']} from Ultravox: {e}")
+        
+        # Auto-sync active external voices that don't have ultravox_voice_id
+        elif voice.get("status") == "active" and not voice.get("ultravox_voice_id"):
+            try:
+                from app.core.config import settings
+                if settings.ULTRAVOX_API_KEY:
+                    # Only sync external/reference voices (not native voices without training samples)
+                    if voice.get("type") == "reference" and voice.get("provider_voice_id"):
+                        try:
+                            ultravox_voice_data = {
+                                "name": voice.get("name"),
+                                "provider": voice.get("provider", "elevenlabs"),
+                                "type": "reference",
+                            }
+                            if voice.get("provider_voice_id"):
+                                ultravox_voice_data["provider_voice_id"] = voice.get("provider_voice_id")
+                            
+                            logger.info(f"Auto-syncing voice {voice['id']} with Ultravox: {ultravox_voice_data}")
+                            ultravox_response = await ultravox_client.create_voice(ultravox_voice_data)
+                            
+                            if ultravox_response and ultravox_response.get("id"):
+                                ultravox_voice_id = ultravox_response.get("id")
+                                db.update(
+                                    "voices",
+                                    {"id": voice["id"]},
+                                    {"ultravox_voice_id": ultravox_voice_id},
+                                )
+                                voice["ultravox_voice_id"] = ultravox_voice_id
+                                logger.info(f"Successfully auto-synced voice {voice['id']} with Ultravox. Ultravox Voice ID: {ultravox_voice_id}")
+                        except Exception as e:
+                            # Log but don't fail - voice can exist without Ultravox
+                            logger.warning(f"Failed to auto-sync voice {voice['id']} with Ultravox: {e}")
+            except Exception as e:
+                # Log but don't fail the request
+                logger.warning(f"Error during auto-sync for voice {voice['id']}: {e}")
     
     return {
         "data": [VoiceResponse(**voice) for voice in voices],
@@ -447,4 +489,156 @@ async def sync_voice_with_ultravox(
         elif "401" in error_msg or "403" in error_msg:
             error_msg = "Ultravox API authentication failed. Please check your ULTRAVOX_API_KEY."
         raise ValidationError(f"Failed to sync voice with Ultravox: {error_msg}", {"error": str(e)})
+
+
+@router.get("/{voice_id}/preview")
+async def preview_voice(
+    voice_id: str,
+    text: Optional[str] = Query(None, description="Text to convert to speech for preview"),
+    current_user: dict = Depends(get_current_user),
+    x_client_id: Optional[str] = Header(None),
+):
+    """
+    Preview a voice by generating audio using the provider's TTS API.
+    Currently supports ElevenLabs voices.
+    """
+    db = DatabaseService(current_user["token"])
+    db.set_auth(current_user["token"])
+    
+    # Get voice from database
+    voice = db.get_voice(voice_id, current_user["client_id"])
+    if not voice:
+        raise NotFoundError("voice", voice_id)
+    
+    logger.info(f"Voice data retrieved: id={voice_id}, provider={voice.get('provider')}, provider_voice_id={voice.get('provider_voice_id')}, status={voice.get('status')}")
+    
+    # Check if voice is active
+    if voice.get("status") != "active":
+        raise ValidationError("Voice must be active to preview", {"status": voice.get("status")})
+    
+    provider = voice.get("provider", "").lower()
+    provider_voice_id = voice.get("provider_voice_id")
+    
+    logger.info(f"Preview request - Provider: {provider}, Provider Voice ID: {provider_voice_id}")
+    
+    # Only support ElevenLabs for now
+    if provider != "elevenlabs":
+        raise ValidationError(f"Voice preview not supported for provider: {provider}")
+    
+    if not provider_voice_id:
+        raise ValidationError("Voice does not have a provider_voice_id. Cannot generate preview.")
+    
+    # Get ElevenLabs API key from database first
+    api_keys = db.select(
+        "api_keys",
+        {
+            "client_id": current_user["client_id"],
+            "service": "elevenlabs",
+            "is_active": True
+        }
+    )
+    
+    elevenlabs_api_key = None
+    if api_keys:
+        # Get the most recent active key
+        latest_key = sorted(api_keys, key=lambda x: x.get("updated_at", ""), reverse=True)[0]
+        encrypted_key = latest_key.get("encrypted_key")
+        if encrypted_key:
+            elevenlabs_api_key = decrypt_api_key(encrypted_key)
+            logger.info("Using ElevenLabs API key from database")
+    
+    # If no API key in database, try environment variable (for development)
+    if not elevenlabs_api_key:
+        elevenlabs_api_key = settings.ELEVENLABS_API_KEY
+        if elevenlabs_api_key:
+            logger.info("Using ElevenLabs API key from environment variable")
+    
+    # Also try direct os.getenv as fallback (in case settings didn't load it)
+    if not elevenlabs_api_key:
+        elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
+        if elevenlabs_api_key:
+            logger.info("Using ElevenLabs API key from os.getenv")
+    
+    if not elevenlabs_api_key:
+        logger.error(f"ElevenLabs API key not found. Provider voice ID: {provider_voice_id}, Voice ID: {voice_id}")
+        raise ValidationError(
+            "ElevenLabs API key not found. Please configure your API key by either: "
+            "1) Setting ELEVENLABS_API_KEY in your backend .env file (in z-backend directory), or "
+            "2) Using PATCH /api/v1/providers/tts endpoint with provider='elevenlabs'. "
+            "Make sure to restart your backend server after adding the environment variable.",
+            {"error": "missing_api_key", "help": "See backend documentation for API key configuration"}
+        )
+    
+    # Log API key info (without exposing the actual key)
+    api_key_preview = elevenlabs_api_key[:8] + "..." + elevenlabs_api_key[-4:] if elevenlabs_api_key and len(elevenlabs_api_key) > 12 else "N/A"
+    logger.info(f"Using ElevenLabs API key (length: {len(elevenlabs_api_key) if elevenlabs_api_key else 0}, preview: {api_key_preview}) for voice preview")
+    
+    # Use default text if not provided
+    preview_text = text or "Hello, this is a preview of this voice."
+    
+    # Call ElevenLabs TTS API
+    # Don't specify model_id - let ElevenLabs use the default model for the account
+    # This avoids issues with deprecated models on free tier
+    try:
+        logger.info(f"Calling ElevenLabs API for voice ID: {provider_voice_id}, text: {preview_text[:50]}...")
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{provider_voice_id}",
+                headers={
+                    "Accept": "audio/mpeg",
+                    "Content-Type": "application/json",
+                    "xi-api-key": elevenlabs_api_key,
+                },
+                json={
+                    "text": preview_text,
+                    # Don't specify model_id - uses account default (works with all tiers)
+                    "voice_settings": {
+                        "stability": 0.5,
+                        "similarity_boost": 0.75,
+                    }
+                },
+            )
+            logger.info(f"ElevenLabs API response status: {response.status_code}")
+            response.raise_for_status()
+            
+            # Return audio stream
+            return StreamingResponse(
+                iter([response.content]),
+                media_type="audio/mpeg",
+                headers={
+                    "Content-Disposition": f'inline; filename="voice-preview.mp3"',
+                }
+            )
+    except httpx.HTTPStatusError as e:
+        logger.error(f"ElevenLabs API error: {e.response.status_code} - {e.response.text}")
+        
+        # Try to parse error response for better error messages
+        error_detail = None
+        try:
+            error_json = e.response.json()
+            if "detail" in error_json:
+                error_detail = error_json["detail"]
+                if isinstance(error_detail, dict):
+                    error_message = error_detail.get("message", str(error_detail))
+                else:
+                    error_message = str(error_detail)
+            else:
+                error_message = e.response.text
+        except:
+            error_message = e.response.text
+        
+        if e.response.status_code == 401:
+            if "model_deprecated" in error_message.lower() or "free tier" in error_message.lower():
+                raise ValidationError(
+                    "The ElevenLabs model is not available on your plan. Please upgrade your ElevenLabs subscription or contact support.",
+                    {"error": "model_deprecated", "message": error_message}
+                )
+            raise ValidationError("Invalid ElevenLabs API key", {"error": "invalid_api_key"})
+        elif e.response.status_code == 404:
+            raise ValidationError("Voice not found in ElevenLabs", {"error": "voice_not_found"})
+        else:
+            raise ValidationError(f"Failed to generate voice preview: {error_message}", {"error": "api_error"})
+    except Exception as e:
+        logger.error(f"Error generating voice preview: {e}", exc_info=True)
+        raise ValidationError(f"Failed to generate voice preview: {str(e)}", {"error": "internal_error"})
 
