@@ -12,7 +12,7 @@ exports.id = "app/(dashboard)/agents/page";
 exports.ids = ["app/(dashboard)/agents/page"];
 exports.modules = {
 
-/***/ "./action-async-storage.external":
+/***/ "../../client/components/action-async-storage.external":
 /*!*******************************************************************************!*\
   !*** external "next/dist/client/components/action-async-storage.external.js" ***!
   \*******************************************************************************/
@@ -23,7 +23,7 @@ module.exports = require("next/dist/client/components/action-async-storage.exter
 
 /***/ }),
 
-/***/ "./request-async-storage.external":
+/***/ "../../client/components/request-async-storage.external":
 /*!********************************************************************************!*\
   !*** external "next/dist/client/components/request-async-storage.external.js" ***!
   \********************************************************************************/
@@ -34,7 +34,7 @@ module.exports = require("next/dist/client/components/request-async-storage.exte
 
 /***/ }),
 
-/***/ "./static-generation-async-storage.external":
+/***/ "../../client/components/static-generation-async-storage.external":
 /*!******************************************************************************************!*\
   !*** external "next/dist/client/components/static-generation-async-storage.external.js" ***!
   \******************************************************************************************/
@@ -499,7 +499,7 @@ const e0 = (0,next_dist_build_webpack_loaders_next_flight_loader_module_proxy__W
 var __webpack_require__ = require("../../../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@swc","vendor-chunks/@auth","vendor-chunks/next-auth","vendor-chunks/@opentelemetry","vendor-chunks/@radix-ui","vendor-chunks/@tanstack","vendor-chunks/@floating-ui","vendor-chunks/tailwind-merge","vendor-chunks/lucide-react","vendor-chunks/zustand","vendor-chunks/tslib","vendor-chunks/react-remove-scroll","vendor-chunks/use-sync-external-store","vendor-chunks/aria-hidden","vendor-chunks/next-themes","vendor-chunks/react-remove-scroll-bar","vendor-chunks/use-callback-ref","vendor-chunks/use-sidecar","vendor-chunks/class-variance-authority","vendor-chunks/react-style-singleton","vendor-chunks/clsx","vendor-chunks/get-nonce"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2F(dashboard)%2Fagents%2Fpage&page=%2F(dashboard)%2Fagents%2Fpage&appPaths=%2F(dashboard)%2Fagents%2Fpage&pagePath=private-next-app-dir%2F(dashboard)%2Fagents%2Fpage.tsx&appDir=C%3A%5CUsers%5CHP%5COneDrive%5CDesktop%5CTrudy%20Frontend%5Cfrontend%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CHP%5COneDrive%5CDesktop%5CTrudy%20Frontend%5Cfrontend&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
+var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@auth","vendor-chunks/next-auth","vendor-chunks/@opentelemetry","vendor-chunks/@radix-ui","vendor-chunks/@tanstack","vendor-chunks/tailwind-merge","vendor-chunks/lucide-react","vendor-chunks/next-themes","vendor-chunks/class-variance-authority","vendor-chunks/@swc","vendor-chunks/clsx","vendor-chunks/@floating-ui","vendor-chunks/zustand","vendor-chunks/tslib","vendor-chunks/react-remove-scroll","vendor-chunks/use-sync-external-store","vendor-chunks/aria-hidden","vendor-chunks/react-remove-scroll-bar","vendor-chunks/use-callback-ref","vendor-chunks/use-sidecar","vendor-chunks/react-style-singleton","vendor-chunks/get-nonce"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2F(dashboard)%2Fagents%2Fpage&page=%2F(dashboard)%2Fagents%2Fpage&appPaths=%2F(dashboard)%2Fagents%2Fpage&pagePath=private-next-app-dir%2F(dashboard)%2Fagents%2Fpage.tsx&appDir=C%3A%5CUsers%5CHP%5COneDrive%5CDesktop%5CTrudy%20Frontend%5Cfrontend%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5CHP%5COneDrive%5CDesktop%5CTrudy%20Frontend%5Cfrontend&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
 module.exports = __webpack_exports__;
 
 })();

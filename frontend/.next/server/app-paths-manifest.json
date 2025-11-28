@@ -1,8 +1,8 @@
 {
+  "/page": "app/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
   "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(auth)/signin/page": "app/(auth)/signin/page.js",
   "/(dashboard)/agents/page": "app/(dashboard)/agents/page.js",
-  "/(dashboard)/voice-cloning/page": "app/(dashboard)/voice-cloning/page.js",
-  "/(dashboard)/rag/page": "app/(dashboard)/rag/page.js",
-  "/(dashboard)/billing/page": "app/(dashboard)/billing/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js"
+  "/(dashboard)/voice-cloning/page": "app/(dashboard)/voice-cloning/page.js"
 }
