@@ -405,6 +405,46 @@ async def get_voice(
     }
 
 
+@router.delete("/{voice_id}")
+async def delete_voice(
+    voice_id: str,
+    current_user: dict = Depends(get_current_user),
+    x_client_id: Optional[str] = Header(None),
+):
+    """Delete voice"""
+    if current_user["role"] not in ["client_admin", "agency_admin"]:
+        raise ForbiddenError("Insufficient permissions")
+    
+    db = DatabaseService(current_user["token"])
+    db.set_auth(current_user["token"])
+    
+    voice = db.get_voice(voice_id, current_user["client_id"])
+    if not voice:
+        raise NotFoundError("voice", voice_id)
+    
+    # Delete from Ultravox if it exists there
+    if voice.get("ultravox_voice_id"):
+        try:
+            from app.core.config import settings
+            if settings.ULTRAVOX_API_KEY:
+                # Note: Ultravox may not have a delete endpoint, but we'll try if it exists
+                # For now, we'll just delete from our database
+                logger.info(f"Voice {voice_id} has Ultravox ID {voice.get('ultravox_voice_id')}, but Ultravox deletion not implemented")
+        except Exception as e:
+            logger.warning(f"Failed to handle Ultravox deletion for voice {voice_id}: {e}")
+    
+    # Delete from database
+    db.delete("voices", {"id": voice_id, "client_id": current_user["client_id"]})
+    
+    return {
+        "data": {"id": voice_id, "deleted": True},
+        "meta": ResponseMeta(
+            request_id=str(uuid.uuid4()),
+            ts=datetime.utcnow(),
+        ),
+    }
+
+
 @router.post("/{voice_id}/sync")
 async def sync_voice_with_ultravox(
     voice_id: str,
