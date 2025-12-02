@@ -13,6 +13,14 @@ export function useVoices() {
       return response.data
     },
     enabled: !!clientId, // Only fetch when clientId is available
+    staleTime: 1000 * 60, // Consider data fresh for 60 seconds (longer to prevent flickering)
+    gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
+    refetchOnMount: false, // Don't refetch if data is fresh (prevents flickering)
+    refetchOnReconnect: true, // Refetch on reconnect
+    // Don't use placeholderData - it causes flickering
+    // Instead, we'll handle loading state in the component using cached data
+    retry: 1, // Only retry once on failure
   })
 }
 
@@ -53,8 +61,18 @@ export function useCreateVoice() {
       const response = await apiClient.post<Voice>(endpoints.voices.create, data)
       return response.data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voices', clientId] })
+    onSuccess: (newVoice) => {
+      // Optimistically update the cache for instant UI feedback
+      queryClient.setQueryData<Voice[]>(['voices', clientId], (oldVoices = []) => {
+        // Check if voice already exists (prevent duplicates)
+        const exists = oldVoices.some(voice => voice.id === newVoice.id)
+        if (exists) {
+          return oldVoices.map(voice => voice.id === newVoice.id ? newVoice : voice)
+        }
+        return [newVoice, ...oldVoices]
+      })
+      // Refetch to ensure we have the latest data
+      queryClient.refetchQueries({ queryKey: ['voices', clientId] })
     },
   })
 }
@@ -67,8 +85,13 @@ export function useDeleteVoice() {
     mutationFn: async (id: string) => {
       await apiClient.delete(endpoints.voices.delete(id))
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['voices', clientId] })
+    onSuccess: (_, deletedId) => {
+      // Optimistically remove from cache for instant UI feedback
+      queryClient.setQueryData<Voice[]>(['voices', clientId], (oldVoices = []) => {
+        return oldVoices.filter(voice => voice.id !== deletedId)
+      })
+      // Refetch to ensure consistency
+      queryClient.refetchQueries({ queryKey: ['voices', clientId] })
     },
   })
 }

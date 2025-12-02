@@ -13,6 +13,14 @@ export function useAgents() {
       return response.data
     },
     enabled: !!clientId, // Only fetch when clientId is available
+    staleTime: 1000 * 60, // Consider data fresh for 60 seconds (longer to prevent flickering)
+    gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
+    refetchOnMount: false, // Don't refetch if data is fresh (prevents flickering)
+    refetchOnReconnect: true, // Refetch on reconnect
+    // Don't use placeholderData - it causes flickering
+    // Instead, we'll handle loading state in the component using cached data
+    retry: 1, // Only retry once on failure
   })
 }
 
@@ -38,8 +46,18 @@ export function useCreateAgent() {
       const response = await apiClient.post<Agent>(endpoints.agents.create, data)
       return response.data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agents', clientId] })
+    onSuccess: (newAgent) => {
+      // Optimistically update the cache for instant UI feedback
+      queryClient.setQueryData<Agent[]>(['agents', clientId], (oldAgents = []) => {
+        // Check if agent already exists (prevent duplicates)
+        const exists = oldAgents.some(agent => agent.id === newAgent.id)
+        if (exists) {
+          return oldAgents.map(agent => agent.id === newAgent.id ? newAgent : agent)
+        }
+        return [newAgent, ...oldAgents]
+      })
+      // Refetch to ensure we have the latest data
+      queryClient.refetchQueries({ queryKey: ['agents', clientId] })
     },
   })
 }
@@ -56,9 +74,15 @@ export function useUpdateAgent() {
       )
       return response.data
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['agents', clientId] })
-      queryClient.invalidateQueries({ queryKey: ['agents', clientId, data.id] })
+    onSuccess: (updatedAgent) => {
+      // Optimistically update the cache for instant UI feedback
+      queryClient.setQueryData<Agent[]>(['agents', clientId], (oldAgents = []) => {
+        return oldAgents.map(agent => agent.id === updatedAgent.id ? updatedAgent : agent)
+      })
+      // Update individual agent cache
+      queryClient.setQueryData<Agent>(['agents', clientId, updatedAgent.id], updatedAgent)
+      // Refetch to ensure consistency
+      queryClient.refetchQueries({ queryKey: ['agents', clientId] })
     },
   })
 }
@@ -71,8 +95,13 @@ export function useDeleteAgent() {
     mutationFn: async (id: string) => {
       await apiClient.delete(endpoints.agents.delete(id))
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agents', clientId] })
+    onSuccess: (_, deletedId) => {
+      // Optimistically remove from cache for instant UI feedback
+      queryClient.setQueryData<Agent[]>(['agents', clientId], (oldAgents = []) => {
+        return oldAgents.filter(agent => agent.id !== deletedId)
+      })
+      // Refetch to ensure consistency
+      queryClient.refetchQueries({ queryKey: ['agents', clientId] })
     },
   })
 }

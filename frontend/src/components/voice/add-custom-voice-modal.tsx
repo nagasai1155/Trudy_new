@@ -37,6 +37,7 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
   const [isUploading, setIsUploading] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const isProcessingRef = useRef(false) // Prevent multiple simultaneous calls
   const { toast } = useToast()
   const createVoiceMutation = useCreateVoice()
 
@@ -314,9 +315,17 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
 
   // Handle save/create voice
   const handleSave = async () => {
+    // Prevent multiple simultaneous calls
+    if (isCreating || isUploading || isProcessingRef.current) {
+      return
+    }
+
     if (!voiceName || !hasAgreed) {
       return
     }
+
+    // Set processing flag
+    isProcessingRef.current = true
 
     // For community voices (external), create voice directly with provider_voice_id
     if (activeTab === 'community-voices') {
@@ -375,6 +384,7 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
         })
       } finally {
         setIsCreating(false)
+        isProcessingRef.current = false
       }
       return
     }
@@ -382,6 +392,7 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
     // For voice clone (native), need to create voice with uploaded files
     if (activeTab === 'voice-clone') {
       if (uploadedFiles.length === 0) {
+        isProcessingRef.current = false
         toast({
           title: 'Files required',
           description: 'Please upload at least one audio file for voice cloning',
@@ -429,6 +440,7 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
         })
       } finally {
         setIsCreating(false)
+        isProcessingRef.current = false
       }
     }
   }
@@ -439,6 +451,7 @@ export function AddCustomVoiceModal({ isOpen, onClose, onSave }: AddCustomVoiceM
     setSelectedProvider('')
     setProviderVoiceId('')
     setUploadedFiles([])
+    isProcessingRef.current = false
     onClose()
   }
 

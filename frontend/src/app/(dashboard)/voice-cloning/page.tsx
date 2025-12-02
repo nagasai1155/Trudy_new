@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -174,11 +174,13 @@ const mockVoices = [
   },
 ]
 
+import { VoiceListItemSkeleton } from '@/components/ui/list-skeleton'
+
 export default function VoiceCloningPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { isLoading: authLoading, clientId } = useAuthClient() // Initialize auth
-  const { data: apiVoices = [], isLoading: voicesLoading, error } = useVoices()
+  const { data: apiVoices, isLoading: voicesLoading, error, isFetching, isFetched } = useVoices()
   const deleteVoiceMutation = useDeleteVoice()
   const createVoiceMutation = useCreateVoice()
   const [activeTab, setActiveTab] = useState('explore')
@@ -193,6 +195,9 @@ export default function VoiceCloningPage() {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null)
   
+  // Ensure we have a safe default for apiVoices
+  const safeVoices = apiVoices || []
+  
   // Filter states
   const [selectedLanguage, setSelectedLanguage] = useState('')
   const [selectedAccent, setSelectedAccent] = useState('')
@@ -204,28 +209,52 @@ export default function VoiceCloningPage() {
   const [customRates, setCustomRates] = useState('Include')
   const [liveModerationEnabled, setLiveModerationEnabled] = useState('Include')
 
-  // Real-time polling for voices with "training" status
+  // Optimized real-time polling - only poll when needed
   useEffect(() => {
-    const hasTrainingVoices = apiVoices.some(voice => voice.status === 'training')
+    if (!clientId) return
     
-    if (hasTrainingVoices) {
-      // Poll every 3 seconds if there are voices being trained
-      const interval = setInterval(() => {
-        queryClient.invalidateQueries({ queryKey: ['voices'] })
-      }, 3000)
-      
-      return () => clearInterval(interval)
-    }
-  }, [apiVoices, queryClient])
+    const trainingVoiceIds = safeVoices
+      .filter(voice => voice.status === 'training')
+      .map(voice => voice.id)
+    
+    if (trainingVoiceIds.length === 0) return
+    
+    // Poll every 3 seconds only for training voices
+    const interval = setInterval(() => {
+      queryClient.refetchQueries({ 
+        queryKey: ['voices', clientId],
+        type: 'active' // Only refetch active queries
+      })
+    }, 3000)
+    
+    return () => clearInterval(interval)
+  }, [safeVoices, queryClient, clientId])
 
-  const filteredVoices = mockVoices.filter(voice =>
-    voice.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    voice.description.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Memoize filtered voices for explore tab
+  const filteredVoices = useMemo(() => {
+    if (!searchQuery.trim()) return mockVoices
+    const query = searchQuery.toLowerCase()
+    return mockVoices.filter(voice =>
+      voice.name.toLowerCase().includes(query) ||
+      voice.description.toLowerCase().includes(query)
+    )
+  }, [searchQuery])
 
-  const filteredMyVoices = apiVoices.filter(voice =>
-    voice.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Memoize filtered my voices
+  const filteredMyVoices = useMemo(() => {
+    if (!searchQuery.trim()) return safeVoices
+    const query = searchQuery.toLowerCase()
+    return safeVoices.filter(voice =>
+      voice.name.toLowerCase().includes(query)
+    )
+  }, [safeVoices, searchQuery])
+  
+  // Improved loading state logic to prevent flickering
+  // Show loading skeleton only on true initial load (first time, no cached data)
+  const cachedVoices = queryClient.getQueryData<Voice[]>(['voices', clientId])
+  const hasCachedData = cachedVoices !== undefined && cachedVoices.length >= 0
+  // Only show loading if: auth loading OR no clientId OR (query loading AND no cached data AND not fetched)
+  const isInitialLoading = authLoading || (!clientId && !error) || (voicesLoading && !hasCachedData && !isFetched)
 
   // Handle delete voice
   const handleDeleteVoice = useCallback(async (voiceId: string, voiceName: string) => {
@@ -425,14 +454,19 @@ export default function VoiceCloningPage() {
       // Voice clone and community voices are now both handled inside the modal
       // This callback is just for closing and refreshing
       
-      // Close modal and refresh
+      // Close modal first
       setCreateVoiceDialogOpen(false)
+      
       // Switch to My Voices tab to show the newly added voice
       setActiveTab('my-voices')
       // Clear search to show all voices
       setSearchQuery('')
-      // Refresh voices list
-      queryClient.invalidateQueries({ queryKey: ['voices'] })
+      
+      // Wait a bit before invalidating to ensure backend has processed the request
+      // The mutation's onSuccess already invalidates, so this is just a safety refresh
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['voices', clientId] })
+      }, 500)
     } catch (error) {
       toast({
         title: 'Error',
@@ -462,27 +496,41 @@ export default function VoiceCloningPage() {
             </button>
             <button
               onClick={() => setActiveTab('my-voices')}
-              className={`text-sm font-medium pb-1 border-b-2 transition-all duration-200 ${
+              className={`flex items-center gap-2 text-sm font-medium pb-1 border-b-2 transition-all duration-200 ${
                 activeTab === 'my-voices'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-primary hover:border-primary/40'
               }`}
             >
               My Voices
-                  </button>
+              {!isInitialLoading && safeVoices.length > 0 && (
+                <span className="ml-1 text-xs bg-gray-200 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                  {safeVoices.length}
+                </span>
+              )}
+              {isFetching && !isInitialLoading && (
+                <Loader2 className="h-3 w-3 animate-spin text-gray-400 ml-1" />
+              )}
+            </button>
           </div>
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <div className="h-5 w-5 rounded-full border-2 border-gray-300 dark:border-gray-700" />
-              <span>0/3 slots used</span>
+              <span>
+                {!isInitialLoading 
+                  ? `${safeVoices.filter(v => v.type === 'custom').length}/3 slots used`
+                  : '0/3 slots used'
+                }
+              </span>
             </div>
             <Button 
               variant="ghost" 
               size="sm" 
               className="gap-2"
               onClick={() => setFeedbackDialogOpen(true)}
+              disabled={isInitialLoading}
             >
               <MessageCircle className="h-4 w-4" />
               Feedback
@@ -503,7 +551,13 @@ export default function VoiceCloningPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 focus:ring-2 focus:ring-primary focus:border-primary"
+            disabled={isInitialLoading}
           />
+          {isFetching && !isInitialLoading && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+            </div>
+          )}
         </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {activeTab === 'explore' && (
@@ -542,6 +596,7 @@ export default function VoiceCloningPage() {
               onClick={() => setCreateVoiceDialogOpen(true)}
               size="sm"
               className="bg-primary hover:bg-primary/90 text-white gap-2 flex-shrink-0"
+              disabled={isInitialLoading}
             >
               <Plus className="h-4 w-4" />
               Add Voice
@@ -690,7 +745,12 @@ export default function VoiceCloningPage() {
         {/* My Voices Tab Content */}
         {activeTab === 'my-voices' && (
           <>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">My Voices</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">My Voices</h2>
+              {isFetching && !isInitialLoading && (
+                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+              )}
+            </div>
             
             {/* Error Message */}
             {error && (
@@ -709,11 +769,12 @@ export default function VoiceCloningPage() {
               </div>
             )}
 
-            {authLoading || (!clientId && !error) || voicesLoading ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Loading voices...</p>
-              </div>
+            {isInitialLoading ? (
+              <>
+                {[...Array(5)].map((_, i) => (
+                  <VoiceListItemSkeleton key={`skeleton-${i}`} />
+                ))}
+              </>
             ) : !clientId ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <AlertCircle className="h-12 w-12 text-yellow-500 mb-4" />

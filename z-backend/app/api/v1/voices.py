@@ -104,6 +104,27 @@ async def create_voice(
     db = DatabaseService(current_user["token"])
     db.set_auth(current_user["token"])
     
+    # Check for duplicate external voice (same provider_voice_id for same client)
+    if voice_data.strategy != "native" and voice_data.source.provider_voice_id:
+        existing_voices = db.select(
+            "voices",
+            {
+                "client_id": current_user["client_id"],
+                "provider_voice_id": voice_data.source.provider_voice_id,
+            }
+        )
+        if existing_voices and len(existing_voices) > 0:
+            # Return existing voice instead of creating duplicate
+            existing_voice = existing_voices[0]
+            logger.info(f"Voice with provider_voice_id {voice_data.source.provider_voice_id} already exists: {existing_voice['id']}")
+            return {
+                "data": VoiceResponse(**existing_voice),
+                "meta": ResponseMeta(
+                    request_id=str(uuid.uuid4()),
+                    ts=datetime.utcnow(),
+                ),
+            }
+    
     # Credit check for native training
     client = None
     if voice_data.strategy == "native":
@@ -336,40 +357,9 @@ async def list_voices(
                 # Log error but don't fail the request
                 logger.warning(f"Failed to sync voice {voice['id']} from Ultravox: {e}")
         
-        # Auto-sync active external voices that don't have ultravox_voice_id
-        elif voice.get("status") == "active" and not voice.get("ultravox_voice_id"):
-            try:
-                from app.core.config import settings
-                if settings.ULTRAVOX_API_KEY:
-                    # Only sync external/reference voices (not native voices without training samples)
-                    if voice.get("type") == "reference" and voice.get("provider_voice_id"):
-                        try:
-                            ultravox_voice_data = {
-                                "name": voice.get("name"),
-                                "provider": voice.get("provider", "elevenlabs"),
-                                "type": "reference",
-                            }
-                            if voice.get("provider_voice_id"):
-                                ultravox_voice_data["provider_voice_id"] = voice.get("provider_voice_id")
-                            
-                            logger.info(f"Auto-syncing voice {voice['id']} with Ultravox: {ultravox_voice_data}")
-                            ultravox_response = await ultravox_client.create_voice(ultravox_voice_data)
-                            
-                            if ultravox_response and ultravox_response.get("id"):
-                                ultravox_voice_id = ultravox_response.get("id")
-                                db.update(
-                                    "voices",
-                                    {"id": voice["id"]},
-                                    {"ultravox_voice_id": ultravox_voice_id},
-                                )
-                                voice["ultravox_voice_id"] = ultravox_voice_id
-                                logger.info(f"Successfully auto-synced voice {voice['id']} with Ultravox. Ultravox Voice ID: {ultravox_voice_id}")
-                        except Exception as e:
-                            # Log but don't fail - voice can exist without Ultravox
-                            logger.warning(f"Failed to auto-sync voice {voice['id']} with Ultravox: {e}")
-            except Exception as e:
-                # Log but don't fail the request
-                logger.warning(f"Error during auto-sync for voice {voice['id']}: {e}")
+        # DISABLED: Auto-sync is disabled to prevent excessive API calls
+        # Use the manual /voices/{voice_id}/sync endpoint to sync voices with Ultravox
+        # This prevents hundreds of failed API calls on every GET request
     
     return {
         "data": [VoiceResponse(**voice) for voice in voices],

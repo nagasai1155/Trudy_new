@@ -1,12 +1,19 @@
 import { QueryClient } from '@tanstack/react-query'
 
-// Create a client
+// Create a client with optimized defaults for instant loading
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 2, // 2 minutes - data stays fresh longer to reduce API calls
+      gcTime: 1000 * 60 * 10, // 10 minutes - keep in cache longer
+      retry: 1, // Only retry once on failure
+      retryDelay: 1000, // Wait 1 second before retry
+      refetchOnWindowFocus: false, // Don't refetch on window focus for better UX
+      refetchOnMount: false, // Don't refetch on mount if data is fresh
+      refetchOnReconnect: false, // Don't refetch on reconnect to reduce API calls
+    },
+    mutations: {
+      retry: 0, // Don't retry mutations
     },
   },
 })

@@ -58,6 +58,27 @@ async def create_agent(
     db = DatabaseService(current_user["token"])
     db.set_auth(current_user["token"])
     
+    # Check for duplicate agent (same name + voice_id for same client)
+    existing_agents = db.select(
+        "agents",
+        {
+            "client_id": current_user["client_id"],
+            "name": agent_data.name,
+            "voice_id": agent_data.voice_id,
+        }
+    )
+    if existing_agents and len(existing_agents) > 0:
+        # Return existing agent instead of creating duplicate
+        existing_agent = existing_agents[0]
+        logger.info(f"Agent with name '{agent_data.name}' and voice_id '{agent_data.voice_id}' already exists: {existing_agent['id']}")
+        return {
+            "data": AgentResponse(**existing_agent),
+            "meta": ResponseMeta(
+                request_id=str(uuid.uuid4()),
+                ts=datetime.utcnow(),
+            ),
+        }
+    
     # Validate voice
     voice = db.get_voice(agent_data.voice_id, current_user["client_id"])
     if not voice:
@@ -412,27 +433,9 @@ async def list_agents(
                     # Get voice
                     voice = db.get_voice(agent["voice_id"], current_user["client_id"])
                     if voice and voice.get("status") == "active":
-                        # Try to sync voice first if it doesn't have ultravox_voice_id
-                        if not voice.get("ultravox_voice_id") and voice.get("provider_voice_id"):
-                            try:
-                                ultravox_voice_data = {
-                                    "name": voice.get("name"),
-                                    "provider": voice.get("provider", "elevenlabs"),
-                                    "type": "reference",
-                                }
-                                if voice.get("provider_voice_id"):
-                                    ultravox_voice_data["provider_voice_id"] = voice.get("provider_voice_id")
-                                
-                                ultravox_voice_response = await ultravox_client.create_voice(ultravox_voice_data)
-                                if ultravox_voice_response and ultravox_voice_response.get("id"):
-                                    db.update(
-                                        "voices",
-                                        {"id": agent["voice_id"]},
-                                        {"ultravox_voice_id": ultravox_voice_response.get("id")},
-                                    )
-                                    voice["ultravox_voice_id"] = ultravox_voice_response.get("id")
-                            except Exception as e:
-                                logger.warning(f"Failed to auto-sync voice {agent['voice_id']} for agent {agent['id']}: {e}")
+                        # DISABLED: Auto-sync is disabled to prevent excessive API calls
+                        # Use the manual /voices/{voice_id}/sync endpoint to sync voices with Ultravox
+                        pass
                         
                         # If voice has ultravox_voice_id, try to sync agent
                         if voice.get("ultravox_voice_id"):

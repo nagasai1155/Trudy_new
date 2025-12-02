@@ -17,20 +17,21 @@ import { useAgents, useDeleteAgent } from '@/hooks/use-agents'
 import { CreateCallModal } from '@/components/calls/create-call-modal'
 import { useCreateCall } from '@/hooks/use-calls'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Headphones, Wind, TrendingUp, Wand2, Check, Mic2, Search, Plus, MoreHorizontal, ExternalLink, Copy, Trash2, AlertCircle, Loader2, Phone } from 'lucide-react'
 import { Agent } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
 import { useAuthClient } from '@/lib/auth-client'
+import { ListItemSkeleton } from '@/components/ui/list-skeleton'
 
 export default function AgentsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { setSelectedAgent } = useAgentStore()
-  const { isLoading: authLoading, clientId } = useAuthClient() // Check auth status
-  const { data: apiAgents = [], isLoading: apiLoading, error, refetch } = useAgents()
+  const { isLoading: authLoading, clientId } = useAuthClient()
+  const { data: apiAgents, isLoading: apiLoading, error, isFetching, isFetched } = useAgents()
   const deleteAgentMutation = useDeleteAgent()
   const createCallMutation = useCreateCall()
   const [searchQuery, setSearchQuery] = useState('')
@@ -38,24 +39,87 @@ export default function AgentsPage() {
   const [deletingAgentId, setDeletingAgentId] = useState<string | null>(null)
   const [callAgentId, setCallAgentId] = useState<string | null>(null)
   
-  // Real-time polling for agents with "creating" status
-  useEffect(() => {
-    const hasCreatingAgents = apiAgents.some(agent => agent.status === 'creating')
-    
-    if (hasCreatingAgents) {
-      // Poll every 3 seconds if there are agents being created
-      const interval = setInterval(() => {
-        queryClient.invalidateQueries({ queryKey: ['agents'] })
-      }, 3000)
-      
-      return () => clearInterval(interval)
-    }
-  }, [apiAgents, queryClient])
+  // Ensure we have a safe default for apiAgents
+  const safeAgents = apiAgents || []
   
-  // Use only real agents from API
-  const allAgents = apiAgents
-  // Show loading if auth is loading OR if we're waiting for clientId OR if query is loading
-  const isLoading = authLoading || (!clientId && !error) || apiLoading
+  // Optimized real-time polling - only poll when needed
+  useEffect(() => {
+    if (!clientId) return
+    
+    const creatingAgentIds = safeAgents
+      .filter(agent => agent.status === 'creating')
+      .map(agent => agent.id)
+    
+    if (creatingAgentIds.length === 0) return
+    
+    // Poll every 3 seconds only for creating agents
+    const interval = setInterval(() => {
+      queryClient.refetchQueries({ 
+        queryKey: ['agents', clientId],
+        type: 'active' // Only refetch active queries
+      })
+    }, 3000)
+    
+    return () => clearInterval(interval)
+  }, [safeAgents, queryClient, clientId])
+  
+  // Memoize expensive computations
+  const formatAgentForDisplay = useCallback((agent: Agent) => {
+    const createdDate = agent.created_at 
+      ? new Date(agent.created_at).toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          year: 'numeric', 
+          hour: 'numeric', 
+          minute: '2-digit',
+          hour12: true 
+        })
+      : 'Unknown'
+    
+    return {
+      id: agent.id,
+      name: agent.name || 'Unnamed Agent',
+      description: agent.description || '',
+      agentName: agent.name || 'Agent',
+      createdBy: 'You',
+      createdAt: createdDate,
+      status: agent.status,
+      fullAgent: agent,
+    }
+  }, [])
+
+  const getNumericId = useCallback((id: string): number => {
+    let hash = 0
+    for (let i = 0; i < id.length; i++) {
+      const char = id.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash
+    }
+    return Math.abs(hash)
+  }, [])
+
+  // Memoize formatted agents
+  const displayAgents = useMemo(() => {
+    return safeAgents.map(formatAgentForDisplay)
+  }, [safeAgents, formatAgentForDisplay])
+
+  // Memoize filtered agents
+  const filteredAgents = useMemo(() => {
+    if (!searchQuery.trim()) return displayAgents
+    const query = searchQuery.toLowerCase()
+    return displayAgents.filter(agent => 
+      agent.name.toLowerCase().includes(query) ||
+      agent.description?.toLowerCase().includes(query) ||
+      agent.agentName?.toLowerCase().includes(query)
+    )
+  }, [displayAgents, searchQuery])
+  
+  // Improved loading state logic to prevent flickering
+  // Show loading skeleton only on true initial load (first time, no cached data)
+  const cachedAgents = queryClient.getQueryData<Agent[]>(['agents', clientId])
+  const hasCachedData = cachedAgents !== undefined && cachedAgents.length >= 0
+  // Only show loading if: auth loading OR no clientId OR (query loading AND no cached data AND not fetched)
+  const isInitialLoading = authLoading || (!clientId && !error) || (apiLoading && !hasCachedData && !isFetched)
   
   // Handle delete agent
   const handleDeleteAgent = useCallback(async (agentId: string, agentName: string) => {
@@ -111,49 +175,6 @@ export default function AgentsPage() {
     }
   }, [createCallMutation, toast, router])
   
-  // Format agent for display (convert backend format to display format)
-  const formatAgentForDisplay = (agent: Agent) => {
-    const createdDate = agent.created_at 
-      ? new Date(agent.created_at).toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric', 
-          year: 'numeric', 
-          hour: 'numeric', 
-          minute: '2-digit',
-          hour12: true 
-        })
-      : 'Unknown'
-    
-    return {
-      id: agent.id,
-      name: agent.name || 'Unnamed Agent',
-      description: agent.description || '',
-      agentName: agent.name || 'Agent',
-      createdBy: 'You', // TODO: Get from user session when available
-      createdAt: createdDate,
-      status: agent.status,
-      fullAgent: agent,
-    }
-  }
-  
-  const displayAgents = allAgents.map(formatAgentForDisplay)
-  
-  // Convert string ID to number for AgentIcon component
-  const getNumericId = (id: string): number => {
-    let hash = 0
-    for (let i = 0; i < id.length; i++) {
-      const char = id.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32-bit integer
-    }
-    return Math.abs(hash)
-  }
-  
-  const filteredAgents = displayAgents.filter(agent => 
-    agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    agent.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    agent.agentName?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
 
   const handleAgentTypeSelect = (type: 'blank' | 'personal' | 'business') => {
     // Modal will handle navigation after creating agent
@@ -190,13 +211,24 @@ export default function AgentsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-1">Agents</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Create and manage your AI agents</p>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">Agents</h1>
+                  {isFetching && !isInitialLoading && (
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {!isInitialLoading && safeAgents.length > 0 
+                    ? `${safeAgents.length} agent${safeAgents.length !== 1 ? 's' : ''}`
+                    : 'Create and manage your AI agents'
+                  }
+                </p>
               </div>
               <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                   className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30 gap-2 flex-1 sm:flex-initial"
                   onClick={() => setShowNewAgentModal(true)}
+                  disabled={isInitialLoading}
                 >
                   <Plus className="h-4 w-4" />
                   New agent
@@ -213,7 +245,13 @@ export default function AgentsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 w-full border-gray-300 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                disabled={isInitialLoading}
               />
+              {isFetching && !isInitialLoading && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                </div>
+              )}
             </div>
 
             {/* Error Message */}
@@ -242,11 +280,12 @@ export default function AgentsPage() {
 
               {/* Table Rows */}
               <div className="bg-white dark:bg-black divide-y divide-gray-200 dark:divide-gray-900">
-                {isLoading ? (
-                  <div className="px-6 py-12 text-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Loading agents...</p>
-                  </div>
+                {isInitialLoading ? (
+                  <>
+                    {[...Array(5)].map((_, i) => (
+                      <ListItemSkeleton key={`skeleton-${i}`} variant="table" />
+                    ))}
+                  </>
                 ) : filteredAgents.length === 0 ? (
                   <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     {searchQuery ? 'No agents found matching your search.' : 'No agents yet. Create your first agent to get started.'}
@@ -359,11 +398,12 @@ export default function AgentsPage() {
 
             {/* Mobile Card View */}
             <div className="md:hidden space-y-3">
-              {isLoading ? (
-                <div className="p-12 text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Loading agents...</p>
-                </div>
+              {isInitialLoading ? (
+                <>
+                  {[...Array(5)].map((_, i) => (
+                    <ListItemSkeleton key={`skeleton-${i}`} variant="card" />
+                  ))}
+                </>
               ) : filteredAgents.length === 0 ? (
                 <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                   {searchQuery ? 'No agents found matching your search.' : 'No agents yet. Create your first agent to get started.'}

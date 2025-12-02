@@ -1,8 +1,13 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { apiClient } from './api'
+
+// Global cache for clientId to prevent duplicate fetches
+let cachedClientId: string | null = null
+let isFetchingClientId = false
+const clientIdPromise: { current: Promise<string | null> | null } = { current: null }
 
 /**
  * Hook to initialize API client with NextAuth token and client_id
@@ -11,17 +16,15 @@ import { apiClient } from './api'
 export function useAuthClient() {
   const { data: session, status } = useSession()
   const isLoading = status === 'loading'
-  const [clientId, setClientId] = useState<string | null>(null)
+  const [clientId, setClientId] = useState<string | null>(cachedClientId)
+  const hasFetchedRef = useRef(false)
 
   useEffect(() => {
     if (status === 'authenticated' && session) {
       // For Google OAuth, use idToken (JWT) instead of accessToken
-      // idToken is a JWT that can be verified by our backend
-      // NextAuth should refresh tokens automatically, but we need to get the latest session
       const token = (session as any).idToken || (session as any).accessToken || ''
       
       // Extract client_id from user metadata or session
-      // Backend will look it up from database
       const extractedClientId = 
         (session.user as any)?.client_id || 
         (session.user as any)?.['https://trudy.ai/client_id'] ||
@@ -30,41 +33,67 @@ export function useAuthClient() {
 
       if (token) {
         apiClient.setToken(token)
-      } else {
-        // If no token, try to refresh session
-        console.warn('No token found in session, session might need refresh')
       }
       
       if (extractedClientId) {
+        // Use client_id from session
         apiClient.setClientId(extractedClientId)
         setClientId(extractedClientId)
-      } else if (token) {
-        // If we have a token but no client_id, try to fetch it from /auth/me
-        // This will auto-create user/client if first login
-        apiClient.get('/auth/me')
-          .then((response) => {
-            const userData = response.data as any
-            if (userData?.client_id) {
-              apiClient.setClientId(userData.client_id)
-              setClientId(userData.client_id)
-              // Store in session for future use
-              if (session.user) {
-                (session.user as any).client_id = userData.client_id
-              }
+        cachedClientId = extractedClientId
+      } else if (token && !cachedClientId && !hasFetchedRef.current) {
+        // Only fetch once if not already fetching
+        hasFetchedRef.current = true
+        
+        if (!isFetchingClientId) {
+          isFetchingClientId = true
+          
+          // Create a single promise for all concurrent requests
+          if (!clientIdPromise.current) {
+            clientIdPromise.current = apiClient.get('/auth/me')
+              .then((response) => {
+                const userData = response.data as any
+                if (userData?.client_id) {
+                  cachedClientId = userData.client_id
+                  apiClient.setClientId(userData.client_id)
+                  // Store in session for future use
+                  if (session.user) {
+                    (session.user as any).client_id = userData.client_id
+                  }
+                  return userData.client_id
+                }
+                return null
+              })
+              .catch((error) => {
+                console.error('Failed to get user info:', error)
+                return null
+              })
+              .finally(() => {
+                isFetchingClientId = false
+                // Clear promise after 100ms to allow state updates
+                setTimeout(() => {
+                  clientIdPromise.current = null
+                }, 100)
+              })
+          }
+          
+          // Wait for the shared promise
+          clientIdPromise.current.then((id) => {
+            if (id) {
+              setClientId(id)
             }
           })
-          .catch((error) => {
-            console.error('Failed to get user info:', error)
-            // If token is expired, we might need to refresh the session
-            if (error?.message?.includes('expired') || error?.message?.includes('Invalid or expired token')) {
-              console.warn('Token appears to be expired, session may need refresh')
-            }
-          })
+        }
+      } else if (cachedClientId) {
+        // Use cached clientId
+        setClientId(cachedClientId)
+        apiClient.setClientId(cachedClientId)
       }
     } else if (status === 'unauthenticated') {
-      // Clear token when user logs out
+      // Clear everything on logout
       apiClient.clearToken()
       setClientId(null)
+      cachedClientId = null
+      hasFetchedRef.current = false
     }
   }, [session, status])
 
@@ -77,41 +106,9 @@ export function useAuthClient() {
 }
 
 // Export function to get clientId for use in React Query keys
+// This now uses the cached value to prevent duplicate requests
 export function useClientId(): string | null {
-  const { data: session, status } = useSession()
-  const [clientId, setClientId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (status === 'authenticated' && session) {
-      // For Google OAuth, use idToken (JWT) instead of accessToken
-      const token = (session as any).idToken || (session as any).accessToken || ''
-      const extractedClientId = 
-        (session.user as any)?.client_id || 
-        (session.user as any)?.['https://trudy.ai/client_id'] ||
-        (session.user as any)?.clientId ||
-        null
-      
-      if (extractedClientId) {
-        setClientId(extractedClientId)
-      } else if (token) {
-        // Fetch from backend if not in session
-        // This will auto-create user/client if first login
-        apiClient.get('/auth/me')
-          .then((response) => {
-            const userData = response.data as any
-            if (userData?.client_id) {
-              setClientId(userData.client_id)
-            }
-          })
-          .catch(() => {
-            // Silently fail
-          })
-      }
-    } else {
-      setClientId(null)
-    }
-  }, [session, status])
-
+  const { clientId } = useAuthClient()
   return clientId
 }
 
